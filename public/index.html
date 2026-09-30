@@ -146,8 +146,8 @@
               <span class="tab-badge" id="tab-scenarios-badge">68</span>
             </button>
             <button class="nav-tab" data-tab="terminal">
-              <span class="tab-icon">🖥️</span>
-              <span class="tab-label">Live Console</span>
+              <span class="tab-icon">⚡</span>
+              <span class="tab-label">Live Execution Canvas</span>
             </button>
             <button class="nav-tab" data-tab="schedules">
               <span class="tab-icon">⏱️</span>
@@ -539,10 +539,146 @@
       </div>
     </div>
 
-    <!-- TAB 3: LIVE TERMINAL CONSOLE -->
+    <!-- TAB 3: LIVE EXECUTION CANVAS (MODERN ALTERNATIVE TO RAW CONSOLE) -->
     <div id="tab-content-terminal" class="tab-content">
+      <!-- Live Execution Canvas Header HUD -->
+      <section class="execution-canvas-hud glass-card mb-4 p-4 rounded-xl border border-slate-700/50">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="canvas-status-orb" id="canvas-status-orb">
+              <span class="pulse-dot"></span>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-base font-bold text-slate-100" id="canvas-active-suite-title">No Active Test Execution</h2>
+                <span class="badge badge-env text-xs" id="canvas-env-badge">SIT - STG 2</span>
+                <span class="badge badge-pass text-xs" id="canvas-status-badge">STANDBY</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5" id="canvas-active-subtitle">Select a module or scenario from the dashboard or matrix to start live visual execution</p>
+            </div>
+          </div>
+
+          <!-- Live Metrics Counters -->
+          <div class="flex items-center gap-3">
+            <div class="canvas-metric-box">
+              <span class="canvas-metric-lbl">PASSED</span>
+              <span class="canvas-metric-val text-emerald-400" id="canvas-pass-count">0</span>
+            </div>
+            <div class="canvas-metric-box">
+              <span class="canvas-metric-lbl">FAILED</span>
+              <span class="canvas-metric-val text-rose-400" id="canvas-fail-count">0</span>
+            </div>
+            <div class="canvas-metric-box">
+              <span class="canvas-metric-lbl">COMPLETED</span>
+              <span class="canvas-metric-val text-blue-400" id="canvas-completed-count">0 / 0</span>
+            </div>
+            <div class="canvas-metric-box">
+              <span class="canvas-metric-lbl">ELAPSED</span>
+              <span class="canvas-metric-val text-amber-400 font-mono" id="canvas-elapsed-time">0.0s</span>
+            </div>
+          </div>
+
+          <!-- Canvas Action Controls -->
+          <div class="flex items-center gap-2">
+            <button id="canvas-open-trace-btn" class="btn btn-secondary btn-sm hidden" title="Inspect Deep Trace in Playwright Trace Viewer">
+              <span>🔍 Trace Viewer</span>
+            </button>
+            <button id="canvas-open-allure-btn" class="btn btn-secondary btn-sm" title="View Allure Executive Report">
+              <span>📊 Allure Report</span>
+            </button>
+            <button id="canvas-toggle-logs-btn" class="btn btn-secondary btn-sm" title="Toggle Raw Output Stream Drawer">
+              <span>📜 Raw Logs</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Overall Canvas Progress Bar -->
+        <div class="canvas-progress-track mt-3">
+          <div class="canvas-progress-bar" id="canvas-progress-bar" style="width: 0%;"></div>
+        </div>
+      </section>
+
+      <!-- Active Running Test Card & Live Stepper -->
+      <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+        <!-- Active Test Spotlight Card (Left 2 Columns) -->
+        <div class="lg:col-span-2 glass-card p-4 rounded-xl border border-blue-500/30 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="live-pulse-icon">⚡</span>
+                <span class="text-xs font-bold tracking-wider text-blue-400 uppercase">ACTIVE TEST STEPPER</span>
+              </div>
+              <span class="font-mono text-xs text-blue-300" id="canvas-active-test-timer">Timer: 0.0s</span>
+            </div>
+            <h3 class="text-base font-semibold text-slate-100" id="canvas-active-test-name">Waiting for execution...</h3>
+            <p class="text-xs text-slate-400 font-mono mt-1" id="canvas-active-test-file">Ready</p>
+          </div>
+
+          <!-- Micro Step Progression Strip -->
+          <div class="live-stepper-strip my-3" id="canvas-stepper-strip">
+            <div class="step-node active" id="step-node-auth">
+              <span class="step-num">1</span>
+              <span class="step-lbl">Auth / Session</span>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step-node" id="step-node-nav">
+              <span class="step-num">2</span>
+              <span class="step-lbl">Navigation</span>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step-node" id="step-node-action">
+              <span class="step-num">3</span>
+              <span class="step-lbl">Action & Assert</span>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step-node" id="step-node-teardown">
+              <span class="step-num">4</span>
+              <span class="step-lbl">Verify & Artifact</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-xs text-slate-400 border-t border-slate-700/40 pt-2">
+            <span>Latest Action: <strong class="text-slate-200" id="canvas-latest-action">Session Standby</strong></span>
+            <span class="text-cyan-400 font-mono" id="canvas-active-worker-info">Worker: 1x Chromium</span>
+          </div>
+        </div>
+
+        <!-- Real-Time Mini Trace & Fast Diagnostic Card (Right 1 Column) -->
+        <div class="glass-card p-4 rounded-xl border border-slate-700/50 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold tracking-wider text-cyan-400 uppercase">FAST DIAGNOSTICS</span>
+              <span class="badge badge-health-online text-xs" id="canvas-health-indicator">Runner: Ready</span>
+            </div>
+            <div class="space-y-2 text-xs">
+              <div class="flex justify-between text-slate-400">
+                <span>Target Cluster:</span>
+                <span class="text-slate-200 font-medium" id="canvas-diag-env">SIT - STG 2</span>
+              </div>
+              <div class="flex justify-between text-slate-400">
+                <span>Network Protocol:</span>
+                <span class="text-slate-200 font-medium font-mono">HTTPS / WSS</span>
+              </div>
+              <div class="flex justify-between text-slate-400">
+                <span>A11y & VRT Audits:</span>
+                <span class="text-emerald-400 font-medium">Axe WCAG 2.1 Active</span>
+              </div>
+              <div class="flex justify-between text-slate-400">
+                <span>Self-Healing Engine:</span>
+                <span class="text-blue-400 font-medium">Multi-Tier Resolvers Ready</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="border-t border-slate-700/40 pt-2 mt-3 flex justify-between items-center text-xs">
+            <span class="text-slate-400">Artifacts Standard:</span>
+            <span class="text-amber-400 font-mono">TC_ID__Title.png</span>
+          </div>
+        </div>
+      </section>
+
       <!-- AI Root-Cause Analysis (RCA) Diagnostic Card (Appears on failure) -->
-      <div id="ai-rca-banner" class="ai-rca-card glass-card hidden">
+      <div id="ai-rca-banner" class="ai-rca-card glass-card hidden mb-4">
         <div class="ai-rca-header">
           <div class="ai-rca-title-grp">
             <span class="ai-rca-robot-icon">🤖</span>
@@ -592,25 +728,30 @@
         </div>
       </div>
 
-      <!-- Terminal Console Card -->
-      <div class="terminal-card glass-card">
+      <!-- Live Completed Test Stream Timeline Cards -->
+      <section class="glass-card p-4 rounded-xl border border-slate-700/50 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-sm">📋</span>
+            <h3 class="text-sm font-semibold text-slate-100">Live Test Completion Feed</h3>
+          </div>
+          <span class="badge badge-secondary text-xs" id="canvas-feed-count">0 Finished</span>
+        </div>
+        <div class="canvas-feed-list space-y-2 max-h-72 overflow-y-auto pr-1" id="canvas-completed-feed">
+          <div class="empty-state text-muted text-xs p-4 text-center">Test scenarios will stream into this feed as visual cards in real-time...</div>
+        </div>
+      </section>
+
+      <!-- Collapsible Raw Output Drawer (For Deep Developer Debugging) -->
+      <div class="terminal-card glass-card hidden" id="raw-logs-drawer">
         <div class="terminal-header">
           <div class="terminal-title">
             <span class="terminal-dot red"></span>
             <span class="terminal-dot yellow"></span>
             <span class="terminal-dot green"></span>
-            <span class="terminal-title-text">Live Execution Stream & Deep Diagnostics</span>
+            <span class="terminal-title-text">Underlying Shell Stream (Raw Diagnostics)</span>
           </div>
           <div class="terminal-actions">
-            <button id="terminal-trace-btn" class="btn btn-secondary btn-sm hidden" title="Inspect Deep Trace in Playwright Trace Viewer">
-              <span>🔍 Trace Viewer</span>
-            </button>
-            <button id="terminal-download-trace-btn" class="btn btn-secondary btn-sm hidden" title="Download Playwright Trace (.zip)">
-              <span>⬇️ Trace.zip</span>
-            </button>
-            <button id="terminal-allure-btn" class="btn btn-secondary btn-sm" title="View Allure Executive Report">
-              <span>📊 Allure Report</span>
-            </button>
             <label class="switch-container compact">
               <input type="checkbox" id="autoscroll-toggle" checked>
               <span class="switch-slider"></span>
@@ -620,11 +761,8 @@
             <button id="download-logs-btn" class="btn btn-secondary btn-sm">Download</button>
           </div>
         </div>
-        <pre class="terminal-body" id="terminal-body">
-<span class="log-system">[SYSTEM] IoT Hub Automation Hub Ready.</span>
-<span class="log-system">[SYSTEM] Allure Reporting Engine & Deep Time-Travel Tracing Active.</span>
-<span class="log-system">[SYSTEM] AI Root-Cause Diagnostic Analyzer Enabled.</span>
-<span class="log-info">[INFO] Select a test suite or scenario to begin execution.</span>
+        <pre class="terminal-body" id="terminal-body" style="max-height: 220px;">
+<span class="log-system">[SYSTEM] Live Execution Canvas Ready.</span>
         </pre>
       </div>
     </div>

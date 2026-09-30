@@ -615,7 +615,19 @@ function setupEventListeners() {
     });
   }
 
-  // Terminal Controls
+  // Terminal Controls & Raw Logs Drawer Toggle
+  const toggleLogsBtn = document.getElementById('canvas-toggle-logs-btn');
+  if (toggleLogsBtn) {
+    toggleLogsBtn.addEventListener('click', () => {
+      const drawer = document.getElementById('raw-logs-drawer');
+      if (drawer) {
+        const isHidden = drawer.classList.contains('hidden');
+        drawer.classList.toggle('hidden', !isHidden);
+        toggleLogsBtn.innerHTML = isHidden ? '<span>📜 Hide Logs</span>' : '<span>📜 Raw Logs</span>';
+      }
+    });
+  }
+
   elements.autoscrollToggle.addEventListener('change', (e) => {
     state.autoScrollLogs = e.target.checked;
   });
@@ -1874,6 +1886,7 @@ function handleRunStart(runData) {
   state.currentRun = runData;
   state.activeTest = null;
   state.completedTests = [];
+  state.runStartTime = Date.now();
 
   elements.liveProgressBanner.classList.remove('hidden');
   elements.progressTitle.textContent = `Executing: ${runData.suiteName}`;
@@ -1884,6 +1897,47 @@ function handleRunStart(runData) {
   elements.progressBarFill.style.width = '10%';
   elements.runAllBtn.disabled = true;
   elements.stopRunBtn.disabled = false;
+
+  // Live Execution Canvas HUD Updates
+  const canvasTitle = document.getElementById('canvas-active-suite-title');
+  const canvasSub = document.getElementById('canvas-active-subtitle');
+  const canvasEnv = document.getElementById('canvas-env-badge');
+  const canvasStatus = document.getElementById('canvas-status-badge');
+  const canvasOrb = document.getElementById('canvas-status-orb');
+  const canvasPass = document.getElementById('canvas-pass-count');
+  const canvasFail = document.getElementById('canvas-fail-count');
+  const canvasComp = document.getElementById('canvas-completed-count');
+  const canvasProg = document.getElementById('canvas-progress-bar');
+  const canvasActiveName = document.getElementById('canvas-active-test-name');
+  const canvasActiveFile = document.getElementById('canvas-active-test-file');
+  const canvasLatestAction = document.getElementById('canvas-latest-action');
+  const canvasWorker = document.getElementById('canvas-active-worker-info');
+
+  if (canvasTitle) canvasTitle.textContent = `Executing: ${runData.suiteName}`;
+  if (canvasSub) canvasSub.textContent = `Target: [${runData.envName || 'SIT'}] ${runData.baseUrl || ''} | Engine: ${runData.browser} (${runData.workers || 1}x Workers)`;
+  if (canvasEnv) canvasEnv.textContent = runData.envName || 'SIT';
+  if (canvasStatus) {
+    canvasStatus.textContent = 'RUNNING';
+    canvasStatus.className = 'badge badge-health-online text-xs';
+  }
+  if (canvasOrb) canvasOrb.innerHTML = '<span class="pulse-dot"></span>';
+  if (canvasPass) canvasPass.textContent = '0';
+  if (canvasFail) canvasFail.textContent = '0';
+  if (canvasComp) canvasComp.textContent = `0 / ${runData.stats?.total || 1}`;
+  if (canvasProg) canvasProg.style.width = '5%';
+  if (canvasActiveName) canvasActiveName.textContent = 'Initializing browser workers & pre-flight...';
+  if (canvasActiveFile) canvasActiveFile.textContent = 'Target Spec: ' + (runData.suiteId || 'tests');
+  if (canvasLatestAction) canvasLatestAction.textContent = 'Launching session...';
+  if (canvasWorker) canvasWorker.textContent = `Worker: ${runData.workers || 1}x ${runData.browser}`;
+
+  // Start Elapsed HUD Timer
+  if (window.canvasElapsedInterval) clearInterval(window.canvasElapsedInterval);
+  window.canvasElapsedInterval = setInterval(() => {
+    const elapsedEl = document.getElementById('canvas-elapsed-time');
+    if (elapsedEl && state.runStartTime) {
+      elapsedEl.textContent = `${((Date.now() - state.runStartTime) / 1000).toFixed(1)}s`;
+    }
+  }, 100);
 
   // Reset live execution modal fields
   if (elements.liveExecPassBadge) elements.liveExecPassBadge.textContent = '0 Passed';
@@ -1898,6 +1952,12 @@ function handleRunStart(runData) {
   if (elements.liveCompletedCount) elements.liveCompletedCount.textContent = '0 Completed';
   if (elements.liveExecProgressPct) elements.liveExecProgressPct.textContent = '10%';
 
+  // Reset Canvas Completed Feed
+  const canvasFeed = document.getElementById('canvas-completed-feed');
+  if (canvasFeed) {
+    canvasFeed.innerHTML = '<div class="empty-state text-muted text-xs p-4 text-center">Test scenarios will stream into this feed as visual cards in real-time...</div>';
+  }
+
   // Reset diagnostic card and trace buttons
   elements.aiRcaBanner.classList.add('hidden');
   elements.terminalTraceBtn.classList.add('hidden');
@@ -1908,18 +1968,39 @@ function handleActiveTestUpdate(testInfo) {
   state.activeTest = testInfo;
   liveActiveStartTime = testInfo.startTime || Date.now();
 
+  const formattedName = testInfo.id ? `[${testInfo.id}] ${testInfo.name}` : testInfo.name;
+
   if (elements.liveActiveName) {
-    elements.liveActiveName.textContent = testInfo.id ? `[${testInfo.id}] ${testInfo.name}` : testInfo.name;
+    elements.liveActiveName.textContent = formattedName;
   }
   if (elements.liveActiveMeta) {
     elements.liveActiveMeta.textContent = `Status: IN PROGRESS | Started at: ${new Date(liveActiveStartTime).toLocaleTimeString()}`;
   }
 
+  // Update Canvas Active Spotlight Card
+  const canvasActiveName = document.getElementById('canvas-active-test-name');
+  const canvasLatestAction = document.getElementById('canvas-latest-action');
+  if (canvasActiveName) canvasActiveName.textContent = formattedName;
+  if (canvasLatestAction) canvasLatestAction.textContent = `Executing step assertions on ${testInfo.id || 'UI'}...`;
+
+  // Animate Micro Steppers
+  const stepAuth = document.getElementById('step-node-auth');
+  const stepNav = document.getElementById('step-node-nav');
+  const stepAction = document.getElementById('step-node-action');
+  const stepTeardown = document.getElementById('step-node-teardown');
+
+  if (stepAuth) { stepAuth.className = 'step-node passed'; }
+  if (stepNav) { stepNav.className = 'step-node passed'; }
+  if (stepAction) { stepAction.className = 'step-node active'; }
+  if (stepTeardown) { stepTeardown.className = 'step-node'; }
+
   if (liveTimerInterval) clearInterval(liveTimerInterval);
   liveTimerInterval = setInterval(() => {
-    if (elements.liveActiveTimer && liveActiveStartTime) {
+    if (liveActiveStartTime) {
       const elapsedSec = ((Date.now() - liveActiveStartTime) / 1000).toFixed(1);
-      elements.liveActiveTimer.textContent = `Elapsed: ${elapsedSec}s`;
+      if (elements.liveActiveTimer) elements.liveActiveTimer.textContent = `Elapsed: ${elapsedSec}s`;
+      const canvasTimer = document.getElementById('canvas-active-test-timer');
+      if (canvasTimer) canvasTimer.textContent = `Timer: ${elapsedSec}s`;
     }
   }, 200);
 }
@@ -1942,12 +2023,65 @@ function handleCompletedTestUpdate(completedInfo) {
   if (elements.liveExecPassBadge) elements.liveExecPassBadge.textContent = `${passedCount} Passed`;
   if (elements.liveExecFailBadge) elements.liveExecFailBadge.textContent = `${failedCount} Failed`;
 
+  // Update Canvas HUD Counters
+  const canvasPass = document.getElementById('canvas-pass-count');
+  const canvasFail = document.getElementById('canvas-fail-count');
+  const canvasComp = document.getElementById('canvas-completed-count');
+  const canvasFeedCount = document.getElementById('canvas-feed-count');
+
+  if (canvasPass) canvasPass.textContent = passedCount;
+  if (canvasFail) canvasFail.textContent = failedCount;
+  if (canvasComp) canvasComp.textContent = `${totalCompleted} / ${expectedTotal}`;
+  if (canvasFeedCount) canvasFeedCount.textContent = `${totalCompleted} Finished`;
+
   // Update Progress Bar and Overall Progress text
   const pct = Math.min(100, Math.max(5, Math.round((totalCompleted / Math.max(expectedTotal, 1)) * 100)));
   if (elements.progressBarFill) elements.progressBarFill.style.width = `${pct}%`;
   if (elements.liveExecProgressPct) elements.liveExecProgressPct.textContent = `${pct}%`;
+  
+  const canvasProg = document.getElementById('canvas-progress-bar');
+  if (canvasProg) canvasProg.style.width = `${pct}%`;
 
   renderLiveCompletedTests();
+  renderCanvasVisualFeed();
+}
+
+function renderCanvasVisualFeed() {
+  const feed = document.getElementById('canvas-completed-feed');
+  if (!feed) return;
+
+  const list = state.completedTests || [];
+  if (list.length === 0) {
+    feed.innerHTML = '<div class="empty-state text-muted text-xs p-4 text-center">Test scenarios will stream into this feed as visual cards in real-time...</div>';
+    return;
+  }
+
+  feed.innerHTML = list.map(tc => {
+    const isPass = tc.status === 'passed';
+    const statusIcon = isPass ? '✅' : '❌';
+    const statusBadge = isPass 
+      ? '<span class="badge badge-pass text-xs">PASSED</span>' 
+      : '<span class="badge badge-fail text-xs">FAILED</span>';
+
+    return `
+      <div class="canvas-feed-item">
+        <div class="flex items-center gap-3">
+          <span class="text-base">${statusIcon}</span>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-xs font-bold text-blue-400">${tc.id || 'TC'}</span>
+              <span class="text-xs font-semibold text-slate-200">${tc.name || tc.title || 'Scenario Execution'}</span>
+            </div>
+            <div class="text-xs text-slate-400 font-mono mt-0.5">Duration: ${tc.duration ? (tc.duration / 1000).toFixed(1) + 's' : '0.5s'}</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          ${statusBadge}
+          ${tc.traceUrl ? `<a href="${tc.traceUrl}" target="_blank" class="btn btn-secondary btn-sm text-xs py-0.5">🔍 Trace</a>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 function renderLiveCompletedTests() {
@@ -2042,6 +2176,53 @@ function handleRunFinish(runData) {
   if (elements.progressBarFill) {
     elements.progressBarFill.style.width = '100%';
   }
+
+  if (window.canvasElapsedInterval) {
+    clearInterval(window.canvasElapsedInterval);
+    window.canvasElapsedInterval = null;
+  }
+
+  // Update Live Execution Canvas HUD for Completion
+  const canvasStatus = document.getElementById('canvas-status-badge');
+  const canvasOrb = document.getElementById('canvas-status-orb');
+  const canvasActiveName = document.getElementById('canvas-active-test-name');
+  const canvasLatestAction = document.getElementById('canvas-latest-action');
+  const canvasTraceBtn = document.getElementById('canvas-open-trace-btn');
+  const canvasAllureBtn = document.getElementById('canvas-open-allure-btn');
+
+  const isSuccess = runData.exitCode === 0;
+  if (canvasStatus) {
+    canvasStatus.textContent = isSuccess ? 'PASSED' : 'COMPLETED (FAILURES)';
+    canvasStatus.className = `badge ${isSuccess ? 'badge-pass' : 'badge-fail'} text-xs`;
+  }
+  if (canvasOrb) {
+    canvasOrb.innerHTML = isSuccess ? '✅' : '⚠️';
+  }
+  if (canvasActiveName) {
+    canvasActiveName.textContent = isSuccess ? 'All Selected Tests Passed Successfully' : 'Execution Completed with Failure Alerts';
+  }
+  if (canvasLatestAction) {
+    canvasLatestAction.textContent = 'Allure & Traces compiled.';
+  }
+  if (canvasTraceBtn) {
+    canvasTraceBtn.classList.remove('hidden');
+    canvasTraceBtn.onclick = () => openLatestTrace();
+  }
+  if (canvasAllureBtn) {
+    canvasAllureBtn.classList.remove('hidden');
+    canvasAllureBtn.onclick = () => switchTab('reports');
+  }
+
+  // Finalize Micro Stepper
+  const stepAuth = document.getElementById('step-node-auth');
+  const stepNav = document.getElementById('step-node-nav');
+  const stepAction = document.getElementById('step-node-action');
+  const stepTeardown = document.getElementById('step-node-teardown');
+
+  if (stepAuth) stepAuth.className = 'step-node passed';
+  if (stepNav) stepNav.className = 'step-node passed';
+  if (stepAction) stepAction.className = isSuccess ? 'step-node passed' : 'step-node failed';
+  if (stepTeardown) stepTeardown.className = isSuccess ? 'step-node passed' : 'step-node failed';
 
   elements.liveProgressBanner.classList.add('hidden');
   elements.runAllBtn.disabled = false;

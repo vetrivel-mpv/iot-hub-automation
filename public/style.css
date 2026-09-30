@@ -4554,6 +4554,182 @@ body.theme-light .op-group-badge {
   border-color: rgba(79, 70, 229, 0.25);
 }
 
+/* ==========================================================================
+   LIVE EXECUTION CANVAS MODERN COMPONENTS
+   ========================================================================== */
+.canvas-status-orb {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(14, 165, 233, 0.15);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.theme-light .canvas-status-orb {
+  background: rgba(2, 132, 199, 0.1);
+  border-color: rgba(2, 132, 199, 0.25);
+}
+
+.canvas-metric-box {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 6px 12px;
+  text-align: center;
+  min-width: 80px;
+}
+
+body.theme-light .canvas-metric-box {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.canvas-metric-lbl {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.canvas-metric-val {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.canvas-progress-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(30, 41, 59, 0.8);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+body.theme-light .canvas-progress-track {
+  background: #e2e8f0;
+}
+
+.canvas-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #06b6d4);
+  border-radius: 9999px;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Micro Stepper Progression Strip */
+.live-stepper-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+body.theme-light .live-stepper-strip {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.step-node {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.45;
+  transition: all 0.2s ease;
+}
+
+.step-node.active {
+  opacity: 1;
+}
+
+.step-node.passed {
+  opacity: 1;
+}
+
+.step-node.failed {
+  opacity: 1;
+}
+
+.step-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(148, 163, 184, 0.2);
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-node.active .step-num {
+  background: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.step-node.passed .step-num {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.step-node.failed .step-num {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.step-lbl {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.step-connector {
+  flex: 1;
+  height: 2px;
+  background: rgba(148, 163, 184, 0.2);
+  min-width: 12px;
+}
+
+body.theme-light .step-connector {
+  background: #cbd5e1;
+}
+
+/* Feed item card */
+.canvas-feed-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(30, 41, 59, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+body.theme-light .canvas-feed-item {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.canvas-feed-item:hover {
+  background: rgba(51, 65, 85, 0.6);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+body.theme-light .canvas-feed-item:hover {
+  background: #e2e8f0;
+}
+
 
 
 
