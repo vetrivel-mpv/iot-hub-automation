@@ -8,7 +8,7 @@ const state = {
   suites: [],
   scenarios: [],
   environments: [],
-  activeEnvironmentId: 'sit-stg2',
+  activeEnvironmentId: 'azure-fd',
   activeEnvironment: null,
   selectedBrowser: 'chromium',
   isHeaded: false,
