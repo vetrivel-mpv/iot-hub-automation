@@ -423,12 +423,62 @@ const SCENARIOS = [
       suiteId = 'ordering'; suiteName = 'Ordering & My Orders'; file = 'tests/ordering/ordering.spec.ts';
     }
 
+    // Map specific operation groups based on test case ID / module context
+    let operationGroup = 'General Operations';
+    let tags = [t.testType || 'Regression'];
+
+    if (t.id.startsWith('TC_AUTH_')) {
+      operationGroup = t.id.includes('001') || t.id.includes('002') ? 'Login & Credentials' : 'Security & Validation';
+      tags.push('@auth', '@security');
+    } else if (t.id.startsWith('TC_DASH_')) {
+      operationGroup = 'Metrics & KPI Telemetry';
+      tags.push('@dashboard', '@metrics');
+    } else if (t.id.startsWith('TC_SUB_ALL_')) {
+      operationGroup = 'Bulk Action Toolbar (All Context)';
+      tags.push('@bulk', '@toolbar', '@all-context');
+    } else if (t.id.startsWith('TC_SUB_ACC_')) {
+      operationGroup = 'Bulk Action Toolbar (Account Context)';
+      tags.push('@bulk', '@toolbar', '@account-context');
+    } else if (t.id.startsWith('TC_SIM_OP_')) {
+      operationGroup = 'Single SIM Lifecycle & Actions';
+      tags.push('@single-sim', '@lifecycle');
+    } else if (t.id.startsWith('TC_SUB_')) {
+      operationGroup = 'SIM Grid & Search Filters';
+      tags.push('@subscriptions', '@filters');
+    } else if (t.id.startsWith('TC_ACC_')) {
+      operationGroup = parseInt(t.id.replace('TC_ACC_', ''), 10) <= 4 ? 'Accounts Grid & Search' : '5-Step Stepper Wizard';
+      tags.push('@accounts', '@wizard');
+    } else if (t.id.startsWith('TC_INV_')) {
+      operationGroup = 'Invoicing & Adjustments';
+      tags.push('@invoice', '@billing');
+    } else if (t.id.startsWith('TC_RES_')) {
+      operationGroup = '5G Slices & APN Resources';
+      tags.push('@resources', '@network');
+    } else if (t.id.startsWith('TC_RAT_')) {
+      operationGroup = 'Rating Plans & Add-ons';
+      tags.push('@rating', '@pricing');
+    } else if (t.id.startsWith('TC_REP_')) {
+      operationGroup = 'Reports & Batch Executions';
+      tags.push('@reports', '@batch');
+    } else if (t.id.startsWith('TC_ADM_')) {
+      operationGroup = 'User & Role Administration';
+      tags.push('@admin', '@rbac');
+    } else if (t.id.startsWith('TC_SEC_')) {
+      operationGroup = 'Security & Audit Logs';
+      tags.push('@security', '@audit');
+    } else if (t.id.startsWith('TC_ORD_')) {
+      operationGroup = 'Ordering & Provisioning';
+      tags.push('@ordering');
+    }
+
     return {
       id: t.id,
       suiteId,
       suiteName,
       file,
       name: t.title,
+      operationGroup,
+      tags,
       tag: t.testType || 'Regression',
       priority: t.priority,
       description: t.objective || t.title,
@@ -1369,13 +1419,24 @@ app.post('/api/run', (req, res) => {
   let targetPaths = [];
   let runTitle = '';
   let expectedTotal = 0;
+  let grepPattern = grep || '';
 
-  if (scenarioId) {
+  const { scenarioIds = [] } = req.body;
+
+  if (scenarioIds && scenarioIds.length > 0) {
+    const matchedScenarios = SCENARIOS.filter(s => scenarioIds.includes(s.id));
+    targetPaths = [...new Set(matchedScenarios.map(s => s.file))];
+    runTitle = `Selected ${scenarioIds.length} Test Scenario${scenarioIds.length > 1 ? 's' : ''}`;
+    expectedTotal = scenarioIds.length;
+    // Build regex pattern matching any of the scenario IDs e.g. (TC_SUB_001|TC_SUB_002)
+    grepPattern = `(${scenarioIds.map(id => id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`;
+  } else if (scenarioId) {
     const sc = SCENARIOS.find(s => s.id === scenarioId);
     if (sc) {
       targetPaths.push(sc.file);
       runTitle = `${sc.id}: ${sc.name}`;
       expectedTotal = 1;
+      grepPattern = sc.id;
     }
   } else if (suiteIds && suiteIds.length > 0) {
     targetPaths = suiteIds.map(id => {
@@ -1439,10 +1500,8 @@ app.post('/api/run', (req, res) => {
   if (workers && parseInt(workers, 10) > 1) {
     args.push(`--workers=${parseInt(workers, 10)}`);
   }
-  if (scenarioId) {
-    args.push('-g', scenarioId);
-  } else if (grep) {
-    args.push('-g', grep);
+  if (grepPattern) {
+    args.push('-g', grepPattern);
   }
 
   const cmdStr = `npx ${args.join(' ')}`;

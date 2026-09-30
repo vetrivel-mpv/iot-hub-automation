@@ -439,15 +439,33 @@
         </div>
       </section>
 
-      <!-- Test Suites Grid -->
+      <!-- Test Suites Grid & Multi-Module Selection -->
       <section class="section-container">
-        <div class="section-header">
+        <div class="section-header flex-wrap gap-3">
           <div>
-            <h2 class="section-title">Automated Portal Modules</h2>
-            <p class="section-subtitle">Click "Run Suite" to trigger focused module tests against the selected environment</p>
+            <h2 class="section-title">Automated Portal Modules & Groups</h2>
+            <p class="section-subtitle">Select individual modules, filter by operation groups, or trigger selective batch execution</p>
           </div>
-          <span class="badge" id="suite-count-badge">13 Modules Ready</span>
+          <div class="flex items-center gap-2">
+            <span class="badge" id="suite-count-badge">13 Modules Ready</span>
+            <button id="select-all-modules-btn" class="btn btn-secondary btn-sm" title="Select / Deselect all modules">
+              <span>☑️ Select All</span>
+            </button>
+            <button id="run-selected-modules-btn" class="btn btn-primary btn-sm btn-glow hidden" title="Run selected modules in parallel">
+              <span>⚡ Run Selected (<span id="selected-modules-count">0</span>)</span>
+            </button>
+          </div>
         </div>
+
+        <!-- Operation Group Filter Pills -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-2 mb-3 text-xs" id="suite-group-pills">
+          <button class="filter-pill active" data-group="all">All Modules</button>
+          <button class="filter-pill" data-group="core">🔐 Core & Auth</button>
+          <button class="filter-pill" data-group="sims">📱 Subscriptions & SIMs</button>
+          <button class="filter-pill" data-group="billing">💳 Billing & Invoicing</button>
+          <button class="filter-pill" data-group="admin">⚙️ Admin & Security</button>
+        </div>
+
         <div class="suites-grid" id="suites-container">
           <!-- Populated dynamically via JS -->
         </div>
@@ -458,26 +476,60 @@
     <div id="tab-content-matrix" class="tab-content">
       <section class="matrix-header glass-card">
         <div class="matrix-title-section">
-          <h2>Detailed Scenario Matrix</h2>
-          <p>Filter, inspect, and run individual test scenarios with surgical granularity</p>
+          <h2>Detailed Scenario Matrix & Operation Groups</h2>
+          <p>Multi-select scenarios, filter by operation groups or tags, and execute custom test batches</p>
         </div>
-        <div class="matrix-filters">
-          <input type="text" id="scenario-search" class="search-input" placeholder="Search scenarios, tags, keywords...">
+        <div class="matrix-filters flex-wrap gap-2">
+          <input type="text" id="scenario-search" class="search-input" placeholder="Search scenarios, tags, keywords, operation group...">
           <select id="scenario-suite-filter" class="custom-select">
             <option value="all">All Suites</option>
           </select>
+          <select id="scenario-group-filter" class="custom-select">
+            <option value="all">All Operation Groups</option>
+          </select>
+          <select id="scenario-tag-filter" class="custom-select">
+            <option value="all">All Tags</option>
+            <option value="@smoke">⚡ @smoke</option>
+            <option value="@ui">🎨 @ui</option>
+            <option value="@filters">🔍 @filters</option>
+            <option value="@bulk">📦 @bulk</option>
+            <option value="@toolbar">🛠️ @toolbar</option>
+            <option value="@lifecycle">🔄 @lifecycle</option>
+            <option value="@single-sim">📱 @single-sim</option>
+            <option value="@wizard">🧙 @wizard</option>
+            <option value="@export">📊 @export</option>
+            <option value="@billing">💳 @billing</option>
+            <option value="@adjustments">⚖️ @adjustments</option>
+            <option value="@quality">🛡️ @quality</option>
+            <option value="@a11y">♿ @a11y</option>
+            <option value="@vrt">👁️ @vrt</option>
+          </select>
+          <button id="run-selected-scenarios-btn" class="btn btn-primary btn-sm btn-glow hidden" title="Run selected test scenarios">
+            <span>⚡ Run Selected (<span id="selected-scenarios-count">0</span>)</span>
+          </button>
         </div>
       </section>
+
+      <!-- Operation Group Quick Filter Bar -->
+      <div class="flex items-center gap-2 overflow-x-auto py-2 px-1 text-xs" id="scenario-group-quick-pills">
+        <button class="filter-pill active" data-opgroup="all">All Operations</button>
+        <button class="filter-pill" data-opgroup="Bulk Action Toolbar (All Context)">Bulk Action Toolbar (All)</button>
+        <button class="filter-pill" data-opgroup="Bulk Action Toolbar (Account Context)">Bulk Action Toolbar (Account)</button>
+        <button class="filter-pill" data-opgroup="Single SIM Lifecycle & Actions">Single SIM Lifecycle</button>
+        <button class="filter-pill" data-opgroup="5-Step Stepper Wizard">5-Step Account Wizard</button>
+        <button class="filter-pill" data-opgroup="Invoicing & Adjustments">Invoicing & Adjustments</button>
+      </div>
 
       <div class="scenarios-table-wrapper glass-card">
         <table class="scenarios-table">
           <thead>
             <tr>
-              <th width="90">ID</th>
-              <th width="150">Module</th>
+              <th width="40"><input type="checkbox" id="matrix-select-all-checkbox" title="Select / Deselect all visible test cases"></th>
+              <th width="100">ID</th>
+              <th width="160">Module & Group</th>
               <th>Scenario Name & Description</th>
-              <th width="110">Tag</th>
-              <th width="120">Action</th>
+              <th width="160">Tags & Badges</th>
+              <th width="130" style="text-align: right;">Action</th>
             </tr>
           </thead>
           <tbody id="scenarios-table-body">

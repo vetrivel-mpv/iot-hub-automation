@@ -525,9 +525,95 @@ function setupEventListeners() {
   elements.stopRunBtn.addEventListener('click', stopExecution);
   elements.bannerStopBtn.addEventListener('click', stopExecution);
 
-  // Scenario Matrix Filters
+  // Multi-Module Batch Execution
+  const runSelectedModulesBtn = document.getElementById('run-selected-modules-btn');
+  if (runSelectedModulesBtn) {
+    runSelectedModulesBtn.addEventListener('click', () => {
+      if (state.selectedSuiteIds.length === 0) return alert('Please select at least one module.');
+      appendLog(`[SYSTEM] Triggering batch execution for ${state.selectedSuiteIds.length} selected module(s)...`, 'system');
+      triggerRun({ suiteIds: state.selectedSuiteIds });
+    });
+  }
+
+  // Select All Modules Button
+  const selectAllModulesBtn = document.getElementById('select-all-modules-btn');
+  if (selectAllModulesBtn) {
+    selectAllModulesBtn.addEventListener('click', () => {
+      if (state.selectedSuiteIds.length === state.suites.length) {
+        state.selectedSuiteIds = [];
+        selectAllModulesBtn.innerHTML = '<span>☑️ Select All</span>';
+      } else {
+        state.selectedSuiteIds = state.suites.map(s => s.id);
+        selectAllModulesBtn.innerHTML = '<span>⏹ Deselect All</span>';
+      }
+      renderSuitesGrid();
+      updateSelectedModulesBar();
+    });
+  }
+
+  // Suite Group Filter Pills
+  const suiteGroupPills = document.querySelectorAll('#suite-group-pills .filter-pill');
+  suiteGroupPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      suiteGroupPills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      renderSuitesGrid(pill.dataset.group);
+    });
+  });
+
+  // Scenario Matrix Filters & Batch Runner
   elements.scenarioSearch.addEventListener('input', filterScenariosTable);
   elements.scenarioSuiteFilter.addEventListener('change', filterScenariosTable);
+
+  const groupFilterSelect = document.getElementById('scenario-group-filter');
+  if (groupFilterSelect) groupFilterSelect.addEventListener('change', filterScenariosTable);
+
+  const tagFilterSelect = document.getElementById('scenario-tag-filter');
+  if (tagFilterSelect) tagFilterSelect.addEventListener('change', filterScenariosTable);
+
+  // Scenario Group Quick Pills
+  const scenarioGroupPills = document.querySelectorAll('#scenario-group-quick-pills .filter-pill');
+  scenarioGroupPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      scenarioGroupPills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      const opgroup = pill.dataset.opgroup;
+      if (groupFilterSelect) {
+        groupFilterSelect.value = opgroup;
+      }
+      filterScenariosTable();
+    });
+  });
+
+  // Matrix Select All Checkbox
+  const matrixSelectAll = document.getElementById('matrix-select-all-checkbox');
+  if (matrixSelectAll) {
+    matrixSelectAll.addEventListener('change', (e) => {
+      const visibleCheckboxes = document.querySelectorAll('.scenario-checkbox');
+      const shouldCheck = e.target.checked;
+      visibleCheckboxes.forEach(cb => {
+        cb.checked = shouldCheck;
+        const scId = cb.value;
+        const idx = state.selectedScenarioIds.indexOf(scId);
+        if (shouldCheck && idx === -1) {
+          state.selectedScenarioIds.push(scId);
+        } else if (!shouldCheck && idx > -1) {
+          state.selectedScenarioIds.splice(idx, 1);
+        }
+      });
+      updateSelectedScenariosBar();
+    });
+  }
+
+  // Run Selected Scenarios Button
+  const runSelectedScenariosBtn = document.getElementById('run-selected-scenarios-btn');
+  if (runSelectedScenariosBtn) {
+    runSelectedScenariosBtn.addEventListener('click', () => {
+      if (state.selectedScenarioIds.length === 0) return alert('Please select at least one test scenario.');
+      appendLog(`[SYSTEM] Triggering surgical batch execution for ${state.selectedScenarioIds.length} test scenario(s)...`, 'system');
+      triggerRun({ scenarioIds: state.selectedScenarioIds });
+    });
+  }
 
   // Terminal Controls
   elements.autoscrollToggle.addEventListener('change', (e) => {
@@ -1178,11 +1264,30 @@ async function fetchSuites() {
   }
 }
 
-function renderSuitesGrid() {
-  elements.suitesContainer.innerHTML = state.suites.map(suite => {
+// Multi-Module Selection State
+state.selectedSuiteIds = [];
+
+function renderSuitesGrid(filterGroup = 'all') {
+  let suitesToRender = state.suites;
+  
+  if (filterGroup === 'core') {
+    suitesToRender = state.suites.filter(s => ['auth', 'dashboard', 'config'].includes(s.id));
+  } else if (filterGroup === 'sims') {
+    suitesToRender = state.suites.filter(s => ['subscriptions', 'resources'].includes(s.id));
+  } else if (filterGroup === 'billing') {
+    suitesToRender = state.suites.filter(s => ['rating', 'invoice_data', 'accounts', 'account_lifecycle'].includes(s.id));
+  } else if (filterGroup === 'admin') {
+    suitesToRender = state.suites.filter(s => ['administration', 'automation_rules', 'security', 'reports', 'ordering'].includes(s.id));
+  }
+
+  elements.suitesContainer.innerHTML = suitesToRender.map(suite => {
+    const isSelected = (state.selectedSuiteIds || []).includes(suite.id);
     return `
-      <div class="suite-card glass-card" onclick="window.openSuiteDetailsModal('${suite.id}')" title="Click to view all ${suite.testCount} test cases in this suite">
+      <div class="suite-card glass-card ${isSelected ? 'is-selected' : ''}" id="suite-card-${suite.id}" onclick="window.toggleSuiteSelection('${suite.id}', event)" title="Click card to select / multi-select this module. Click 'View Tests' to inspect.">
         <div class="suite-header">
+          <div class="suite-checkbox-wrapper" onclick="event.stopPropagation();">
+            <input type="checkbox" class="suite-checkbox" id="suite-chk-${suite.id}" ${isSelected ? 'checked' : ''} onchange="window.toggleSuiteSelection('${suite.id}', event)">
+          </div>
           <div class="suite-icon">${suite.icon || '📦'}</div>
           <div class="suite-info">
             <h3 class="suite-title">
@@ -1211,6 +1316,38 @@ function renderSuitesGrid() {
   elements.kpiModules.textContent = `${state.suites.length} Suites`;
   elements.suiteCountBadge.textContent = `${state.suites.length} Modules Ready`;
 }
+
+window.toggleSuiteSelection = function(suiteId, event) {
+  if (suiteId === 'all') return;
+  const idx = state.selectedSuiteIds.indexOf(suiteId);
+  if (idx > -1) {
+    state.selectedSuiteIds.splice(idx, 1);
+  } else {
+    state.selectedSuiteIds.push(suiteId);
+  }
+
+  const card = document.getElementById(`suite-card-${suiteId}`);
+  const chk = document.getElementById(`suite-chk-${suiteId}`);
+  const isSel = state.selectedSuiteIds.includes(suiteId);
+
+  if (card) card.classList.toggle('is-selected', isSel);
+  if (chk) chk.checked = isSel;
+
+  updateSelectedModulesBar();
+};
+
+function updateSelectedModulesBar() {
+  const btn = document.getElementById('run-selected-modules-btn');
+  const countEl = document.getElementById('selected-modules-count');
+  const count = state.selectedSuiteIds.length;
+
+  if (countEl) countEl.textContent = count;
+  if (btn) {
+    if (count > 0) btn.classList.remove('hidden');
+    else btn.classList.add('hidden');
+  }
+}
+
 
 // -------------------------------------------------------------
 // SUITE DETAILS & TEST CASES VIEWER MODAL
@@ -1412,17 +1549,31 @@ function closeConfigModal() {
   pendingConfigRunPayload = null;
 }
 
+// Multi-Scenario Selection State
+state.selectedScenarioIds = [];
+
 async function fetchScenarios() {
   try {
     const res = await fetch('/api/scenarios');
     const data = await res.json();
     state.scenarios = data.scenarios || [];
+    populateOperationGroupFilters();
     renderScenariosTable(state.scenarios);
     elements.kpiScenarios.textContent = `${state.scenarios.length} Tests`;
     elements.tabScenariosBadge.textContent = state.scenarios.length;
   } catch (err) {
     console.error('Failed to fetch scenarios:', err);
   }
+}
+
+function populateOperationGroupFilters() {
+  const groupFilter = document.getElementById('scenario-group-filter');
+  if (!groupFilter) return;
+
+  const groups = [...new Set(state.scenarios.map(s => s.operationGroup).filter(Boolean))];
+  groupFilter.innerHTML = `<option value="all">All Operation Groups (${groups.length})</option>` + groups.map(g => `
+    <option value="${g}">${g}</option>
+  `).join('');
 }
 
 function populateSuiteFilters() {
@@ -1433,45 +1584,90 @@ function populateSuiteFilters() {
 
 function renderScenariosTable(scenariosList) {
   if (scenariosList.length === 0) {
-    elements.scenariosTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b; padding: 24px;">No matching scenarios found.</td></tr>`;
+    elements.scenariosTableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #64748b; padding: 24px;">No matching scenarios found for the selected filters.</td></tr>`;
     return;
   }
 
-  elements.scenariosTableBody.innerHTML = scenariosList.map(sc => `
-    <tr>
-      <td><span class="font-mono" style="font-weight: 700; color: #60a5fa;">${sc.id}</span></td>
-      <td><span style="font-weight: 600;">${sc.suiteName}</span></td>
-      <td>
-        <div style="font-weight: 600; color: var(--text-main);">${sc.name}</div>
-        <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">${sc.description}</div>
-      </td>
-      <td><span class="tag-badge">${sc.tag || 'Test'}</span></td>
-      <td>
-        <div style="display: flex; gap: 6px; justify-content: flex-end;">
-          <button class="btn btn-secondary btn-sm" onclick="window.openConfigModalForScenario('${sc.id}')" title="Check runtime configuration for this test">
-            <span>⚙️ Config</span>
-          </button>
-          <button class="btn btn-primary btn-sm" onclick="window.triggerScenarioRun('${sc.id}')" title="Run this scenario">
-            <span>▶ Run</span>
-          </button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
+  elements.scenariosTableBody.innerHTML = scenariosList.map(sc => {
+    const isChecked = state.selectedScenarioIds.includes(sc.id);
+    const tagsList = sc.tags || [sc.tag || 'Test'];
+
+    return `
+      <tr class="${isChecked ? 'bg-blue-500/10' : ''}">
+        <td>
+          <input type="checkbox" class="scenario-checkbox" value="${sc.id}" ${isChecked ? 'checked' : ''} onchange="window.toggleScenarioSelection('${sc.id}', event)">
+        </td>
+        <td><span class="font-mono" style="font-weight: 700; color: #60a5fa;">${sc.id}</span></td>
+        <td>
+          <div style="font-weight: 600;">${sc.suiteName}</div>
+          ${sc.operationGroup ? `<span class="op-group-badge">${sc.operationGroup}</span>` : ''}
+        </td>
+        <td>
+          <div style="font-weight: 600; color: var(--text-main);">${sc.name}</div>
+          <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">${sc.description}</div>
+        </td>
+        <td>
+          <div class="flex flex-wrap gap-1">
+            ${tagsList.map(t => `<span class="tag-badge">${t}</span>`).join('')}
+          </div>
+        </td>
+        <td>
+          <div style="display: flex; gap: 6px; justify-content: flex-end;">
+            <button class="btn btn-secondary btn-sm" onclick="window.openConfigModalForScenario('${sc.id}')" title="Check runtime configuration for this test">
+              <span>⚙️ Config</span>
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="window.triggerScenarioRun('${sc.id}')" title="Run this scenario">
+              <span>▶ Run</span>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  updateSelectedScenariosBar();
+}
+
+window.toggleScenarioSelection = function(scenarioId, event) {
+  const idx = state.selectedScenarioIds.indexOf(scenarioId);
+  if (idx > -1) {
+    state.selectedScenarioIds.splice(idx, 1);
+  } else {
+    state.selectedScenarioIds.push(scenarioId);
+  }
+  updateSelectedScenariosBar();
+};
+
+function updateSelectedScenariosBar() {
+  const btn = document.getElementById('run-selected-scenarios-btn');
+  const countEl = document.getElementById('selected-scenarios-count');
+  const count = state.selectedScenarioIds.length;
+
+  if (countEl) countEl.textContent = count;
+  if (btn) {
+    if (count > 0) btn.classList.remove('hidden');
+    else btn.classList.add('hidden');
+  }
 }
 
 function filterScenariosTable() {
   const query = elements.scenarioSearch.value.toLowerCase().trim();
   const suiteId = elements.scenarioSuiteFilter.value;
+  const groupFilter = document.getElementById('scenario-group-filter')?.value || 'all';
+  const tagFilter = document.getElementById('scenario-tag-filter')?.value || 'all';
 
   const filtered = state.scenarios.filter(sc => {
     const matchesSuite = suiteId === 'all' || sc.suiteId === suiteId;
+    const matchesGroup = groupFilter === 'all' || sc.operationGroup === groupFilter;
+    const matchesTag = tagFilter === 'all' || (sc.tags && sc.tags.includes(tagFilter)) || (sc.tag && sc.tag === tagFilter);
     const matchesQuery = !query || 
       sc.id.toLowerCase().includes(query) || 
       sc.name.toLowerCase().includes(query) || 
       sc.description.toLowerCase().includes(query) ||
+      (sc.operationGroup && sc.operationGroup.toLowerCase().includes(query)) ||
+      (sc.tags && sc.tags.some(t => t.toLowerCase().includes(query))) ||
       (sc.tag && sc.tag.toLowerCase().includes(query));
-    return matchesSuite && matchesQuery;
+    return matchesSuite && matchesGroup && matchesTag && matchesQuery;
   });
 
   renderScenariosTable(filtered);
