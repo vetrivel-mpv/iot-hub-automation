@@ -1,0 +1,62 @@
+{
+  "name": "wdh-portal-automation",
+  "version": "1.0.0",
+  "description": "End-to-End Test Automation Framework for IoT Hub (WDH) Portal using Playwright and TypeScript",
+  "main": "index.js",
+  "scripts": {
+    "app": "node server.js",
+    "start": "node server.js",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:auth": "playwright test tests/auth",
+    "test:dashboard": "playwright test tests/dashboard",
+    "test:subscriptions": "playwright test tests/subscriptions",
+    "test:accounts": "playwright test tests/accounts",
+    "test:resources": "playwright test tests/resources",
+    "test:rating": "playwright test tests/rating",
+    "test:reports": "playwright test tests/reports",
+    "test:admin": "playwright test tests/administration",
+    "test:rules": "playwright test tests/automation_rules",
+    "test:invoice": "playwright test tests/invoice_data",
+    "test:security": "playwright test tests/security",
+    "test:shard:1": "playwright test --shard=1/3",
+    "test:shard:2": "playwright test --shard=2/3",
+    "test:shard:3": "playwright test --shard=3/3",
+    "test:report": "playwright show-report",
+    "generate:excel": "node scripts/generate_excel.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint 'src/**/*.{ts,js}' 'tests/**/*.{ts,js}'"
+  },
+  "keywords": [
+    "playwright",
+    "typescript",
+    "e2e-testing",
+    "pom",
+    "wdh",
+    "nokia-wing"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@faker-js/faker": "^10.6.0",
+    "@playwright/test": "^1.50.0",
+    "@types/node": "^22.10.0",
+    "@typescript-eslint/eslint-plugin": "^8.71.0",
+    "@typescript-eslint/parser": "^8.71.0",
+    "allure-commandline": "^2.43.0",
+    "allure-playwright": "^3.12.0",
+    "dotenv": "^16.4.7",
+    "eslint": "^10.11.0",
+    "eslint-plugin-playwright": "^2.12.0",
+    "exceljs": "^4.4.0",
+    "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "nodemailer": "^10.0.13"
+  }
+}

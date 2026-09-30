@@ -1,0 +1,43 @@
+{
+  "activeEnvironmentId": "azure-fd",
+  "environments": [
+    {
+      "id": "sit-stg2",
+      "name": "SIT - STG 2 (Default)",
+      "category": "SIT",
+      "baseUrl": "https://wdh-sitstg2.nokiawing.com",
+      "description": "IoT Hub System Integration & Staging Environment 2",
+      "auth": {
+        "username": "vetrivel_m",
+        "password": "DH@328bEfrz2@pG"
+      },
+      "isDefault": true,
+      "isProtected": false,
+      "timeouts": {
+        "short": 5000,
+        "medium": 15000,
+        "long": 30000,
+        "pageLoad": 45000
+      }
+    },
+    {
+      "id": "azure-fd",
+      "name": "Azure FrontDoor (CMPaaS)",
+      "category": "DEV",
+      "baseUrl": "https://wdh-ekbbe2e2bbe4addc.a02.azurefd.net",
+      "description": "IoT Hub on Azure FrontDoor (CMPaaS)",
+      "auth": {
+        "username": "cmpaas-csp-user",
+        "password": "hMIscf751jLXncx"
+      },
+      "isDefault": false,
+      "isProtected": false,
+      "timeouts": {
+        "short": 5000,
+        "medium": 15000,
+        "long": 30000,
+        "pageLoad": 45000
+      }
+    }
+  ]
+}

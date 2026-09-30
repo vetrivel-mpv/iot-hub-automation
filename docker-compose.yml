@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  iot-hub-automation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: iot-hub-automation:latest
+    container_name: iot-hub-automation-portal
+    ports:
+      - "3030:3030"
+    environment:
+      - PORT=3030
+      - NODE_ENV=production
+      - CI=true
+      - HEADLESS=true
+    volumes:
+      # Mount reports & execution history so test runs and artifacts persist across container restarts
+      - ./reports:/app/reports
+      - ./allure-results:/app/allure-results
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3030/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
