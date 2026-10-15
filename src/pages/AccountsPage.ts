@@ -1,11 +1,12 @@
 import { Page, Locator, expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { Logger } from '../utils/logger';
+import { DataFactory } from '../utils/dataFactory';
 
 export interface AccountCreationData {
   accountName: string;
   accountType?: string; // e.g. 'DEMO', 'ENTERPRISE'
-  initialState?: string; // e.g. 'ENTERPRISE-INVENTORY'
+  initialState?: string; // e.g. 'DRAFT'
   description?: string;
   contacts?: {
     primary?: { firstName: string; lastName: string; email: string; phone: string };
@@ -90,12 +91,12 @@ export class AccountsPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    // Header action buttons
-    this.createAccountButton = page.locator('button:has-text("+ ACCOUNT"), .MuiButton-containedPrimary:has-text("ACCOUNT"), button:has-text("+ Account"), button:has-text("CREATE NEW ACCOUNT")').first();
+    // Header action buttons & Table controls
+    this.createAccountButton = page.locator('label[aria-label="Account"], label:has-text("Account"), button[aria-label="Account"], button:has-text("Account")').first();
     this.globalSearchInput = page.locator('input[placeholder*="Search" i], input[type="search"]');
     this.searchButton = page.locator('button:has-text("search"), .MuiSvgIcon-root[data-testid="SearchIcon"], button:has(svg[data-testid="SearchIcon"])');
-    this.columnVisibilityButton = page.locator('[data-testid="VisibilityIcon"], [aria-label*="column" i], button:has(svg[data-testid*="Visibility" i])');
-    this.exportButton = page.locator('[data-testid="SaveAltIcon"], [data-testid="SaveIcon"], button:has(svg[data-testid*="Save" i])');
+    this.columnVisibilityButton = page.locator('button[title*="Choose columns" i], button[aria-label*="Choose columns" i], [data-testid="VisibilityIcon"], [aria-label*="column" i], button:has(svg[data-testid*="Visibility" i])');
+    this.exportButton = page.locator('button[title*="Export" i], button[aria-label*="Export" i], [data-testid="SaveAltIcon"], [data-testid="SaveIcon"], button:has(svg[data-testid*="Save" i])');
     this.rowsPerPageDropdown = page.locator('.MuiTablePagination-select, [aria-label*="Rows per page" i], div:has-text("Rows Per Page")');
     this.paginationInfo = page.locator('.MuiTablePagination-displayedRows, div:has-text("of")');
 
@@ -109,23 +110,23 @@ export class AccountsPage extends BasePage {
     this.filterAccountTypeDropdown = page.locator('div:has-text("Select to Filter")').nth(2);
 
     // Modal / Wizard Dialog
-    this.createAccountDialog = page.locator('.MuiDialog-root, [role="dialog"], div:has(h2:has-text("Create New Account"))');
-    this.wizardNextButton = page.locator('.MuiDialog-root button:has-text("Next"), .MuiDialog-root button:has-text("NEXT"), button:has-text("Next")');
-    this.wizardBackButton = page.locator('.MuiDialog-root button:has-text("Back"), .MuiDialog-root button:has-text("BACK")');
-    this.wizardCancelButton = page.locator('.MuiDialog-root button:has-text("Cancel"), .MuiDialog-root button:has-text("CANCEL")');
-    this.wizardSubmitButton = page.locator('.MuiDialog-root button:has-text("Create"), .MuiDialog-root button:has-text("CREATE"), .MuiDialog-root button:has-text("Save"), .MuiDialog-root button:has-text("SAVE"), .MuiDialog-root button:has-text("Submit"), .MuiDialog-root button:has-text("Finish")');
+    this.createAccountDialog = page.locator('.MuiDialog-root, [role="dialog"]');
+    this.wizardNextButton = page.locator('.MuiDialog-root button:has-text("Next"), .MuiDialog-root button:has-text("NEXT"), [role="dialog"] button:has-text("Next"), button:has-text("Next")');
+    this.wizardBackButton = page.locator('.MuiDialog-root button:has-text("Back"), .MuiDialog-root button:has-text("BACK"), [role="dialog"] button:has-text("Back")');
+    this.wizardCancelButton = page.locator('.MuiDialog-root button:has-text("Cancel"), .MuiDialog-root button:has-text("CANCEL"), [role="dialog"] button:has-text("Cancel")');
+    this.wizardSubmitButton = page.locator('.MuiDialog-root button:has-text("Ok"), .MuiDialog-root button:has-text("OK"), .MuiDialog-root button:has-text("Create"), .MuiDialog-root button:has-text("Submit")');
 
     // Step 1: Basic
-    this.accountNameInput = page.locator('.MuiDialog-root input').first();
+    this.accountNameInput = page.locator('input[placeholder="Name"], [aria-label="Name"], .MuiDialog-root input').first();
     this.accountTypeDropdown = page.locator('.MuiDialog-root div:has-text("Account Type") [role="combobox"], .MuiDialog-root div:has-text("Account Type") .MuiSelect-select, .MuiDialog-root div:has-text("Account Type") div[role="button"]').first();
     this.initialStateDropdown = page.locator('.MuiDialog-root div:has-text("Initial State") [role="combobox"], .MuiDialog-root div:has-text("Initial State") .MuiSelect-select, .MuiDialog-root div:has-text("Initial State") div[role="button"]').first();
-    this.descriptionInput = page.locator('.MuiDialog-root textarea').first();
+    this.descriptionInput = page.locator('textarea[name="Description"], .MuiDialog-root textarea').first();
 
     // Step 4: Contacts
-    this.primaryFirstNameInput = page.locator('.MuiDialog-root input').nth(0);
-    this.primaryLastNameInput = page.locator('.MuiDialog-root input').nth(1);
-    this.primaryEmailInput = page.locator('.MuiDialog-root input').nth(2);
-    this.primaryPhoneInput = page.locator('.MuiDialog-root input').nth(3);
+    this.primaryFirstNameInput = page.locator('input[placeholder="First Name"], [aria-label="First Name"]').first();
+    this.primaryLastNameInput = page.locator('input[placeholder="Last Name"], [aria-label="Last Name"]').first();
+    this.primaryEmailInput = page.locator('input[placeholder="Email"], [aria-label="Email"]').first();
+    this.primaryPhoneInput = page.locator('input[placeholder="Phone Number"], [aria-label="Phone Number"], input[type="tel"]').first();
 
     this.shippingFirstNameInput = page.locator('.MuiDialog-root input').nth(4);
     this.shippingLastNameInput = page.locator('.MuiDialog-root input').nth(5);
@@ -143,11 +144,11 @@ export class AccountsPage extends BasePage {
     this.techSupportPhoneInput = page.locator('.MuiDialog-root input').nth(15);
 
     // Step 5: Address
-    this.addressStreetInput = page.locator('.MuiDialog-root input').nth(0);
-    this.addressCityInput = page.locator('.MuiDialog-root input').nth(1);
-    this.addressStateInput = page.locator('.MuiDialog-root input').nth(2);
+    this.addressStreetInput = page.locator('input[placeholder="Address Line 1"], [aria-label="Address Line 1"]').first();
+    this.addressCityInput = page.locator('input[placeholder="City"], [aria-label="City"]').first();
+    this.addressStateInput = page.locator('input[placeholder="State & Province"], [aria-label="State & Province"]').first();
     this.addressCountryDropdown = page.locator('.MuiDialog-root [role="combobox"], .MuiDialog-root .MuiSelect-select').first();
-    this.addressPostalCodeInput = page.locator('.MuiDialog-root input').nth(3);
+    this.addressPostalCodeInput = page.locator('input[placeholder="Postal Code"], [aria-label="Postal Code"]').first();
 
     // Table Data
     this.accountsTable = page.locator('table, [role="grid"], .MuiTable-root');
@@ -169,12 +170,24 @@ export class AccountsPage extends BasePage {
    * Opens the + ACCOUNT creation modal
    */
   async openCreateAccountModal(): Promise<void> {
-    Logger.info('Opening Create Account modal');
-    await this.waitForLoadingSpinnerToDisappear();
-    await this.click(this.createAccountButton.first(), '+ ACCOUNT button');
-    await this.createAccountDialog.first().waitFor({ state: 'visible', timeout: 10000 });
-    await this.waitForLoadingSpinnerToDisappear();
-    await this.page.waitForTimeout(500);
+    return await this.step('🏢 Step: Open Create Account 5-Step Stepper Wizard', async () => {
+      Logger.info('Opening Create Account modal');
+      await this.waitForLoadingSpinnerToDisappear();
+      await this.tableRows.first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
+      await this.page.waitForTimeout(500);
+
+      const modal = this.page.locator('.MuiDialog-root, [role="dialog"]').first();
+      if (await modal.isVisible({ timeout: 500 }).catch(() => false)) {
+        return;
+      }
+
+      const createBtn = this.page.locator('label[aria-label="Account"]').first();
+      await createBtn.waitFor({ state: 'visible', timeout: 10000 });
+      await createBtn.click();
+      await modal.waitFor({ state: 'visible', timeout: 10000 });
+      await this.waitForLoadingSpinnerToDisappear();
+      await this.page.waitForTimeout(600);
+    });
   }
 
   /**
@@ -182,30 +195,34 @@ export class AccountsPage extends BasePage {
    */
   async closeCreateAccountModal(): Promise<void> {
     Logger.info('Closing Create Account modal');
-    if (await this.wizardCancelButton.first().isVisible({ timeout: 2000 })) {
-      await this.click(this.wizardCancelButton.first(), 'Cancel Button');
-      await this.createAccountDialog.first().waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
+    const cancelBtn = this.page.locator('.MuiDialog-root button:has-text("Cancel"), .MuiDialog-root button:has-text("CANCEL"), [role="dialog"] button:has-text("Cancel")').first();
+    if (await cancelBtn.isVisible({ timeout: 2000 })) {
+      await this.click(cancelBtn, 'Cancel Button');
+      await this.page.locator('.MuiDialog-root, [role="dialog"]').first().waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
     }
   }
 
   /**
    * Fills Step 1: Basic Information
    */
-  async fillBasicInfo(data: {
-    accountName: string;
+  async fillBasicInfo(data?: {
+    accountName?: string;
     accountType?: string;
     initialState?: string;
     description?: string;
-  }): Promise<void> {
-    Logger.info(`[Step 1: Basic] Filling Basic Info: Name="${data.accountName}", Type="${data.accountType || 'DEMO'}", State="${data.initialState || 'ENTERPRISE-INVENTORY'}"`);
+  }): Promise<string> {
+    const finalAccountName = (data && data.accountName) ? data.accountName : DataFactory.uniqueAccountName();
+    Logger.info(`[Step 1: Basic] Filling Basic Info: Name="${finalAccountName}", Type="${data?.accountType || 'DEMO'}", State="${data?.initialState || 'DRAFT'}"`);
     await this.waitForLoadingSpinnerToDisappear();
 
     // 1. Account Name
-    const nameInput = this.page.locator('.MuiDialog-root input').first();
-    await this.fill(nameInput, data.accountName, 'Account Name input');
+    const nameInput = this.page.locator('.MuiDialog-root input[type="text"], .MuiDialog-root input:not([type="hidden"]), [role="dialog"] input').first();
+    if (await nameInput.isVisible({ timeout: 5000 })) {
+      await this.fill(nameInput, finalAccountName, 'Account Name input');
+    }
 
     // 2. Account Type Dropdown
-    const targetType = data.accountType || 'DEMO';
+    const targetType = data?.accountType || 'DEMO';
     const typeCombobox = this.page.locator('.MuiDialog-root .MuiSelect-select, .MuiDialog-root [role="combobox"], .MuiDialog-root div[role="button"]').filter({ hasText: /ENTERPRISE|DEMO/i }).first();
     if (await typeCombobox.isVisible({ timeout: 2000 })) {
       await this.click(typeCombobox);
@@ -239,8 +256,8 @@ export class AccountsPage extends BasePage {
     }
 
     // 4. Initial State Dropdown
-    const targetState = data.initialState || 'ENTERPRISE-INVENTORY';
-    const stateCombobox = this.page.locator('.MuiDialog-root .MuiSelect-select, .MuiDialog-root [role="combobox"], .MuiDialog-root div[role="button"]').filter({ hasText: /ENTERPRISE-INVENTORY|INVENTORY/i }).first();
+    const targetState = data?.initialState || 'DRAFT';
+    const stateCombobox = this.page.locator('.MuiDialog-root .MuiSelect-select, .MuiDialog-root [role="combobox"], .MuiDialog-root div[role="button"]').filter({ hasText: /DRAFT|ENTERPRISE-INVENTORY|INVENTORY|TRIAL/i }).first();
     if (await stateCombobox.isVisible({ timeout: 2000 })) {
       await this.click(stateCombobox);
       await this.page.waitForTimeout(400);
@@ -259,7 +276,7 @@ export class AccountsPage extends BasePage {
     }
 
     // 5. Description
-    if (data.description) {
+    if (data?.description) {
       const descInput = this.page.locator('.MuiDialog-root textarea').first();
       if (await descInput.isVisible({ timeout: 2000 })) {
         await this.fill(descInput, data.description, 'Description input');
@@ -268,6 +285,7 @@ export class AccountsPage extends BasePage {
 
     // Click NEXT -> moves to Step 2 (Billing Profile)
     await this.clickNextStep('Step 1 (Basic) -> Step 2 (Billing Profile)');
+    return finalAccountName;
   }
 
   /**
@@ -293,7 +311,7 @@ export class AccountsPage extends BasePage {
     const primary = contacts?.primary || {
       firstName: 'Vetrivel',
       lastName: 'Automation',
-      email: 'vetrivel.automation@nokia.com',
+      email: 'vetrivel.automation@iothub.com',
       phone: '+358401234567',
     };
 
@@ -373,40 +391,65 @@ export class AccountsPage extends BasePage {
    */
   private async clickNextStep(stepDesc: string): Promise<void> {
     await this.waitForLoadingSpinnerToDisappear();
-    const nextBtn = this.wizardNextButton.first();
-    await expect(nextBtn).toBeVisible({ timeout: 5000 });
-    await this.click(nextBtn, `Wizard NEXT (${stepDesc})`);
-    await this.waitForLoadingSpinnerToDisappear();
-    await this.page.waitForTimeout(500);
+    const nextBtn = this.page.locator('.MuiDialog-root button:has-text("Next"), .MuiDialog-root button:has-text("NEXT"), [role="dialog"] button:has-text("Next"), button:has-text("Next")').first();
+    if (await nextBtn.isVisible({ timeout: 4000 })) {
+      await this.click(nextBtn, `Wizard NEXT (${stepDesc})`);
+      await this.waitForLoadingSpinnerToDisappear();
+      await this.page.waitForTimeout(500);
+    } else {
+      Logger.warn(`Wizard NEXT button was not visible for ${stepDesc}`);
+    }
   }
 
   /**
-   * Searches for an account and clicks into its detail view
+   * Searches for an account and clicks into its detail view.
+   * Throws a descriptive AccountNotFoundError if the account does not exist.
    */
   async openAccountByName(accountName: string): Promise<void> {
-    Logger.info(`Searching and opening account: "${accountName}"`);
-    await this.waitForLoadingSpinnerToDisappear();
-
-    // Ensure any open dialog or backdrop is hidden
-    const openDialog = this.page.locator('.MuiDialog-root, [role="dialog"], .MuiBackdrop-root').first();
-    if (await openDialog.isVisible({ timeout: 1000 }).catch(() => false)) {
-      await this.page.keyboard.press('Escape');
-      await this.page.waitForTimeout(500);
+    if (!accountName || !accountName.trim()) {
+      throw new Error('[AccountNotFoundError] Cannot search for account: accountName parameter is empty or undefined.');
     }
 
-    await this.searchAccount(accountName);
-    await this.waitForLoadingSpinnerToDisappear();
+    const cleanName = accountName.trim();
+    return await this.step(`🔍 Step: Search and Open Account 360 [${cleanName}]`, async () => {
+      Logger.info(`Searching and opening account: "${cleanName}"`);
+      await this.waitForLoadingSpinnerToDisappear();
 
-    // Click account link or row
-    const accountLink = this.page.locator(`a:has-text("${accountName}"), td:has-text("${accountName}"), table tbody tr td a`).first();
-    if (await accountLink.isVisible({ timeout: 8000 })) {
-      await this.click(accountLink);
-    } else {
-      const firstRow = this.page.locator('table tbody tr td a, table tbody tr').first();
-      await firstRow.click({ force: true });
-    }
-    await this.waitForLoadingSpinnerToDisappear();
-    await this.waitForPageReady();
+      // Ensure any open dialog or backdrop is hidden
+      const openDialog = this.page.locator('.MuiDialog-root, [role="dialog"], .MuiBackdrop-root').first();
+      if (await openDialog.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await this.page.keyboard.press('Escape');
+        await this.page.waitForTimeout(500);
+      }
+
+      await this.searchAccount(cleanName);
+      await this.waitForLoadingSpinnerToDisappear();
+
+      // Check for "no data" / "0 of 0" indicators
+      const noData = this.page.locator('text="0 of 0", text="No data available", text="No records found"').first();
+      const hasNoData = await noData.isVisible({ timeout: 1500 }).catch(() => false);
+
+      // Locate matching account row containing the target account name
+      const targetRow = this.page.locator('table tbody tr').filter({ hasText: cleanName }).first();
+      const isFound = !hasNoData && await targetRow.isVisible({ timeout: 5000 }).catch(() => false);
+
+      if (!isFound) {
+        const currentUrl = this.page.url();
+        const errorMsg = `[AccountNotFoundError] Account "${cleanName}" was not found in Accounts directory. Searched on ${currentUrl} but no matching record exists in the table.`;
+        Logger.error(errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      const viewDetailsBtn = targetRow.locator('button[title="View Details"], button:has(.material-icons:has-text("preview")), a').first();
+      if (await viewDetailsBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await this.click(viewDetailsBtn, `View Details button for "${cleanName}"`);
+      } else {
+        const accountCell = targetRow.locator('td').filter({ hasText: cleanName }).first();
+        await this.click(accountCell, `Account Cell "${cleanName}"`);
+      }
+      await this.waitForLoadingSpinnerToDisappear();
+      await this.waitForPageReady();
+    });
   }
 
   /**

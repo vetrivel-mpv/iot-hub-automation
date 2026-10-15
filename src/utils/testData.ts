@@ -14,7 +14,7 @@ export class TestDataGenerator {
   /**
    * Generates a random test email
    */
-  static randomEmail(domain: string = 'nokiawing.com'): string {
+  static randomEmail(domain: string = 'iothub.com'): string {
     return `test_auto_${Date.now()}_${this.randomString(4)}@${domain}`;
   }
 
@@ -35,12 +35,12 @@ export class TestDataGenerator {
       },
       {
         description: 'Non-existent user with standard password',
-        username: 'nonexistent.user999@nokiawing.com',
+        username: 'nonexistent.user999@iothub.com',
         password: 'WrongPassword999!',
       },
       {
         description: 'Valid format user with wrong password',
-        username: 'testuser@nokiawing.com',
+        username: 'testuser@iothub.com',
         password: 'IncorrectPassword!#',
       },
     ];

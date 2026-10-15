@@ -35,7 +35,7 @@ export const WDH_NAVIGATION_MAP: Record<string, { sectionTitle?: string; items: 
   Resources: [
     {
       sectionTitle: 'Resources',
-      items: ['APN/DNN', 'QoS', 'Network Profile', 'SIM Inventory', 'eSIM Inventory', 'IP Pools', 'Roaming Profile'],
+      items: ['APN/DNN', 'QoS', 'Network Profile', 'SIM Inventory', 'eSIM Inventory', 'IP Pools', 'Roaming Profile', 'Numbering Plan', 'CCS Offer ID'],
     },
     {
       sectionTitle: '5G Resource',

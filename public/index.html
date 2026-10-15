@@ -32,17 +32,19 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
-    // Immediate anti-flash theme initializer
+    // Light theme & Compact density initializer (Permanently Locked to Compact)
     (function() {
-      const savedTheme = localStorage.getItem('wdh_theme') || 'light';
-      document.documentElement.setAttribute('data-theme', savedTheme);
-      if (savedTheme === 'light') {
-        document.addEventListener('DOMContentLoaded', () => document.body.classList.add('theme-light'));
-      }
+      localStorage.setItem('wdh_theme', 'light');
+      localStorage.setItem('wdh_density', 'compact');
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.documentElement.setAttribute('data-density', 'compact');
+      document.addEventListener('DOMContentLoaded', () => {
+        document.body.classList.add('theme-light', 'mode-compact');
+      });
     })();
   </script>
 </head>
-<body class="theme-light">
+<body class="theme-light mode-compact">
   <div class="app-container">
     <!-- Top Enterprise Header Bar (Brand, Environment Selector, User Auth & Utility Toggles) -->
     <header class="app-header">
@@ -59,8 +61,8 @@
         <div class="env-switcher-wrapper">
           <div class="env-dropdown-trigger" id="env-selector-btn" title="Switch Target Environment">
             <span class="pulse-dot" id="header-env-pulse"></span>
-            <span class="env-category-tag" id="header-env-category">SIT</span>
-            <span class="env-name-text" id="header-env-name">SIT - STG 2</span>
+            <span class="env-category-tag cat-dev" id="header-env-category">DEV</span>
+            <span class="env-name-text" id="header-env-name">Azure FrontDoor (CMPaaS)</span>
             <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
           </div>
           <div class="env-dropdown-menu hidden" id="env-dropdown-menu">
@@ -74,6 +76,13 @@
           </div>
         </div>
 
+        <!-- Real-Time Environment Health HUD Pill -->
+        <button id="header-health-hud-pill" class="header-hud-pill" title="Live Health Telemetry: Latency, DNS & TLS Status (Click to inspect HUD)">
+          <span class="hud-pulse-dot" id="header-hud-pulse"></span>
+          <span class="hud-latency-text" id="header-hud-latency">⚡ 184ms</span>
+          <span class="hud-tls-badge" id="header-hud-tls">🔒 TLS 1.3</span>
+        </button>
+
         <!-- Quick Ping Health Button -->
         <button id="quick-ping-btn" class="btn btn-icon-only" title="Test Environment Health / Connectivity">
           <span class="ping-icon">📡</span>
@@ -81,131 +90,192 @@
       </div>
 
       <div class="header-actions">
-        <!-- CI/CD & Auto-Trigger Badge -->
-        <div class="ci-pipeline-status" id="ci-status-badge" title="CI/CD Webhook & Automation Runner: Active">
-          <span class="pulse-dot"></span>
-          <span class="ci-text">CI Pipeline: Online</span>
-        </div>
-
-        <button id="theme-toggle-btn" class="btn btn-secondary btn-icon-only" title="Toggle Light / Dark Theme">
-          <span class="theme-icon" id="theme-icon">☀️</span>
+        <!-- Quick Command Palette Button (Cmd+K) -->
+        <button id="header-cmd-k-btn" class="header-cmd-k-btn" onclick="window.toggleCommandPalette()" title="Open Command Palette & Fuzzy Search (⌘K)">
+          <span class="cmd-icon">🔍</span>
+          <span class="cmd-label">Search...</span>
+          <kbd class="cmd-badge">⌘K</kbd>
         </button>
-        <div class="user-chip-container">
-          <div class="user-chip" id="user-chip-btn" title="User Authentication & Profile">
-            <img class="user-avatar-img hidden" id="user-avatar-img" src="" alt="Google Profile">
-            <span class="user-avatar" id="user-avatar-fallback">VM</span>
-            <span id="username-display">vetrivel_m</span>
-            <svg class="chevron-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
-          </div>
-          <div class="user-auth-dropdown hidden" id="user-auth-dropdown">
-            <div class="auth-dropdown-header">
-              <div class="auth-user-info">
-                <strong id="auth-dropdown-name">vetrivel_m</strong>
-                <span class="text-muted" id="auth-dropdown-email">Logged in as Local Admin</span>
+
+        <!-- Unified Automation Engines & Telemetry Dropdown (Replaces Cluttered Header Chips) -->
+        <div class="engines-dropdown-wrapper">
+          <button id="engines-menu-btn" class="engines-menu-btn" title="Enterprise Automation Engines: Self-Healing, Contract Drift, Data Sweeper, Telecom, Guardrail & Data Engine">
+            <span class="engines-btn-icon">⚡</span>
+            <span class="engines-btn-label font-semibold text-xs">Automation Engines</span>
+            <span class="engines-summary-pill" id="engines-header-summary-pill">7 Active</span>
+            <svg class="chevron-icon ml-1" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          
+          <div class="engines-dropdown-menu hidden" id="engines-dropdown-menu">
+            <div class="engines-dropdown-header">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Autonomous Engines & Safeguards</span>
+              <span class="badge badge-pass" style="font-size: 0.65rem;">Active & Operational</span>
+            </div>
+            
+            <div class="engines-grid">
+              <!-- Engine 1: Self-Healing Locators (Option B) -->
+              <div class="engine-card" id="header-self-healing-badge" title="Option B: Self-Healing Locators & Heuristic DOM Inference Engine">
+                <div class="engine-card-icon bg-purple-50 text-purple-600">🔮</div>
+                <div class="engine-card-info">
+                  <div class="flex items-center justify-between">
+                    <strong class="text-xs font-bold text-slate-800">Self-Healing Locators</strong>
+                    <span class="healing-count-pill" id="header-healing-count">0</span>
+                  </div>
+                  <p class="text-[11px] text-muted">Heuristic DOM recovery & learned patch cache</p>
+                </div>
+              </div>
+
+              <!-- Engine 2: Contract Drift Sniffer (Option C) -->
+              <div class="engine-card" id="header-contract-drift-badge" title="Option C: Live In-Flight API Contract Drift Sniffer">
+                <div class="engine-card-icon bg-orange-50 text-orange-600">📡</div>
+                <div class="engine-card-info">
+                  <div class="flex items-center justify-between">
+                    <strong class="text-xs font-bold text-slate-800">Contract Drift Sniffer</strong>
+                    <span class="drift-health-pill" id="header-drift-health">100%</span>
+                  </div>
+                  <p class="text-[11px] text-muted">In-flight schema validation & latency SLA audit</p>
+                </div>
+              </div>
+
+              <!-- Engine 3: Quarantine Data Sweeper (Option D) -->
+              <div class="engine-card" id="header-sweeper-badge" title="Option D: Collision-Free Data Teardown & Quarantine Sweeper">
+                <div class="engine-card-icon bg-emerald-50 text-emerald-600">🧹</div>
+                <div class="engine-card-info">
+                  <div class="flex items-center justify-between">
+                    <strong class="text-xs font-bold text-slate-800">Quarantine Data Sweeper</strong>
+                    <span class="sweeper-count-pill" id="header-sweeper-count">0</span>
+                  </div>
+                  <p class="text-[11px] text-muted">Automated post-test teardown of test accounts</p>
+                </div>
+              </div>
+
+              <!-- Engine 4: Python Telecom Engine (Option A) -->
+              <div class="engine-card" id="header-python-badge" title="Option A: Python Telecom Sidecar Engine">
+                <div class="engine-card-icon bg-sky-50 text-sky-600">🐍</div>
+                <div class="engine-card-info">
+                  <div class="flex items-center justify-between">
+                    <strong class="text-xs font-bold text-slate-800">Telecom Engine (Python)</strong>
+                    <span class="badge badge-info" style="font-size: 0.65rem;">v3.14 Ready</span>
+                  </div>
+                  <p class="text-[11px] text-muted">Luhn Bulk SIM generator, CDR rating & invoice audit</p>
+                </div>
+              </div>
+
+              <!-- Engine 5: Safety Guardrail Lock -->
+              <div class="engine-card" id="header-guardrail-badge" title="PROD Safety Guardrail: Active Mutation Lock">
+                <div class="engine-card-icon bg-blue-50 text-blue-600" id="header-guardrail-icon">🛡️</div>
+                <div class="engine-card-info">
+                  <div class="flex items-center justify-between">
+                    <strong class="text-xs font-bold text-slate-800">PROD Safety Guardrail</strong>
+                    <span class="badge badge-pass" id="header-guardrail-text" style="font-size: 0.65rem;">SAFETY LOCK</span>
+                  </div>
+                  <p class="text-[11px] text-muted">Strict mutation lock on protected environments</p>
+                </div>
+              </div>
+
+              <!-- Engine 6: Worker Session Persistence -->
+              <div class="engine-card" id="header-session-badge" title="Session State: Reusing playwright/.auth/user.json (~85ms parallel worker bootstrap)">
+                <div class="engine-card-icon bg-amber-50 text-amber-600">⚡</div>
+                <div class="engine-card-info">
+                  <div class="flex items-center justify-between">
+                    <strong class="text-xs font-bold text-slate-800">Session State Persistence</strong>
+                    <span class="badge badge-pass" id="header-session-text" style="font-size: 0.65rem;">Ready (~85ms)</span>
+                  </div>
+                  <p class="text-[11px] text-muted">Keycloak SSO auth caching for fast execution</p>
+                </div>
+              </div>
+
+              <!-- Engine 7: 0-Collision Data Engine -->
+              <div class="engine-card" id="header-data-engine-badge" title="Collision-Free Data Engine: Guaranteed 0.00% collisions across workers">
+                <div class="engine-card-icon bg-indigo-50 text-indigo-600">🎲</div>
+                <div class="engine-card-info">
+                  <div class="flex items-center justify-between">
+                    <strong class="text-xs font-bold text-slate-800">0-Collision Data Engine</strong>
+                    <span class="badge badge-pass" style="font-size: 0.65rem;">0.00% Collisions</span>
+                  </div>
+                  <p class="text-[11px] text-muted">Worker-isolated unique sequences & APN hashes</p>
+                </div>
               </div>
             </div>
-            <div class="auth-dropdown-actions">
-              <button id="google-login-btn" class="btn btn-secondary btn-sm btn-full-width">
-                <svg width="16" height="16" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                </svg>
-                <span>Sign In with Google</span>
-              </button>
-              <button id="auth-logout-btn" class="btn btn-danger btn-sm btn-full-width hidden">
-                <span>🚪 Sign Out</span>
-              </button>
-            </div>
           </div>
         </div>
+
+        <!-- Concurrency Badge -->
+        <div class="header-concurrency-chip" id="header-concurrency-badge" title="Active Playwright Parallel Worker Concurrency">
+          <span class="chip-icon">🏎️</span>
+          <span id="header-workers-count-label">4x Workers</span>
+        </div>
+
+        <!-- Environment Configuration Trigger -->
         <button id="open-env-modal-btn" class="btn btn-secondary" title="Configure Environments & Credentials">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
         </button>
       </div>
     </header>
 
-    <!-- Grouped Enterprise Navigation Architecture Ribbon (Dedicated Uncongested Row) -->
-    <nav class="enterprise-nav-ribbon glass-card">
+    <!-- Unified Enterprise Navigation Ribbon (Single Unwrapped High-Performance Line) -->
+    <nav class="enterprise-nav-ribbon glass-card" aria-label="Main Navigation">
       <div class="nav-ribbon-content">
-        <!-- Group 1: Execution & Testing -->
-        <div class="nav-group-section">
-          <div class="nav-group-header">
-            <span class="nav-group-dot dot-execution"></span>
-            <span class="nav-group-label">TEST EXECUTION</span>
-          </div>
-          <div class="nav-group-pills">
-            <button class="nav-tab active" data-tab="dashboard">
-              <span class="tab-icon">⚡</span>
-              <span class="tab-label">Dashboard</span>
-            </button>
-            <button class="nav-tab" data-tab="matrix">
-              <span class="tab-icon">📋</span>
-              <span class="tab-label">Test Matrix</span>
-              <span class="tab-badge" id="tab-scenarios-badge">68</span>
-            </button>
-            <button class="nav-tab" data-tab="terminal">
-              <span class="tab-icon">⚡</span>
-              <span class="tab-label">Live Execution Canvas</span>
-            </button>
-            <button class="nav-tab" data-tab="schedules">
-              <span class="tab-icon">⏱️</span>
-              <span class="tab-label">Schedules & Crons</span>
-            </button>
-          </div>
-        </div>
+        <div class="nav-ribbon-tabs" id="main-nav-tabs">
+          <!-- Group 1: Core Automation & Execution -->
+          <button class="nav-tab active" data-tab="dashboard" title="High-Level Execution Metrics & Real-Time Telemetry">
+            <span class="tab-icon">⚡</span>
+            <span class="tab-label">Dashboard</span>
+          </button>
+          <button class="nav-tab" data-tab="suites" title="Automated Portal Modules & Groups">
+            <span class="tab-icon">📦</span>
+            <span class="tab-label">Modules</span>
+            <span class="tab-badge" id="tab-suites-badge">16</span>
+          </button>
+          <button class="nav-tab" data-tab="matrix" title="Full Test Scenario Matrix & Deep Filtering">
+            <span class="tab-icon">📋</span>
+            <span class="tab-label">Test Matrix</span>
+            <span class="tab-badge" id="tab-scenarios-badge">249</span>
+          </button>
+          <button class="nav-tab" data-tab="terminal" title="Real-Time Terminal Logs & Live Canvas Streaming">
+            <span class="tab-icon">🏎️</span>
+            <span class="tab-label">Live Canvas</span>
+          </button>
 
-        <div class="nav-group-separator"></div>
+          <div class="nav-ribbon-divider" role="separator" aria-orientation="vertical"></div>
 
-        <!-- Group 2: Observability & Telemetry -->
-        <div class="nav-group-section">
-          <div class="nav-group-header">
-            <span class="nav-group-dot dot-observability"></span>
-            <span class="nav-group-label">OBSERVABILITY & ANALYTICS</span>
-          </div>
-          <div class="nav-group-pills">
-            <button class="nav-tab" data-tab="performance">
-              <span class="tab-icon">⚡</span>
-              <span class="tab-label">API Performance</span>
-            </button>
-            <button class="nav-tab" data-tab="envdiff">
-              <span class="tab-icon">🌐</span>
-              <span class="tab-label">Multi-Env Diff</span>
-            </button>
-            <button class="nav-tab" data-tab="flakiness">
-              <span class="tab-icon">🤖</span>
-              <span class="tab-label">AI Flakiness & Locators</span>
-            </button>
-            <button class="nav-tab" data-tab="report">
-              <span class="tab-icon">📊</span>
-              <span class="tab-label">HTML Reports</span>
-            </button>
-            <button class="nav-tab" data-tab="history">
-              <span class="tab-icon">📜</span>
-              <span class="tab-label">Run History</span>
-            </button>
-          </div>
-        </div>
+          <!-- Group 2: Telemetry & Analytics -->
+          <button class="nav-tab" data-tab="report" title="Executive Allure & Playwright Quality Intelligence Reports">
+            <span class="tab-icon">📊</span>
+            <span class="tab-label">Reports</span>
+          </button>
+          <button class="nav-tab" data-tab="gallery" title="Artifacts Studio: Screenshots, Videos & Traces">
+            <span class="tab-icon">📸</span>
+            <span class="tab-label">Artifacts</span>
+          </button>
+          <button class="nav-tab" data-tab="performance" title="API Gateway Telemetry & Response Latency">
+            <span class="tab-icon">📡</span>
+            <span class="tab-label">API Telemetry</span>
+          </button>
+          <button class="nav-tab" data-tab="flakiness" title="AI-Assisted Root Cause & Flakiness Analysis">
+            <span class="tab-icon">🤖</span>
+            <span class="tab-label">AI Flakiness</span>
+          </button>
 
-        <div class="nav-group-separator"></div>
+          <div class="nav-ribbon-divider" role="separator" aria-orientation="vertical"></div>
 
-        <!-- Group 3: Infrastructure & Artifacts -->
-        <div class="nav-group-section">
-          <div class="nav-group-header">
-            <span class="nav-group-dot dot-infrastructure"></span>
-            <span class="nav-group-label">FLEET & ASSETS</span>
-          </div>
-          <div class="nav-group-pills">
-            <button class="nav-tab" data-tab="environments">
-              <span class="tab-icon">🏛️</span>
-              <span class="tab-label">Environments</span>
-            </button>
-            <button class="nav-tab" data-tab="gallery">
-              <span class="tab-icon">📸</span>
-              <span class="tab-label">Artifacts & Traces</span>
-            </button>
-          </div>
+          <!-- Group 3: Fleet, Environments & Operations -->
+          <button class="nav-tab" data-tab="envdiff" title="Multi-Environment Config & Drift Differential Matrix">
+            <span class="tab-icon">🌐</span>
+            <span class="tab-label">Env Diff</span>
+          </button>
+          <button class="nav-tab" data-tab="environments" title="Fleet Environment Endpoints & Microservice Status">
+            <span class="tab-icon">🏛️</span>
+            <span class="tab-label">Fleet Envs</span>
+          </button>
+          <button class="nav-tab" data-tab="schedules" title="Automated Cron Schedules & Regression Pipelines">
+            <span class="tab-icon">⏱️</span>
+            <span class="tab-label">Schedules</span>
+          </button>
+          <button class="nav-tab" data-tab="history" title="Comprehensive Execution Run History & Audits">
+            <span class="tab-icon">📜</span>
+            <span class="tab-label">Run History</span>
+          </button>
         </div>
       </div>
     </nav>
@@ -220,11 +290,11 @@
               <span class="progress-title" id="progress-title">Executing Test Suite...</span>
               <span class="badge badge-interactive" id="live-banner-drilldown-hint">🔍 View Live Test Status (Click)</span>
             </div>
-            <div class="progress-subtitle" id="progress-subtitle">Target Environment: SIT - STG 2</div>
+            <div class="progress-subtitle" id="progress-subtitle">Target Environment: Azure FrontDoor (CMPaaS)</div>
           </div>
         </div>
         <div class="progress-stats">
-          <span class="badge badge-env" id="live-env-badge">SIT-STG2</span>
+          <span class="badge badge-env cat-dev" id="live-env-badge">AZURE-FD</span>
           <span class="badge badge-pass" id="live-pass-count">0 Passed</span>
           <span class="badge badge-fail" id="live-fail-count">0 Failed</span>
           <button id="banner-drilldown-btn" class="btn btn-sm btn-secondary" title="Open Live Test Execution Details">📋 Test Details</button>
@@ -244,11 +314,11 @@
           <div class="telemetry-env-icon">🌐</div>
           <div>
             <div class="telemetry-title">
-              <span id="telemetry-env-name">SIT - STG 2 (Default)</span>
-              <span class="badge badge-env" id="telemetry-category">SIT</span>
+              <span id="telemetry-env-name">Azure FrontDoor (CMPaaS)</span>
+              <span class="badge badge-env cat-dev" id="telemetry-category">DEV</span>
               <span class="badge badge-health-online" id="telemetry-health-badge">HEALTHY</span>
             </div>
-            <div class="telemetry-url" id="telemetry-base-url">https://wdh-sitstg2.nokiawing.com</div>
+            <div class="telemetry-url" id="telemetry-base-url">https://wdh-ekbbe2e2bbe4addc.a02.azurefd.net</div>
           </div>
         </div>
         <div class="telemetry-metrics">
@@ -258,13 +328,14 @@
           </div>
           <div class="metric-item">
             <span class="metric-label">Auth User</span>
-            <span class="metric-value" id="telemetry-username">vetrivel_m</span>
+            <span class="metric-value" id="telemetry-username">cmpaas-csp-user</span>
           </div>
           <div class="metric-item">
             <span class="metric-label">Status</span>
             <span class="metric-value status-good" id="telemetry-status-text">Connected</span>
           </div>
           <div class="telemetry-actions">
+            <button id="telemetry-direct-switch-btn" class="btn btn-warning btn-sm hidden" title="Target host is on a private network. Switch directly to Azure FrontDoor">⚡ Switch to Azure FrontDoor</button>
             <button id="telemetry-ping-btn" class="btn btn-secondary btn-sm">📡 Test Ping</button>
             <button id="telemetry-switch-btn" class="btn btn-primary btn-sm">🔄 Switch Env</button>
           </div>
@@ -272,16 +343,16 @@
       </section>
 
       <!-- Executive Client & Release Governance Command Banner -->
-      <section class="executive-governance-card glass-card" style="margin-bottom: 16px; padding: 18px 24px; border-left: 4px solid var(--primary); background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%);">
+      <section class="executive-governance-card glass-card">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
           <div style="display: flex; align-items: center; gap: 14px;">
-            <div style="font-size: 2rem; background: rgba(0, 102, 255, 0.15); border: 1px solid rgba(0, 102, 255, 0.4); padding: 8px 12px; border-radius: 12px;">👑</div>
+            <div class="gov-icon-wrapper">👑</div>
             <div>
               <div style="display: flex; align-items: center; gap: 8px;">
-                <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: #ffffff;">Executive Release Governance & Quality Gate</h3>
-                <span class="badge badge-health-online" style="font-size: 0.72rem;">PRODUCTION GATE: GO</span>
+                <h3 class="gov-title">Executive Release Governance & Quality Gate</h3>
+                <span class="badge badge-health-online" id="executive-gate-badge" style="font-size: 0.72rem;">PRODUCTION GATE: GO</span>
               </div>
-              <p style="margin: 2px 0 0; font-size: 0.82rem; color: #94a3b8;">1-Click client-friendly verification presets with instant executive HTML email digest generation</p>
+              <p class="gov-desc" id="executive-gate-desc">1-Click client-friendly verification presets with instant executive HTML email digest generation</p>
             </div>
           </div>
 
@@ -306,7 +377,7 @@
           <div class="kpi-icon-wrapper blue">📦</div>
           <div class="kpi-content">
             <span class="kpi-label">Active Modules</span>
-            <span class="kpi-value" id="kpi-modules">15 Suites</span>
+            <span class="kpi-value" id="kpi-modules">13 Suites</span>
           </div>
         </div>
         <div class="kpi-card glass-card" id="kpi-card-scenarios" title="Click to view Detailed Scenario Matrix">
@@ -323,11 +394,196 @@
             <span class="kpi-value" id="kpi-envs">4 Environments</span>
           </div>
         </div>
-        <div class="kpi-card glass-card" id="kpi-card-lifecycle" title="Click to inspect Account Creation & Activation Lifecycle (6 E2E Steps)">
-          <div class="kpi-icon-wrapper orange">✨</div>
+        <div class="kpi-card glass-card" id="kpi-card-e2e" title="Click to view End-to-End Test Suite (Includes Account Lifecycle & Provisioning)">
+          <div class="kpi-icon-wrapper orange">🔄</div>
           <div class="kpi-content">
-            <span class="kpi-label">Account Lifecycle</span>
-            <span class="kpi-value">6 E2E Steps</span>
+            <span class="kpi-label">E2E Test Suite</span>
+            <span class="kpi-value" id="kpi-e2e">25 Scenarios</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Enterprise Multi-Stage Promotion Pipeline (Dev to QA, QA to Stag, Stag to Prod) -->
+      <section class="promotion-pipeline-card glass-card mb-4" id="promotion-pipeline-section">
+        <div class="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-slate-200 dark:border-slate-700/40">
+          <div class="flex items-center gap-2.5">
+            <div style="background: linear-gradient(135deg, #3b82f6, #8b5cf6); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);">🚀</div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">MULTI-STAGE PROMOTION PIPELINE</span>
+                <span class="badge badge-env text-[10px]" id="pipeline-active-badge">ACTIVE: QA → STAG</span>
+              </div>
+              <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100">Release Promotion Gates & Multi-Environment Consistency Matrix</h4>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 text-xs flex-wrap">
+            <span class="text-muted text-[11px] font-medium">Switch Promotion Tier:</span>
+            <div class="inline-flex rounded-lg p-0.5 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60" id="pipeline-stage-selector">
+              <button class="stage-nav-pill" id="stage-nav-dev-to-qa" onclick="window.selectPipelineStage('dev-to-qa')">1. Dev → QA</button>
+              <button class="stage-nav-pill active" id="stage-nav-qa-to-stag" onclick="window.selectPipelineStage('qa-to-stag')">2. QA → Stag</button>
+              <button class="stage-nav-pill" id="stage-nav-stag-to-prod" onclick="window.selectPipelineStage('stag-to-prod')">3. Stag → Prod</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 Pipeline Stage Flow Cards (Dynamically Populated) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3" id="pipeline-stage-cards-grid">
+          <div class="p-4 text-center text-xs text-muted col-span-3">Loading synchronized promotion pipeline stages...</div>
+        </div>
+      </section>
+
+      <!-- Section: Latest Execution Snapshot & RCA Quick View -->
+      <section class="latest-run-card glass-card mb-4" id="latest-run-card">
+        <div class="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-slate-700/40">
+          <div class="flex items-center gap-3">
+            <div class="run-status-icon-wrapper" id="latest-run-icon">⚡</div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-muted">LATEST EXECUTION SNAPSHOT</span>
+                <span class="badge" id="latest-run-badge">READY</span>
+                <span class="text-xs font-mono text-muted" id="latest-run-id">--</span>
+              </div>
+              <h4 class="text-base font-bold text-slate-800 dark:text-slate-100" id="latest-run-title">No test run recorded in this session</h4>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="btn btn-secondary btn-sm" id="latest-run-logs-btn" title="Open Live Canvas and Terminal Logs">
+              <span>🏎️ View Live Canvas</span>
+            </button>
+            <button class="btn btn-secondary btn-sm" id="latest-run-rca-btn" title="View Root Cause Analysis (RCA)">
+              <span>🔍 View RCA Analysis</span>
+            </button>
+            <button class="btn btn-primary btn-sm" id="latest-run-rerun-btn" title="Re-run last execution">
+              <span>⚡ Re-Run</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 pt-3 text-xs" id="latest-run-stats-grid">
+          <div class="p-2.5 rounded-lg bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/50">
+            <span class="text-muted block text-[10px] uppercase font-semibold">Environment</span>
+            <span class="font-bold text-slate-800 dark:text-slate-100 font-mono" id="latest-run-env">--</span>
+          </div>
+          <div class="p-2.5 rounded-lg bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/50">
+            <span class="text-muted block text-[10px] uppercase font-semibold">Passed</span>
+            <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono text-sm" id="latest-run-passed">0</span>
+          </div>
+          <div class="p-2.5 rounded-lg bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/50">
+            <span class="text-muted block text-[10px] uppercase font-semibold">Failed</span>
+            <span class="font-bold text-rose-600 dark:text-rose-400 font-mono text-sm" id="latest-run-failed">0</span>
+          </div>
+          <div class="p-2.5 rounded-lg bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/50">
+            <span class="text-muted block text-[10px] uppercase font-semibold">Skipped</span>
+            <span class="font-bold text-amber-600 dark:text-amber-400 font-mono text-sm" id="latest-run-skipped">0</span>
+          </div>
+          <div class="p-2.5 rounded-lg bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/50">
+            <span class="text-muted block text-[10px] uppercase font-semibold">Duration</span>
+            <span class="font-bold text-slate-800 dark:text-slate-100 font-mono text-sm" id="latest-run-duration">--</span>
+          </div>
+        </div>
+
+        <!-- Diagnosis Banner (shows if failed) -->
+        <div id="latest-run-diagnosis" class="mt-3 p-2.5 rounded-lg bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 text-xs hidden">
+          <span class="font-bold">⚠️ Failure Diagnosis:</span> <span id="latest-run-diagnosis-text">Network timeout / VPN required</span>
+        </div>
+      </section>
+
+      <!-- Direct Allure Executive Report Integration Widget -->
+      <section class="allure-dashboard-widget glass-card mb-4" id="allure-dashboard-card">
+        <div class="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-slate-200 dark:border-slate-700/40">
+          <div class="flex items-center gap-3">
+            <div class="allure-badge-icon" style="background: linear-gradient(135deg, #f59e0b, #ef4444); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 19px; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);">📊</div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500">ALLURE 2.43 EXECUTIVE REPORT</span>
+                <span class="badge badge-fail" id="allure-dash-audit-badge">TRIAGE REQUIRED</span>
+                <span class="text-xs font-mono text-muted" id="allure-dash-run-id">RUN-176189</span>
+              </div>
+              <h4 class="text-base font-bold text-slate-900 dark:text-slate-100" id="allure-dash-title">Execution Audit & Defect Intelligence</h4>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button class="btn btn-secondary btn-sm" onclick="switchTab('report')" title="Switch to full interactive Allure Report tab">
+              <span>📈 View in Allure Tab</span>
+            </button>
+            <button class="btn btn-secondary btn-sm" id="allure-dash-rca-btn" onclick="window.openRcaModal && window.openRcaModal(document.getElementById('allure-dash-run-id')?.textContent || 'RUN-176189')" title="AI Root Cause Analysis of 8 Failed Tests">
+              <span>🤖 AI RCA Triage</span>
+            </button>
+            <a href="/api/reports/allure/download-standalone" download class="btn btn-secondary btn-sm" title="Download Self-Contained Offline HTML Allure Report">
+              <span>📥 Export Single HTML</span>
+            </a>
+            <button class="btn btn-primary btn-sm" onclick="window.triggerAllureRegenerate ? window.triggerAllureRegenerate() : switchTab('report')" title="Regenerate Allure Analytics">
+              <span>🔄 Refresh Report</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3.5 pt-3 items-stretch">
+          <!-- 1. Allure Donut Chart & Dual Metric Card -->
+          <div class="lg:col-span-4 allure-panel-card flex items-center justify-center gap-4">
+            <div style="width: 105px; height: 105px; position: relative; flex-shrink: 0;">
+              <canvas id="allure-donut-canvas" width="105" height="105"></canvas>
+            </div>
+            <div class="flex flex-col justify-center">
+              <div class="flex items-baseline gap-1.5">
+                <span class="text-3xl font-black allure-metric-title font-mono" id="allure-dash-pass-pct">80.5%</span>
+                <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">PASSED</span>
+              </div>
+              <div class="allure-metric-sub font-medium" id="allure-dash-subtext">33 passed of 41 executed</div>
+              <div class="text-[11px] text-muted font-mono mt-0.5" id="allure-dash-fleet-pct">Fleet Total: 66.0% (50 Scenarios)</div>
+              
+              <div class="flex items-center gap-1.5 mt-2.5 flex-wrap">
+                <span class="allure-legend-pill passed">● <span id="allure-dash-passed-count">33</span> Passed</span>
+                <span class="allure-legend-pill failed">● <span id="allure-dash-failed-count">8</span> Failed</span>
+                <span class="allure-legend-pill skipped" title="Intentionally skipped via Production Safety Guardrails on SIT-STG2">🛡️ <span id="allure-dash-skipped-count">9</span> Guardrail</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Interactive Allure Defect Categories Breakdown -->
+          <div class="lg:col-span-5 allure-panel-card flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Defect Categories (Allure Triage)</span>
+              <span class="text-[10px] font-mono text-muted" id="allure-dash-cat-count">2 Categories Active</span>
+            </div>
+            <div id="allure-dash-categories-list" class="space-y-2 flex-1 flex flex-col justify-center">
+              <div class="text-xs text-muted">Loading categories...</div>
+            </div>
+          </div>
+
+          <!-- 3. Target Environment & Guardrail Lock Context -->
+          <div class="lg:col-span-3 allure-panel-card flex flex-col justify-between space-y-2">
+            <div class="allure-env-row">
+              <span class="allure-env-label">Target Environment</span>
+              <span class="allure-env-val text-blue-600 dark:text-blue-400" id="allure-dash-env-name">SIT - STG 2</span>
+            </div>
+            <div class="allure-env-row">
+              <span class="allure-env-label">Safety Guardrail Interception</span>
+              <span class="allure-env-val text-amber-600 dark:text-amber-400 text-xs" id="allure-dash-guardrail">ACTIVE (Write Protection)</span>
+            </div>
+            <div class="allure-env-row">
+              <span class="allure-env-label">Parallel Concurrency</span>
+              <span class="allure-env-val text-slate-800 dark:text-slate-200 text-xs" id="allure-dash-concurrency">4x Isolated Workers</span>
+            </div>
+            <div class="allure-env-row">
+              <span class="allure-env-label">Quality SLA Status</span>
+              <span class="allure-env-val text-rose-600 dark:text-rose-400 text-xs font-semibold" id="allure-dash-sla-status">Needs 4 Fixes for Release</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Quality Gate SLA Indicator Strip -->
+        <div class="allure-gate-bar-container">
+          <div class="flex items-center gap-2 text-xs">
+            <span class="font-bold text-slate-700 dark:text-slate-300" id="allure-gate-strip-title">Stage Quality Gate:</span>
+            <span class="badge badge-health-online text-[11px]" id="allure-gate-strip-threshold">SLA Threshold: 90%</span>
+            <span class="text-muted text-[11px]" id="allure-gate-strip-executed">Current Executed: <strong id="allure-gate-strip-pct">80.5%</strong></span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-[11px] text-muted font-mono" id="allure-gate-strip-runid">Run ID: <strong class="text-slate-700 dark:text-slate-200" id="allure-gate-strip-runid-text">RUN-176189</strong></span>
+            <button class="btn btn-secondary btn-sm text-[11px] py-0.5 px-2.5" onclick="switchTab('report')" title="Open detailed report">
+              View Detailed Root Causes →
+            </button>
           </div>
         </div>
       </section>
@@ -383,21 +639,43 @@
             <canvas id="tremor-fleet-chart"></canvas>
           </div>
           <div class="flex items-center justify-between text-xs text-slate-400 border-t border-slate-700/40 pt-2 mt-2">
-            <span class="text-emerald-400">● 3 Online</span>
-            <span class="text-amber-400">● 1 Latency Alert</span>
-            <span class="text-slate-400">● 0 Offline</span>
+            <span class="text-emerald-400" id="fleet-stat-online">● 3 Online</span>
+            <span class="text-amber-400" id="fleet-stat-warning">● 1 Latency Alert</span>
+            <span class="text-slate-400" id="fleet-stat-offline">● 0 Offline</span>
           </div>
         </div>
       </section>
 
+      <!-- Section: Portal Modules Quick Health & Direct Execution Matrix -->
+      <section class="portal-modules-quick-section glass-card mb-4">
+        <div class="flex items-center justify-between flex-wrap gap-3 mb-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-blue-500">PORTAL SUITE HEALTH</span>
+              <span class="badge badge-env" id="dash-modules-count-badge">16 Modules Ready</span>
+            </div>
+            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">Automated Modules Direct Health Matrix</h3>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="btn btn-secondary btn-sm" onclick="switchTab('suites')" title="Open Full Modules Manager">
+              <span>📦 Open Modules Manager</span>
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="window.triggerExecutiveRun('smoke')" title="Run Critical Path Smoke Tests">
+              <span>⚡ 1-Click Smoke Audit</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3" id="dash-modules-quick-grid">
+          <!-- Dynamically generated module cards with live status & 1-click Run button -->
+        </div>
+      </section>
+    </div>
+
+    <!-- TAB: AUTOMATED PORTAL MODULES & GROUPS -->
+    <div id="tab-content-suites" class="tab-content">
       <!-- Execution Controls Bar -->
       <section class="execution-bar glass-card">
-        <div class="control-group">
-          <label class="control-label">Target Environment</label>
-          <select id="runner-env-select" class="custom-select env-select">
-            <!-- Populated via JS -->
-          </select>
-        </div>
 
         <div class="control-group">
           <label class="control-label">Browser Engine</label>
@@ -420,9 +698,10 @@
         <div class="control-group">
           <label class="control-label">Parallel Workers</label>
           <div class="toggle-group" id="workers-selector">
-            <button class="toggle-btn active" data-workers="1" title="1 Worker (Sequential & Isolated)">1x</button>
+            <button class="toggle-btn" data-workers="1" title="1 Worker (Sequential Debug)">1x</button>
             <button class="toggle-btn" data-workers="2" title="2 Parallel Workers (2x Speed)">2x</button>
-            <button class="toggle-btn" data-workers="4" title="4 Parallel Workers (Max Speed)">4x</button>
+            <button class="toggle-btn active" data-workers="4" title="4 Parallel Workers (Standard Enterprise)">4x</button>
+            <button class="toggle-btn" data-workers="8" title="8 Parallel Workers (Turbo Concurrency)">8x</button>
           </div>
         </div>
 
@@ -458,8 +737,9 @@
         </div>
 
         <!-- Operation Group Filter Pills -->
-        <div class="flex items-center gap-2 overflow-x-auto pb-2 mb-3 text-xs" id="suite-group-pills">
+        <div class="scenario-group-pills-bar mb-3 text-xs" id="suite-group-pills">
           <button class="filter-pill active" data-group="all">All Modules</button>
+          <button class="filter-pill" data-group="e2e">🔄 E2E Flow</button>
           <button class="filter-pill" data-group="core">🔐 Core & Auth</button>
           <button class="filter-pill" data-group="sims">📱 Subscriptions & SIMs</button>
           <button class="filter-pill" data-group="billing">💳 Billing & Invoicing</button>
@@ -467,7 +747,257 @@
         </div>
 
         <div class="suites-grid" id="suites-container">
-          <!-- Populated dynamically via JS -->
+          <!-- Module 1: Auth -->
+          <div class="suite-card glass-card" id="suite-card-auth" onclick="window.toggleSuiteSelection('auth', event)" title="Click card to select / multi-select this module. Click 'View Tests' to inspect.">
+            <div class="suite-header">
+              <div class="suite-checkbox-wrapper" onclick="event.stopPropagation();">
+                <input type="checkbox" class="suite-checkbox" id="suite-chk-auth" onchange="window.toggleSuiteSelection('auth', event)">
+              </div>
+              <div class="suite-icon">🔐</div>
+              <div class="suite-info">
+                <h3 class="suite-title"><span>Authentication & Access</span></h3>
+                <p class="suite-desc">Landing page, Login/Logout, validation, Remember Me, Show Password, Security</p>
+              </div>
+            </div>
+            <div class="suite-footer">
+              <div class="suite-meta"><span>📁 tests/auth</span></div>
+              <div class="suite-card-actions">
+                <button class="btn-view-tests" onclick="event.stopPropagation(); window.openSuiteDetailsModal('auth')" title="View individual test cases">🔍 View 15 Tests</button>
+                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); window.triggerSuiteRun('auth')" title="Execute this entire suite"><span>▶ Run</span></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 2: Dashboard -->
+          <div class="suite-card glass-card" id="suite-card-dashboard" onclick="window.toggleSuiteSelection('dashboard', event)" title="Click card to select / multi-select this module. Click 'View Tests' to inspect.">
+            <div class="suite-header">
+              <div class="suite-checkbox-wrapper" onclick="event.stopPropagation();">
+                <input type="checkbox" class="suite-checkbox" id="suite-chk-dashboard" onchange="window.toggleSuiteSelection('dashboard', event)">
+              </div>
+              <div class="suite-icon">📊</div>
+              <div class="suite-info">
+                <h3 class="suite-title"><span>Dashboard & Metrics</span></h3>
+                <p class="suite-desc">Summary metric cards, Filter tabs (Accounts/Subscriptions/Usage), Viewport, Realm, Logout</p>
+              </div>
+            </div>
+            <div class="suite-footer">
+              <div class="suite-meta"><span>📁 tests/dashboard</span></div>
+              <div class="suite-card-actions">
+                <button class="btn-view-tests" onclick="event.stopPropagation(); window.openSuiteDetailsModal('dashboard')" title="View individual test cases">🔍 View 13 Tests</button>
+                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); window.triggerSuiteRun('dashboard')" title="Execute this entire suite"><span>▶ Run</span></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 3: Subscriptions -->
+          <div class="suite-card glass-card" id="suite-card-subscriptions" onclick="window.toggleSuiteSelection('subscriptions', event)" title="Click card to select / multi-select this module. Click 'View Tests' to inspect.">
+            <div class="suite-header">
+              <div class="suite-checkbox-wrapper" onclick="event.stopPropagation();">
+                <input type="checkbox" class="suite-checkbox" id="suite-chk-subscriptions" onchange="window.toggleSuiteSelection('subscriptions', event)">
+              </div>
+              <div class="suite-icon">📱</div>
+              <div class="suite-info">
+                <h3 class="suite-title"><span>Subscriptions & SIMs</span></h3>
+                <p class="suite-desc">2.9M SIM table grid, ICCID search, Action Toolbar (All & Account Context), Single SIM Operations, eSIM & Tags</p>
+              </div>
+            </div>
+            <div class="suite-footer">
+              <div class="suite-meta"><span>📁 tests/subscriptions</span></div>
+              <div class="suite-card-actions">
+                <button class="btn-view-tests" onclick="event.stopPropagation(); window.openSuiteDetailsModal('subscriptions')" title="View individual test cases">🔍 View 65 Tests</button>
+                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); window.triggerSuiteRun('subscriptions')" title="Execute this entire suite"><span>▶ Run</span></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 4: Accounts -->
+          <div class="suite-card glass-card" id="suite-card-accounts" onclick="window.toggleSuiteSelection('accounts', event)" title="Click card to select / multi-select this module. Click 'View Tests' to inspect.">
+            <div class="suite-header">
+              <div class="suite-checkbox-wrapper" onclick="event.stopPropagation();">
+                <input type="checkbox" class="suite-checkbox" id="suite-chk-accounts" onchange="window.toggleSuiteSelection('accounts', event)">
+              </div>
+              <div class="suite-icon">🏢</div>
+              <div class="suite-info">
+                <h3 class="suite-title"><span>Accounts Management</span></h3>
+                <p class="suite-desc">+ ACCOUNT 5-step stepper wizard, table column filters, pagination, Sales Agents</p>
+              </div>
+            </div>
+            <div class="suite-footer">
+              <div class="suite-meta"><span>📁 tests/accounts/accounts.spec.ts</span></div>
+              <div class="suite-card-actions">
+                <button class="btn-view-tests" onclick="event.stopPropagation(); window.openSuiteDetailsModal('accounts')" title="View individual test cases">🔍 View 14 Tests</button>
+                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); window.triggerSuiteRun('accounts')" title="Execute this entire suite"><span>▶ Run</span></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 6: Resources -->
+          <div class="suite-card glass-card" id="suite-card-resources" onclick="window.toggleSuiteSelection('resources', event)" title="Click card to select / multi-select this module. Click 'View Tests' to inspect.">
+            <div class="suite-header">
+              <div class="suite-checkbox-wrapper" onclick="event.stopPropagation();">
+                <input type="checkbox" class="suite-checkbox" id="suite-chk-resources" onchange="window.toggleSuiteSelection('resources', event)">
+              </div>
+              <div class="suite-icon">🌐</div>
+              <div class="suite-info">
+                <h3 class="suite-title"><span>Resources & 5G Slices</span></h3>
+                <p class="suite-desc">APN/DNN, QoS, Network Profiles, 5G Slices, SIM Inventory, IP Pools, Search</p>
+              </div>
+            </div>
+            <div class="suite-footer">
+              <div class="suite-meta"><span>📁 tests/resources</span></div>
+              <div class="suite-card-actions">
+                <button class="btn-view-tests" onclick="event.stopPropagation(); window.openSuiteDetailsModal('resources')" title="View individual test cases">🔍 View 18 Tests</button>
+                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); window.triggerSuiteRun('resources')" title="Execute this entire suite"><span>▶ Run</span></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 7: Rating -->
+          <div class="suite-card glass-card" id="suite-card-rating" onclick="window.toggleSuiteSelection('rating', event)" title="Click card to select / multi-select this module. Click 'View Tests' to inspect.">
+            <div class="suite-header">
+              <div class="suite-checkbox-wrapper" onclick="event.stopPropagation();">
+                <input type="checkbox" class="suite-checkbox" id="suite-chk-rating" onchange="window.toggleSuiteSelection('rating', event)">
+              </div>
+              <div class="suite-icon">💳</div>
+              <div class="suite-info">
+                <h3 class="suite-title"><span>Rating & Pricing Bundles</span></h3>
+                <p class="suite-desc">Rate Plans, Add-on Bundles, Quotas, Service Fees, Discounts, Catalog Search</p>
+              </div>
+            </div>
+            <div class="suite-footer">
+              <div class="suite-meta"><span>📁 tests/rating</span></div>
+              <div class="suite-card-actions">
+                <button class="btn-view-tests" onclick="event.stopPropagation(); window.openSuiteDetailsModal('rating')" title="View individual test cases">🔍 View 16 Tests</button>
+                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); window.triggerSuiteRun('rating')" title="Execute this entire suite"><span>▶ Run</span></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 8: Reports -->
+          <div class="suite-card glass-card" id="suite-card-reports" onclick="window.toggleSuiteSelection('reports', event)" title="Click card to select / multi-select this module. Click 'View Tests' to inspect.">
+            <div class="suite-header">
+              <div class="suite-checkbox-wrapper" onclick="event.stopPropagation();">
+                <input type="checkbox" class="suite-checkbox" id="suite-chk-reports" onchange="window.toggleSuiteSelection('reports', event)">
+              </div>
+              <div class="suite-icon">📑</div>
+              <div class="suite-info">
+                <h3 class="suite-title"><span>Reports & Batch Executions</span></h3>
+                <p class="suite-desc">Batch Executions data grid, Off-the-shelf reports, Status filters, Search & Export</p>
+              </div>
+            </div>
+            <div class="suite-footer">
+              <div class="suite-meta"><span>📁 tests/reports</span></div>
+              <div class="suite-card-actions">
+                <button class="btn-view-tests" onclick="event.stopPropagation(); window.openSuiteDetailsModal('reports')" title="View individual test cases">🔍 View 14 Tests</button>
+                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); window.triggerSuiteRun('reports')" title="Execute this entire suite"><span>▶ Run</span></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 9: Administration -->
+          <div class="suite-card glass-card" id="suite-card-administration" onclick="window.toggleSuiteSelection('administration', event)" title="Click card to select / multi-select this module. Click 'View Tests' to inspect.">
+            <div class="suite-header">
+              <div class="suite-checkbox-wrapper" onclick="event.stopPropagation();">
+                <input type="checkbox" class="suite-checkbox" id="suite-chk-administration" onchange="window.toggleSuiteSelection('administration', event)">
+              </div>
+              <div class="suite-icon">⚙️</div>
+              <div class="suite-info">
+                <h3 class="suite-title"><span>Administration & Users</span></h3>
+                <p class="suite-desc">User management, User Groups, Roles Catalog, IP-Whitelist security rules</p>
+              </div>
+            </div>
+            <div class="suite-footer">
+              <div class="suite-meta"><span>📁 tests/administration</span></div>
+              <div class="suite-card-actions">
+                <button class="btn-view-tests" onclick="event.stopPropagation(); window.openSuiteDetailsModal('administration')" title="View individual test cases">🔍 View 14 Tests</button>
+                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); window.triggerSuiteRun('administration')" title="Execute this entire suite"><span>▶ Run</span></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 10: Automation Rules -->
+          <div class="suite-card glass-card" id="suite-card-automation_rules" onclick="window.toggleSuiteSelection('automation_rules', event)" title="Click card to select / multi-select this module. Click 'View Tests' to inspect.">
+            <div class="suite-header">
+              <div class="suite-checkbox-wrapper" onclick="event.stopPropagation();">
+                <input type="checkbox" class="suite-checkbox" id="suite-chk-automation_rules" onchange="window.toggleSuiteSelection('automation_rules', event)">
+              </div>
+              <div class="suite-icon">🤖</div>
+              <div class="suite-info">
+                <h3 class="suite-title"><span>Automation Rules</span></h3>
+                <p class="suite-desc">Global Rules, Enterprise Rules configuration, Search, Rule creation modal</p>
+              </div>
+            </div>
+            <div class="suite-footer">
+              <div class="suite-meta"><span>📁 tests/automation_rules</span></div>
+              <div class="suite-card-actions">
+                <button class="btn-view-tests" onclick="event.stopPropagation(); window.openSuiteDetailsModal('automation_rules')" title="View individual test cases">🔍 View 10 Tests</button>
+                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); window.triggerSuiteRun('automation_rules')" title="Execute this entire suite"><span>▶ Run</span></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 11: Invoice Data -->
+          <div class="suite-card glass-card" id="suite-card-invoice_data" onclick="window.toggleSuiteSelection('invoice_data', event)" title="Click card to select / multi-select this module. Click 'View Tests' to inspect.">
+            <div class="suite-header">
+              <div class="suite-checkbox-wrapper" onclick="event.stopPropagation();">
+                <input type="checkbox" class="suite-checkbox" id="suite-chk-invoice_data" onchange="window.toggleSuiteSelection('invoice_data', event)">
+              </div>
+              <div class="suite-icon">🧾</div>
+              <div class="suite-info">
+                <h3 class="suite-title"><span>Invoice Data & Adjustments</span></h3>
+                <p class="suite-desc">Account Invoice Feeds, Final Invoices, Adjustment types, Billing cycle filters</p>
+              </div>
+            </div>
+            <div class="suite-footer">
+              <div class="suite-meta"><span>📁 tests/invoice_data</span></div>
+              <div class="suite-card-actions">
+                <button class="btn-view-tests" onclick="event.stopPropagation(); window.openSuiteDetailsModal('invoice_data')" title="View individual test cases">🔍 View 12 Tests</button>
+                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); window.triggerSuiteRun('invoice_data')" title="Execute this entire suite"><span>▶ Run</span></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 12: Security -->
+          <div class="suite-card glass-card" id="suite-card-security" onclick="window.toggleSuiteSelection('security', event)" title="Click card to select / multi-select this module. Click 'View Tests' to inspect.">
+            <div class="suite-header">
+              <div class="suite-checkbox-wrapper" onclick="event.stopPropagation();">
+                <input type="checkbox" class="suite-checkbox" id="suite-chk-security" onchange="window.toggleSuiteSelection('security', event)">
+              </div>
+              <div class="suite-icon">🛡️</div>
+              <div class="suite-info">
+                <h3 class="suite-title"><span>Security & Audit Logs</span></h3>
+                <p class="suite-desc">Audit logs grid, Today / 7D / 30D filters, User event tracking, Export, Service filters</p>
+              </div>
+            </div>
+            <div class="suite-footer">
+              <div class="suite-meta"><span>📁 tests/security</span></div>
+              <div class="suite-card-actions">
+                <button class="btn-view-tests" onclick="event.stopPropagation(); window.openSuiteDetailsModal('security')" title="View individual test cases">🔍 View 12 Tests</button>
+                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); window.triggerSuiteRun('security')" title="Execute this entire suite"><span>▶ Run</span></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 13: Ordering -->
+          <div class="suite-card glass-card" id="suite-card-ordering" onclick="window.toggleSuiteSelection('ordering', event)" title="Click card to select / multi-select this module. Click 'View Tests' to inspect.">
+            <div class="suite-header">
+              <div class="suite-checkbox-wrapper" onclick="event.stopPropagation();">
+                <input type="checkbox" class="suite-checkbox" id="suite-chk-ordering" onchange="window.toggleSuiteSelection('ordering', event)">
+              </div>
+              <div class="suite-icon">🛒</div>
+              <div class="suite-info">
+                <h3 class="suite-title"><span>Ordering & My Orders</span></h3>
+                <p class="suite-desc">My Orders modal prompt, Account context selection, Dismissal, Orders grid</p>
+              </div>
+            </div>
+            <div class="suite-footer">
+              <div class="suite-meta"><span>📁 tests/ordering</span></div>
+              <div class="suite-card-actions">
+                <button class="btn-view-tests" onclick="event.stopPropagation(); window.openSuiteDetailsModal('ordering')" title="View individual test cases">🔍 View 10 Tests</button>
+                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); window.triggerSuiteRun('ordering')" title="Execute this entire suite"><span>▶ Run</span></button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </div>
@@ -479,7 +1009,7 @@
           <h2>Detailed Scenario Matrix & Operation Groups</h2>
           <p>Multi-select scenarios, filter by operation groups or tags, and execute custom test batches</p>
         </div>
-        <div class="matrix-filters flex-wrap gap-2">
+        <div class="matrix-filters">
           <input type="text" id="scenario-search" class="search-input" placeholder="Search scenarios, tags, keywords, operation group...">
           <select id="scenario-suite-filter" class="custom-select">
             <option value="all">All Suites</option>
@@ -511,7 +1041,7 @@
       </section>
 
       <!-- Operation Group Quick Filter Bar -->
-      <div class="flex items-center gap-2 overflow-x-auto py-2 px-1 text-xs" id="scenario-group-quick-pills">
+      <div class="scenario-group-pills-bar text-xs" id="scenario-group-quick-pills">
         <button class="filter-pill active" data-opgroup="all">All Operations</button>
         <button class="filter-pill" data-opgroup="Bulk Action Toolbar (All Context)">Bulk Action Toolbar (All)</button>
         <button class="filter-pill" data-opgroup="Bulk Action Toolbar (Account Context)">Bulk Action Toolbar (Account)</button>
@@ -551,7 +1081,7 @@
             <div>
               <div class="flex items-center gap-2">
                 <h2 class="text-base font-bold text-slate-100" id="canvas-active-suite-title">No Active Test Execution</h2>
-                <span class="badge badge-env text-xs" id="canvas-env-badge">SIT - STG 2</span>
+                <span class="badge badge-env cat-dev text-xs" id="canvas-env-badge">Azure FrontDoor (CMPaaS)</span>
                 <span class="badge badge-pass text-xs" id="canvas-status-badge">STANDBY</span>
               </div>
               <p class="text-xs text-slate-400 mt-0.5" id="canvas-active-subtitle">Select a module or scenario from the dashboard or matrix to start live visual execution</p>
@@ -595,6 +1125,24 @@
         <!-- Overall Canvas Progress Bar -->
         <div class="canvas-progress-track mt-3">
           <div class="canvas-progress-bar" id="canvas-progress-bar" style="width: 0%;"></div>
+        </div>
+      </section>
+
+      <!-- PARALLEL WORKER CONCURRENCY SWIMLANES GRID -->
+      <section class="worker-swimlanes-container glass-card mb-4 p-4 rounded-xl border border-slate-700/60" id="worker-swimlanes-section">
+        <div class="worker-swimlanes-header flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="live-pulse-icon">🏎️</span>
+            <h3 class="text-xs font-bold tracking-wider text-cyan-400 uppercase">PARALLEL WORKER GRID (<span id="canvas-workers-count-label">4</span> ACTIVE THREADS)</h3>
+            <span class="badge badge-pass text-xs" id="canvas-concurrency-badge">4x Concurrency</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-slate-400 font-mono" id="canvas-speedup-est">⚡ Concurrency Efficiency: ~72% faster</span>
+            <span class="badge badge-health-online text-xs font-mono" id="canvas-pool-status">Workers Online</span>
+          </div>
+        </div>
+        <div class="worker-swimlanes-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="worker-swimlanes-grid">
+          <!-- Dynamically populated with worker thread cards -->
         </div>
       </section>
 
@@ -653,7 +1201,7 @@
             <div class="space-y-2 text-xs">
               <div class="flex justify-between text-slate-400">
                 <span>Target Cluster:</span>
-                <span class="text-slate-200 font-medium" id="canvas-diag-env">SIT - STG 2</span>
+                <span class="text-slate-200 font-medium" id="canvas-diag-env">Azure FrontDoor (CMPaaS)</span>
               </div>
               <div class="flex justify-between text-slate-400">
                 <span>Network Protocol:</span>
@@ -752,6 +1300,15 @@
             <span class="terminal-title-text">Underlying Shell Stream (Raw Diagnostics)</span>
           </div>
           <div class="terminal-actions">
+            <div class="terminal-log-level-wrapper flex items-center gap-1.5">
+              <span class="text-xs text-slate-400 font-mono">Verbosity:</span>
+              <select id="terminal-log-level-select" class="terminal-level-select" title="Set test logging verbosity level">
+                <option value="DEBUG">DEBUG (Deep Tracing)</option>
+                <option value="INFO" selected>INFO (Standard)</option>
+                <option value="WARN">WARN</option>
+                <option value="ERROR">ERROR</option>
+              </select>
+            </div>
             <label class="switch-container compact">
               <input type="checkbox" id="autoscroll-toggle" checked>
               <span class="switch-slider"></span>
@@ -759,9 +1316,10 @@
             </label>
             <button id="clear-logs-btn" class="btn btn-secondary btn-sm">Clear</button>
             <button id="download-logs-btn" class="btn btn-secondary btn-sm">Download</button>
+            <button id="expand-terminal-btn" class="btn btn-secondary btn-sm" title="Toggle Full Height Terminal"><span>⛶ Expand</span></button>
           </div>
         </div>
-        <pre class="terminal-body" id="terminal-body" style="max-height: 220px;">
+        <pre class="terminal-body" id="terminal-body">
 <span class="log-system">[SYSTEM] Live Execution Canvas Ready.</span>
         </pre>
       </div>
@@ -804,6 +1362,7 @@
               <option value="">All Environments</option>
             </select>
             <button id="history-compare-btn" class="btn btn-primary" onclick="window.toggleHistoryDiffModal()">⚖️ Compare Runs (Diff)</button>
+            <button id="history-download-standalone-btn" class="btn btn-secondary" onclick="window.downloadStandaloneAllure()" title="Download single-file standalone Allure report (HTML) for offline auditing">📥 Standalone HTML</button>
             <button id="export-history-csv-btn" class="btn btn-secondary">📥 Export CSV</button>
             <button id="export-history-json-btn" class="btn btn-secondary">Export JSON</button>
           </div>
@@ -851,18 +1410,19 @@
         </div>
 
         <div class="history-table-wrapper glass-card">
-          <table class="scenarios-table">
+          <table class="scenarios-table history-dense-table">
             <thead>
               <tr>
-                <th width="110">Run ID</th>
-                <th width="140">Timestamp</th>
-                <th width="120">Environment</th>
-                <th>Target Suite / Test</th>
-                <th width="80">Browser</th>
-                <th width="90">Duration</th>
-                <th width="120">Results</th>
-                <th width="95">Status</th>
-                <th width="140">Deep Diagnostics</th>
+                <th style="width: 140px;">Execution ID</th>
+                <th style="width: 105px;">Timestamp</th>
+                <th style="width: 170px;">Environment</th>
+                <th style="width: 180px;">Target Suite / Test</th>
+                <th>Created Resources & Accounts</th>
+                <th style="width: 85px;">Engine</th>
+                <th style="width: 75px;">Duration</th>
+                <th style="width: 95px;">Results</th>
+                <th style="width: 105px;">Status</th>
+                <th style="width: 195px;">Reports & Evidence</th>
               </tr>
             </thead>
             <tbody id="history-table-body">
@@ -874,20 +1434,27 @@
     </div>
 
     <!-- TAB 6: SCREENSHOTS & ARTIFACTS GALLERY (SEARCHABLE BY TEST NAME) -->
+    <!-- TAB 5: ARTIFACTS, DEEP TRACES & VIDEO STUDIO -->
     <div id="tab-content-gallery" class="tab-content">
       <section class="section-container">
         <div class="section-header">
           <div>
-            <h2 class="section-title">Captured Visual Artifacts & Screenshots</h2>
-            <p class="section-subtitle">High-resolution viewport captures and step inspection images tagged with test case IDs</p>
+            <h2 class="section-title">Execution Artifacts, Deep Traces & Video Recordings</h2>
+            <p class="section-subtitle">Inspect recorded Playwright time-travel traces (.zip), WebM action playback videos, and DOM screenshots</p>
           </div>
-          <div class="header-btns" style="display: flex; gap: 10px; align-items: center;">
-            <input type="text" id="gallery-search-input" class="form-input" placeholder="🔍 Search artifacts by Test ID (e.g. TC_SUB_001, TC_ACC)..." style="width: 320px;">
-            <button id="refresh-gallery-btn" class="btn btn-secondary btn-sm">🔄 Refresh Gallery</button>
+          <div class="header-btns" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <div class="artifact-type-pills" id="artifact-type-filter-pills">
+              <button class="filter-pill active" data-type="all">All Artifacts (<span id="count-artifact-all">0</span>)</button>
+              <button class="filter-pill" data-type="screenshot">📸 Screenshots (<span id="count-artifact-screenshots">0</span>)</button>
+              <button class="filter-pill" data-type="trace">🔍 Deep Traces (<span id="count-artifact-traces">0</span>)</button>
+              <button class="filter-pill" data-type="video">🎥 Videos (<span id="count-artifact-videos">0</span>)</button>
+            </div>
+            <input type="text" id="gallery-search-input" class="form-input" placeholder="🔍 Search by Test ID, name..." style="width: 240px;">
+            <button id="refresh-gallery-btn" class="btn btn-secondary btn-sm">🔄 Refresh</button>
           </div>
         </div>
         <div class="gallery-grid" id="gallery-container">
-          <div class="empty-state">No screenshots captured yet. Execute a test suite to view artifacts.</div>
+          <div class="empty-state">No execution artifacts captured yet. Run a test suite to view artifacts.</div>
         </div>
       </section>
     </div>
@@ -901,7 +1468,7 @@
             <p class="section-subtitle">Deep network diagnostics: inspect payload bodies, response codes, latency breakdown, headers, and failure traces</p>
           </div>
           <div class="header-btn-group">
-            <a href="/api/telemetry/export" download="wdh-opentelemetry-spans.json" class="btn btn-secondary btn-sm" title="Export OpenTelemetry standard span JSON">📦 Export OTel Traces</a>
+            <a href="/api/telemetry/export" download="iothub-opentelemetry-spans.json" class="btn btn-secondary btn-sm" title="Export OpenTelemetry standard span JSON">📦 Export OTel Traces</a>
             <button id="clear-perf-btn" class="btn btn-secondary btn-sm" title="Clear Performance Records">🗑️ Clear Metrics</button>
             <button id="refresh-perf-btn" class="btn btn-primary btn-sm">🔄 Refresh Telemetry</button>
           </div>
@@ -946,15 +1513,15 @@
         <!-- Phase 3: OpenTelemetry Time-Series & Percentile Analytics Hub -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <!-- Left 2 Cols: Interactive Latency Time-Series & OTel Scatter Plot -->
-          <div class="lg:col-span-2 bg-slate-900/90 border border-slate-700/60 rounded-xl p-5 shadow-xl backdrop-blur-md">
-            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+          <div class="lg:col-span-2 telemetry-panel rounded-xl p-5 shadow-xl backdrop-blur-md">
+            <div class="flex items-center justify-between pb-3 mb-3 border-b telemetry-header-border">
               <div class="flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></span>
-                <h3 class="text-sm font-semibold text-slate-100 tracking-wide">OpenTelemetry Latency Waterfall & Time-Series</h3>
+                <h3 class="text-sm font-semibold tracking-wide telemetry-title">OpenTelemetry Latency Waterfall & Time-Series</h3>
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-xs px-2.5 py-1 rounded bg-slate-800 text-cyan-300 font-mono" id="otel-p95-badge">P95: -- ms</span>
-                <span class="text-xs px-2.5 py-1 rounded bg-slate-800 text-rose-300 font-mono" id="otel-anomaly-badge">0 Anomalies</span>
+                <span class="text-xs px-2.5 py-1 rounded font-mono telemetry-badge" id="otel-p95-badge">P95: -- ms</span>
+                <span class="text-xs px-2.5 py-1 rounded font-mono telemetry-badge" id="otel-anomaly-badge">0 Anomalies</span>
               </div>
             </div>
             <div class="h-64 relative w-full">
@@ -963,55 +1530,55 @@
           </div>
 
           <!-- Right 1 Col: Percentiles Distribution & Protocol Breakdown -->
-          <div class="bg-slate-900/90 border border-slate-700/60 rounded-xl p-5 shadow-xl backdrop-blur-md flex flex-col justify-between">
+          <div class="telemetry-panel rounded-xl p-5 shadow-xl backdrop-blur-md flex flex-col justify-between">
             <div>
-              <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+              <div class="flex items-center justify-between pb-3 mb-3 border-b telemetry-header-border">
                 <div class="flex items-center gap-2">
                   <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
-                  <h3 class="text-sm font-semibold text-slate-100 tracking-wide">Percentile Latency SLA</h3>
+                  <h3 class="text-sm font-semibold tracking-wide telemetry-title">Percentile Latency SLA</h3>
                 </div>
-                <span class="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Distribution</span>
+                <span class="text-[11px] uppercase tracking-wider font-semibold telemetry-subtitle">Distribution</span>
               </div>
 
               <!-- Percentile Badges Grid -->
               <div class="grid grid-cols-2 gap-3 mb-4">
-                <div class="p-2.5 rounded-lg bg-slate-800/80 border border-slate-700/50">
-                  <div class="text-[11px] text-slate-400 font-medium">p50 (Median)</div>
-                  <div class="text-lg font-bold text-emerald-400 font-mono mt-0.5" id="p50-val">0 ms</div>
-                  <div class="text-[10px] text-slate-400">50% faster than this</div>
+                <div class="p-2.5 rounded-lg percentile-box">
+                  <div class="text-[11px] font-medium percentile-label">p50 (Median)</div>
+                  <div class="text-lg font-bold font-mono mt-0.5 percentile-val val-p50" id="p50-val">0 ms</div>
+                  <div class="text-[10px] percentile-sub">50% faster than this</div>
                 </div>
-                <div class="p-2.5 rounded-lg bg-slate-800/80 border border-slate-700/50">
-                  <div class="text-[11px] text-slate-400 font-medium">p90 (Standard)</div>
-                  <div class="text-lg font-bold text-cyan-400 font-mono mt-0.5" id="p90-val">0 ms</div>
-                  <div class="text-[10px] text-slate-400">90% faster than this</div>
+                <div class="p-2.5 rounded-lg percentile-box">
+                  <div class="text-[11px] font-medium percentile-label">p90 (Standard)</div>
+                  <div class="text-lg font-bold font-mono mt-0.5 percentile-val val-p90" id="p90-val">0 ms</div>
+                  <div class="text-[10px] percentile-sub">90% faster than this</div>
                 </div>
-                <div class="p-2.5 rounded-lg bg-slate-800/80 border border-slate-700/50">
-                  <div class="text-[11px] text-slate-400 font-medium">p95 (Tail Latency)</div>
-                  <div class="text-lg font-bold text-amber-400 font-mono mt-0.5" id="p95-val">0 ms</div>
-                  <div class="text-[10px] text-slate-400">SLA threshold line</div>
+                <div class="p-2.5 rounded-lg percentile-box">
+                  <div class="text-[11px] font-medium percentile-label">p95 (Tail Latency)</div>
+                  <div class="text-lg font-bold font-mono mt-0.5 percentile-val val-p95" id="p95-val">0 ms</div>
+                  <div class="text-[10px] percentile-sub">SLA threshold line</div>
                 </div>
-                <div class="p-2.5 rounded-lg bg-slate-800/80 border border-slate-700/50">
-                  <div class="text-[11px] text-slate-400 font-medium">p99 (Peak Spike)</div>
-                  <div class="text-lg font-bold text-rose-400 font-mono mt-0.5" id="p99-val">0 ms</div>
-                  <div class="text-[10px] text-slate-400">Worst 1% latency</div>
+                <div class="p-2.5 rounded-lg percentile-box">
+                  <div class="text-[11px] font-medium percentile-label">p99 (Peak Spike)</div>
+                  <div class="text-lg font-bold font-mono mt-0.5 percentile-val val-p99" id="p99-val">0 ms</div>
+                  <div class="text-[10px] percentile-sub">Worst 1% latency</div>
                 </div>
               </div>
 
               <!-- HTTP Status & Method Pill Breakdown -->
-              <div class="border-t border-slate-800 pt-3">
-                <div class="text-xs text-slate-400 font-medium mb-2">HTTP Status Breakdown</div>
+              <div class="border-t telemetry-header-border pt-3">
+                <div class="text-xs font-semibold mb-2 telemetry-label">HTTP Status Breakdown</div>
                 <div class="flex items-center gap-2" id="otel-status-pill-row">
-                  <span class="flex-1 text-center py-1 rounded bg-emerald-950/60 border border-emerald-800/60 text-emerald-300 text-xs font-mono" id="status-2xx-count">2xx: 0</span>
-                  <span class="flex-1 text-center py-1 rounded bg-blue-950/60 border border-blue-800/60 text-blue-300 text-xs font-mono" id="status-3xx-count">3xx: 0</span>
-                  <span class="flex-1 text-center py-1 rounded bg-amber-950/60 border border-amber-800/60 text-amber-300 text-xs font-mono" id="status-4xx-count">4xx: 0</span>
-                  <span class="flex-1 text-center py-1 rounded bg-rose-950/60 border border-rose-800/60 text-rose-300 text-xs font-mono" id="status-5xx-count">5xx: 0</span>
+                  <span class="flex-1 text-center py-1 rounded text-xs font-mono font-semibold status-breakdown-pill pill-2xx" id="status-2xx-count">2xx: 0</span>
+                  <span class="flex-1 text-center py-1 rounded text-xs font-mono font-semibold status-breakdown-pill pill-3xx" id="status-3xx-count">3xx: 0</span>
+                  <span class="flex-1 text-center py-1 rounded text-xs font-mono font-semibold status-breakdown-pill pill-4xx" id="status-4xx-count">4xx: 0</span>
+                  <span class="flex-1 text-center py-1 rounded text-xs font-mono font-semibold status-breakdown-pill pill-5xx" id="status-5xx-count">5xx: 0</span>
                 </div>
               </div>
             </div>
 
-            <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-              <span>SDK: <strong class="text-slate-300">OpenTelemetry v2.4</strong></span>
-              <span id="otel-total-payload" class="font-mono text-cyan-300">Payload: 0 KB</span>
+            <div class="mt-4 pt-3 border-t telemetry-header-border flex items-center justify-between text-xs telemetry-footer">
+              <span>SDK: <strong class="telemetry-strong">OpenTelemetry v2.4</strong></span>
+              <span id="otel-total-payload" class="font-mono font-semibold telemetry-payload">Payload: 0 KB</span>
             </div>
           </div>
         </div>
@@ -1019,24 +1586,98 @@
         <!-- Performance Action Log & Redesigned Waterfall -->
         <div class="glass-card perf-card">
           <div class="perf-toolbar">
-            <div class="perf-search-box">
-              <input type="text" id="perf-search-input" class="form-input" placeholder="🔍 Search by action name, API path, query param, HTTP method...">
-            </div>
-            <div class="perf-filter-group">
-              <!-- Success / Failure Quick Filters -->
-              <div class="toggle-group perf-status-tabs" id="perf-status-filter-group">
-                <button class="toggle-btn active" data-status-filter="ALL">All APIs</button>
-                <button class="toggle-btn text-success" data-status-filter="SUCCESS">✅ Success (2xx/3xx)</button>
-                <button class="toggle-btn text-danger" data-status-filter="FAILURE">❌ Errors (4xx/5xx/Fail)</button>
+            <!-- Row 1: Search + Arrangement View Mode (Actions vs Endpoints vs Flat) + Sort Option -->
+            <div class="perf-toolbar-row perf-toolbar-main">
+              <div class="perf-search-box">
+                <input type="text" id="perf-search-input" class="form-input" placeholder="🔍 Search endpoint route, action name, query, GraphQL operation, or microservice...">
               </div>
-              <select id="perf-filter-rating" class="custom-select">
-                <option value="ALL">All Latency Ratings</option>
-                <option value="SLA_BREACH">🚨 SLA Regressions (&gt; 1,500ms)</option>
-                <option value="FAST">⚡ Fast (&lt; 500ms)</option>
-                <option value="ACCEPTABLE">🟡 Acceptable (500ms - 1.5s)</option>
-                <option value="SLOW">🟠 Slow (1.5s - 3s)</option>
-                <option value="CRITICAL">🔴 Critical (&gt; 3s)</option>
-              </select>
+
+              <!-- View Mode Toggle: Actions vs Endpoints vs Flat Waterfall -->
+              <div class="perf-view-mode-container">
+                <span class="perf-control-label">Arrange APIs:</span>
+                <div class="toggle-group" id="perf-view-mode-group">
+                  <button class="toggle-btn" data-view-mode="ACTIONS" title="Group by User Actions / UI clicks">🖱️ By Action</button>
+                  <button class="toggle-btn active" data-view-mode="ENDPOINTS" title="Arrange and aggregate by unique API Endpoint routes">🌐 By Endpoint</button>
+                  <button class="toggle-btn" data-view-mode="FLAT" title="Chronological Flat Waterfall of all network calls">📋 Flat Waterfall</button>
+                </div>
+              </div>
+
+              <!-- Sort Dropdown (for Endpoints & Waterfall) -->
+              <div class="perf-sort-container" id="perf-sort-wrapper">
+                <select id="perf-sort-select" class="custom-select" title="Sort APIs / Endpoints">
+                  <option value="COUNT_DESC">📊 Most Calls (High to Low)</option>
+                  <option value="LATENCY_DESC">⏱️ Slowest Avg Latency</option>
+                  <option value="MAX_LATENCY_DESC">🚨 Highest Spike Latency</option>
+                  <option value="ERROR_RATE_DESC">❌ Highest Error Rate</option>
+                  <option value="ENDPOINT_ASC">🔤 Endpoint Path (A-Z)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Row 2: Microservices Horizontal Pill Filter Bar -->
+            <div class="perf-toolbar-row perf-toolbar-ms">
+              <div class="perf-ms-header">
+                <span class="perf-control-label">Microservice:</span>
+              </div>
+              <div class="scenario-group-pills-bar perf-ms-pills-bar" id="perf-ms-pills">
+                <button class="filter-pill active" data-ms="ALL">🌐 All Services (<span id="ms-pill-count-all">0</span>)</button>
+                <button class="filter-pill" data-ms="iam">🔑 IAM & Keycloak (<span id="ms-pill-count-iam">0</span>)</button>
+                <button class="filter-pill" data-ms="graphql">⚡ GraphQL Gateway (<span id="ms-pill-count-graphql">0</span>)</button>
+                <button class="filter-pill" data-ms="subscriptions">📱 Subscriptions & SIMs (<span id="ms-pill-count-subscriptions">0</span>)</button>
+                <button class="filter-pill" data-ms="accounts">🏢 Accounts & Customers (<span id="ms-pill-count-accounts">0</span>)</button>
+                <button class="filter-pill" data-ms="billing">💳 Billing & Invoicing (<span id="ms-pill-count-billing">0</span>)</button>
+                <button class="filter-pill" data-ms="admin">🛡️ Admin & Security (<span id="ms-pill-count-admin">0</span>)</button>
+                <button class="filter-pill" data-ms="resources">🌐 Resources & Slices (<span id="ms-pill-count-resources">0</span>)</button>
+                <button class="filter-pill" data-ms="ordering">🛒 Ordering & Orders (<span id="ms-pill-count-ordering">0</span>)</button>
+                <button class="filter-pill" data-ms="diagnostics">🩺 Diagnostics & HLR (<span id="ms-pill-count-diagnostics">0</span>)</button>
+                <button class="filter-pill" data-ms="analytics">📊 Analytics & Telemetry (<span id="ms-pill-count-analytics">0</span>)</button>
+                <button class="filter-pill" data-ms="assets">📦 Static & Assets (<span id="ms-pill-count-assets">0</span>)</button>
+              </div>
+            </div>
+
+            <!-- Row 3: Secondary Filters (Status, Latency Rating, Microservice Select for compact, Active Summary) -->
+            <div class="perf-toolbar-row perf-toolbar-filters">
+              <div class="perf-filter-group">
+                <!-- Success / Failure Quick Filters -->
+                <div class="toggle-group perf-status-tabs" id="perf-status-filter-group">
+                  <button class="toggle-btn active" data-status-filter="ALL">All Statuses</button>
+                  <button class="toggle-btn text-success" data-status-filter="SUCCESS">✅ Success (2xx/3xx)</button>
+                  <button class="toggle-btn text-danger" data-status-filter="FAILURE">❌ Errors (4xx/5xx/Fail)</button>
+                </div>
+
+                <select id="perf-filter-rating" class="custom-select">
+                  <option value="ALL">All Latency Ratings</option>
+                  <option value="SLA_BREACH">🚨 SLA Regressions (&gt; 1,500ms)</option>
+                  <option value="FAST">⚡ Fast (&lt; 500ms)</option>
+                  <option value="ACCEPTABLE">🟡 Acceptable (500ms - 1.5s)</option>
+                  <option value="SLOW">🟠 Slow (1.5s - 3s)</option>
+                  <option value="CRITICAL">🔴 Critical (&gt; 3s)</option>
+                </select>
+
+                <select id="perf-filter-ms-select" class="custom-select">
+                  <option value="ALL">All Microservices (12)</option>
+                  <option value="iam">🔑 IAM & Keycloak</option>
+                  <option value="graphql">⚡ GraphQL Gateway</option>
+                  <option value="subscriptions">📱 Subscriptions & SIMs</option>
+                  <option value="accounts">🏢 Accounts & Customers</option>
+                  <option value="billing">💳 Billing & Invoicing</option>
+                  <option value="admin">🛡️ Admin & Security</option>
+                  <option value="resources">🌐 Resources & Slices</option>
+                  <option value="ordering">🛒 Ordering & Orders</option>
+                  <option value="diagnostics">🩺 Diagnostics & HLR</option>
+                  <option value="analytics">📊 Analytics & Telemetry</option>
+                  <option value="assets">📦 Static & Assets</option>
+                </select>
+
+                <button id="perf-reset-filters-btn" class="btn btn-secondary btn-sm" title="Clear all active filters">
+                  <span>↺ Reset</span>
+                </button>
+              </div>
+
+              <!-- Active Status / Results Counter -->
+              <div class="perf-summary-badge" id="perf-summary-badge">
+                <span class="badge" id="perf-results-counter">Arranging...</span>
+              </div>
             </div>
           </div>
 
@@ -1152,6 +1793,12 @@
             <button class="report-sub-tab" data-report="traces">🔍 Deep Traces Archive</button>
           </div>
           <div class="report-header-actions">
+            <button id="regenerate-allure-btn" class="btn btn-secondary btn-sm" onclick="window.regenerateAllureReport()" title="Recompile latest Allure results into fresh HTML report">
+              <span>⚡ Regenerate Allure</span>
+            </button>
+            <button id="download-standalone-allure-btn" class="btn btn-secondary btn-sm" onclick="window.downloadStandaloneAllure()" title="Download single-file self-contained HTML report that opens offline without a server">
+              <span>📥 Export Single HTML</span>
+            </button>
             <button id="dispatch-teams-btn" class="btn btn-secondary btn-sm" title="Dispatch Executive Summary to Microsoft Teams / Slack">
               <span>📢 Dispatch MS Teams</span>
             </button>
@@ -1215,7 +1862,7 @@
           <div class="form-group">
             <label class="form-label">Portal Base URL *</label>
             <div class="input-with-action">
-              <input type="url" id="env-form-url" class="form-input" placeholder="https://wdh-sitstg2.nokiawing.com" required>
+              <input type="url" id="env-form-url" class="form-input" placeholder="https://iothub-stage.domain.com" required>
               <button type="button" id="env-form-test-btn" class="btn btn-secondary btn-sm">Test Ping</button>
             </div>
             <div id="env-form-ping-result" class="ping-status-text hidden"></div>
@@ -1248,27 +1895,520 @@
       </div>
     </div>
 
-    <!-- MODAL 2: PROD SAFETY CONFIRMATION -->
-    <div id="prod-safety-modal" class="modal-overlay hidden">
-      <div class="modal-card glass-card modal-danger">
+    <!-- MODAL: REAL-TIME ENVIRONMENT HEALTH HUD & FLEET TELEMETRY -->
+    <div id="env-health-hud-modal" class="modal-overlay hidden">
+      <div class="modal-card glass-card hud-modal-card">
         <div class="modal-header">
-          <h3 class="modal-title">⚠️ Production Safety Warning</h3>
+          <div class="flex items-center gap-2">
+            <span class="text-xl">📡</span>
+            <h3 class="modal-title">Live Environment Health HUD & Fleet Telemetry</h3>
+          </div>
+          <button class="modal-close-btn" id="env-health-hud-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="hud-active-banner" id="hud-active-banner">
+            <!-- Populated via JS -->
+          </div>
+          <div class="hud-section-title">CONFIGURED FLEET ENDPOINTS & TELEMETRY</div>
+          <div class="hud-fleet-grid" id="hud-fleet-grid">
+            <!-- Dynamically populated cards -->
+          </div>
+        </div>
+        <div class="modal-footer flex items-center justify-between">
+          <div class="text-xs text-muted flex items-center gap-2">
+            <span class="pulse-dot"></span> Heartbeat auto-probes every 30s
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" id="hud-deep-probe-btn" class="btn btn-secondary btn-sm">⚡ Run Diagnostic Probe</button>
+            <button type="button" id="hud-close-btn" class="btn btn-primary btn-sm">Done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: PROD SAFETY GUARDRAIL & COMPLIANCE LOCK -->
+    <div id="prod-safety-modal" class="modal-overlay hidden">
+      <div class="modal-card glass-card modal-danger prod-guardrail-modal-card">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🛡️</span>
+            <h3 class="modal-title">Production Safety Guardrail Lock</h3>
+          </div>
           <button class="modal-close-btn" id="prod-safety-close">✕</button>
         </div>
         <div class="modal-body">
-          <div class="safety-warning-box">
-            <p>You are about to execute automated tests against a <strong>PROTECTED / PRODUCTION</strong> environment:</p>
-            <div class="safety-target-env" id="safety-env-target">PROD: https://wdh.nokiawing.com</div>
-            <p class="caution-note">Automated runs against Production may generate live records and affect billing telemetry. Please verify this action.</p>
+          <div class="safety-warning-box p-3.5 rounded-xl bg-rose-50 border border-rose-200">
+            <div class="flex items-center gap-2 text-rose-700 font-bold mb-1">
+              <span>⚠️ STRICT MUTATION LOCK ENGAGED</span>
+            </div>
+            <p class="text-xs text-rose-950 leading-relaxed">Target environment is flagged as <strong class="text-rose-700 font-bold">PROTECTED / PRODUCTION</strong>. All database mutating operations (Account creation, SIM provisioning, Resource allocation, Automation rules) are locked to protect live production telemetry.</p>
+            <div class="safety-target-env mt-2 bg-rose-100 border border-rose-200 text-rose-800 font-mono font-bold text-xs" id="safety-env-target">PROD: https://acmgr.prod.att.com</div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Type <strong>PROD</strong> to confirm execution:</label>
-            <input type="text" id="prod-confirm-input" class="form-input" placeholder="PROD">
+          
+          <div class="guardrail-policy-box mt-3 p-3.5 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-700">
+            <div class="font-bold text-slate-900 mb-1.5">Enforced Corporate Safety Policies:</div>
+            <ul class="list-disc pl-4 space-y-1 text-slate-700 font-medium">
+              <li><span class="text-emerald-700 font-bold">✅</span> Read-only Smoke & Diagnostic verification permitted.</li>
+              <li><span class="text-rose-600 font-bold">❌</span> Bulk suite runs & destructive tests blocked by API filter.</li>
+              <li><span class="text-blue-700 font-bold">🔐</span> Requires manual bypass authorization token to override lock.</li>
+            </ul>
           </div>
-          <div class="modal-actions">
+
+          <div class="form-group mt-3">
+            <label class="form-label text-xs text-slate-700 font-semibold">Enter Safety Bypass Token to Unlock Destructive Execution:</label>
+            <input type="text" id="prod-confirm-input" class="form-input font-mono text-sm bg-white border border-slate-300 text-slate-900" placeholder="CONFIRM-PROD-SAFETY-OVERRIDE">
+          </div>
+          <div class="modal-actions mt-4 flex items-center justify-end gap-2">
             <button type="button" id="prod-cancel-btn" class="btn btn-secondary">Cancel</button>
-            <button type="button" id="prod-proceed-btn" class="btn btn-danger" disabled>Proceed with Run</button>
+            <button type="button" id="prod-proceed-btn" class="btn btn-danger" disabled>Authorize & Run</button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: PRE-FLIGHT CONNECTIVITY & VPN REACHABILITY WARNING -->
+    <div id="vpn-warning-modal" class="modal-overlay hidden">
+      <div class="modal-card glass-card modal-warning">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">📡</span>
+            <h3 class="modal-title">Pre-Flight Connectivity & VPN Warning</h3>
+          </div>
+          <button class="modal-close-btn" id="vpn-warning-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="safety-warning-box p-3.5 rounded-xl bg-amber-50 border border-amber-200">
+            <div class="flex items-center gap-2 text-amber-800 font-bold mb-1">
+              <span>⚠️ TARGET ENVIRONMENT UNREACHABLE</span>
+            </div>
+            <p class="text-xs text-amber-950 leading-relaxed" id="vpn-warning-desc">
+              Target host is currently unresolvable via public DNS and requires an active <strong>AT&T Corporate VPN</strong> connection.
+            </p>
+            <div class="safety-target-env mt-2 bg-amber-100 border border-amber-200 text-amber-900 font-mono font-bold text-xs" id="vpn-target-env">
+              [DEV] AT&T Dev2 (ACM) (https://acmgr.dev2.azprv.3pc.att.com)
+            </div>
+          </div>
+          
+          <div class="guardrail-policy-box mt-3 p-3.5 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-700">
+            <div class="font-bold text-slate-900 mb-1.5">Recommended Actions:</div>
+            <ul class="list-disc pl-4 space-y-1 text-slate-700 font-medium">
+              <li>Connect your device to <strong>AT&T Global VPN / AnyConnect</strong> and retry.</li>
+              <li>Or switch to <strong>Azure FrontDoor (CMPaaS)</strong> which is public and currently reachable.</li>
+              <li>Or proceed anyway if your VPN connection was just established.</li>
+            </ul>
+          </div>
+
+          <div class="modal-actions mt-4 flex items-center justify-end gap-2">
+            <button type="button" id="vpn-switch-env-btn" class="btn btn-secondary">Switch to Azure FrontDoor</button>
+            <button type="button" id="vpn-proceed-btn" class="btn btn-primary">Proceed Anyway</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: SESSION PERSISTENCE & 100ms BOOTSTRAP MONITOR -->
+    <div id="auth-session-modal" class="modal-overlay hidden">
+      <div class="modal-card glass-card session-modal-card">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">⚡</span>
+            <h3 class="modal-title">Session Persistence & 100ms Parallel Worker Bootstrap</h3>
+          </div>
+          <button class="modal-close-btn" id="auth-session-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="session-benchmark-card">
+            <div class="benchmark-grid">
+              <div class="benchmark-item compare-old">
+                <span class="benchmark-label">Traditional Login Per Worker</span>
+                <span class="benchmark-val">~12,000ms</span>
+                <span class="benchmark-sub">Browser Keycloak DOM render waterfall</span>
+              </div>
+              <div class="benchmark-arrow">➔</div>
+              <div class="benchmark-item compare-new">
+                <span class="benchmark-label">WDH Persistent Session</span>
+                <span class="benchmark-val text-emerald-400">~85ms</span>
+                <span class="benchmark-sub">Instant BrowserContext injection (140x faster)</span>
+              </div>
+            </div>
+          </div>
+          <div class="session-details-grid mt-4" id="session-details-grid">
+            <!-- Populated via API -->
+          </div>
+        </div>
+        <div class="modal-footer flex items-center justify-between">
+          <span class="text-xs text-muted">Cached in: playwright/.auth/user.json</span>
+          <div class="flex items-center gap-2">
+            <button type="button" id="session-refresh-btn" class="btn btn-secondary btn-sm">🔄 Re-authenticate Fresh Session</button>
+            <button type="button" id="session-done-btn" class="btn btn-primary btn-sm">Done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: COLLISION-FREE UNIQUE TEST DATA ENGINE -->
+    <div id="data-engine-modal" class="modal-overlay hidden">
+      <div class="modal-card glass-card data-engine-modal-card">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🎲</span>
+            <h3 class="modal-title">Collision-Free Unique Test Data Engine</h3>
+          </div>
+          <button class="modal-close-btn" id="data-engine-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="data-formula-card p-4 rounded-xl bg-blue-50/60 border border-blue-200">
+            <div class="font-bold text-sm text-blue-700 mb-1">Mathematical Uniqueness Guarantee</div>
+            <div class="bg-white border border-blue-200/80 rounded-lg p-2.5 my-2 shadow-xs">
+              <code class="text-xs text-emerald-700 font-mono font-bold block">ATT_{ENTITY}_W{worker}_{timestamp36}_{sequence}_{rand4}</code>
+            </div>
+            <div class="text-xs text-slate-600 leading-relaxed">Monotonic clock + parallel worker index isolation (W0..W3) + atomic sequence counter guarantees <strong class="text-slate-900">0.00% database constraint collisions</strong> across concurrent test workers.</div>
+          </div>
+          <div class="live-generator-interactive mt-4">
+            <h4 class="text-sm font-bold text-slate-800 mb-2">Interactive Live Generator Test</h4>
+            <div class="flex items-center gap-2 mb-3">
+              <select id="data-gen-worker-select" class="form-select custom-select text-xs">
+                <option value="0">Worker 0 (W0)</option>
+                <option value="1">Worker 1 (W1)</option>
+                <option value="2">Worker 2 (W2)</option>
+                <option value="3">Worker 3 (W3)</option>
+              </select>
+              <button id="data-gen-btn" class="btn btn-primary btn-sm">⚡ Generate Live Sample</button>
+            </div>
+            <div id="data-gen-output-box" class="data-gen-output-box p-3.5 rounded-xl bg-white border border-slate-200 font-mono text-xs text-slate-800 shadow-xs space-y-1.5 min-h-[100px]">
+              <div class="text-slate-500 italic">Click "Generate Live Sample" to test instant unique generator...</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer flex items-center justify-between">
+          <span class="text-xs text-muted">Enforced automatically in DataFactory & BasePage</span>
+          <button type="button" id="data-engine-done-btn" class="btn btn-primary btn-sm">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: PYTHON TELECOM DATA, CDR RATING & INVOICE RECONCILIATION -->
+    <div id="python-telecom-modal" class="modal-overlay hidden">
+      <div class="modal-card glass-card python-modal-card" style="max-width: 840px; width: 95%;">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">🐍</span>
+            <div>
+              <h3 class="modal-title font-bold text-base">Python Telecom Data & Invoice Auditor</h3>
+              <span class="text-xs text-muted" id="python-engine-status-sub">Python 3.14 • Pandas Vectorized Engine • ISO/IEC 7812 Compliant</span>
+            </div>
+          </div>
+          <button class="modal-close-btn" id="python-modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <!-- Python Modal Tabs -->
+          <div class="flex items-center gap-2 border-b pb-2 mb-4" id="python-modal-tabs">
+            <button class="btn btn-sm btn-secondary active-subtab" data-ptab="sims">📱 Bulk SIM & eSIM Generator</button>
+            <button class="btn btn-sm btn-secondary" data-ptab="cdr">📊 CDR Rating Math Engine</button>
+            <button class="btn btn-sm btn-secondary" data-ptab="invoice">🧾 Invoice & Tax Reconciler</button>
+          </div>
+
+          <!-- SUBTAB 1: BULK SIM GENERATOR -->
+          <div id="ptab-content-sims" class="ptab-content">
+            <div class="bg-slate-50 p-3 rounded-lg border mb-3 flex items-center justify-between">
+              <div>
+                <strong class="text-sm">ISO/IEC 7812 Luhn Checksum & GSMA eSIM Generator</strong>
+                <p class="text-xs text-muted">Generates collision-free ICCID, IMSI, and eSIM LPA activation codes for portal bulk orders.</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <select id="python-sim-count" class="form-input text-xs" style="width: 100px;">
+                  <option value="10">10 SIMs</option>
+                  <option value="50" selected>50 SIMs</option>
+                  <option value="100">100 SIMs</option>
+                  <option value="500">500 SIMs</option>
+                </select>
+                <button id="python-run-sims-btn" class="btn btn-primary btn-sm">⚡ Generate Batch</button>
+              </div>
+            </div>
+            <div id="python-sims-result-container" class="hidden">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-semibold text-emerald-600" id="python-sims-summary-text">✓ 50 SIMs Generated with Valid Luhn Checksums</span>
+                <a id="python-sims-download-btn" href="#" class="btn btn-secondary btn-sm" download>📥 Download CSV</a>
+              </div>
+              <div class="table-container" style="max-height: 240px; overflow-y: auto;">
+                <table class="data-table text-xs w-full" id="python-sims-table">
+                  <thead>
+                    <tr>
+                      <th>ICCID (Luhn Valid)</th>
+                      <th>IMSI</th>
+                      <th>Type</th>
+                      <th>MSISDN</th>
+                      <th>Rate Plan</th>
+                      <th>LPA Activation Code</th>
+                    </tr>
+                  </thead>
+                  <tbody id="python-sims-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUBTAB 2: CDR RATING ENGINE -->
+          <div id="ptab-content-cdr" class="ptab-content hidden">
+            <div class="bg-slate-50 p-3 rounded-lg border mb-3 flex items-center justify-between">
+              <div>
+                <strong class="text-sm">High-Throughput CDR Rating & Tariff Math Engine</strong>
+                <p class="text-xs text-muted">Evaluates tiered data quotas, international roaming multipliers, and flags billing discrepancies.</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <select id="python-cdr-count" class="form-input text-xs" style="width: 110px;">
+                  <option value="50">50 Records</option>
+                  <option value="150" selected>150 Records</option>
+                  <option value="500">500 Records</option>
+                </select>
+                <button id="python-run-cdr-btn" class="btn btn-primary btn-sm">⚡ Run CDR Audit</button>
+              </div>
+            </div>
+            <div id="python-cdr-result-container" class="hidden">
+              <div class="grid grid-cols-4 gap-2 mb-3" id="python-cdr-kpis">
+                <!-- Dynamically populated KPI cards -->
+              </div>
+              <div class="table-container" style="max-height: 200px; overflow-y: auto;">
+                <table class="data-table text-xs w-full">
+                  <thead>
+                    <tr>
+                      <th>Record ID</th>
+                      <th>Service</th>
+                      <th>Usage</th>
+                      <th>Billed ($)</th>
+                      <th>Expected ($)</th>
+                      <th>Variance ($)</th>
+                      <th>Audit Verdict</th>
+                    </tr>
+                  </thead>
+                  <tbody id="python-cdr-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUBTAB 3: INVOICE RECONCILER -->
+          <div id="ptab-content-invoice" class="ptab-content hidden">
+            <div class="bg-slate-50 p-3 rounded-lg border mb-3 flex items-center justify-between">
+              <div>
+                <strong class="text-sm">Enterprise Invoice & Tax Checksum Auditor</strong>
+                <p class="text-xs text-muted">Audits subtotal formulas, VAT/GST tax rates, credit notes, and cross-reconciles against CDR ledgers.</p>
+              </div>
+              <button id="python-run-invoice-btn" class="btn btn-primary btn-sm">⚡ Reconcile Current Invoice</button>
+            </div>
+            <div id="python-invoice-result-container" class="hidden">
+              <div id="python-invoice-verdict-banner" class="p-3 rounded-lg mb-3 flex items-center justify-between"></div>
+              <div id="python-invoice-breakdown" class="grid grid-cols-2 gap-3 text-xs"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer flex items-center justify-between">
+          <span class="text-xs text-muted">Python Service: python-services/cli.py • CLI & JSON Bridge Active</span>
+          <button type="button" class="btn btn-secondary btn-sm" id="python-modal-footer-close">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: OPTION B - SELF-HEALING LOCATORS & RESILIENT POM ENGINE -->
+    <div id="self-healing-modal" class="modal-overlay hidden">
+      <div class="modal-card glass-card" style="max-width: 860px; width: 95%;">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">🔮</span>
+            <div>
+              <h3 class="modal-title font-bold text-base">Self-Healing Locators & Heuristic POM Engine</h3>
+              <span class="text-xs text-muted">Option B • Multi-Tier Fallback • Fuzzy Text Matching • Dynamic DOM Heuristics</span>
+            </div>
+          </div>
+          <button class="modal-close-btn" id="self-healing-modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="grid grid-cols-4 gap-3 mb-4">
+            <div class="p-3 bg-slate-50 border rounded-lg text-center">
+              <span class="text-xs text-muted block">Total Lookups</span>
+              <strong class="text-xl text-slate-800" id="sh-stat-lookups">0</strong>
+            </div>
+            <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-center">
+              <span class="text-xs text-emerald-700 block">Healed Locators</span>
+              <strong class="text-xl text-emerald-700" id="sh-stat-healed">0</strong>
+            </div>
+            <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
+              <span class="text-xs text-blue-700 block">Recovery Rate</span>
+              <strong class="text-xl text-blue-700" id="sh-stat-rate">100%</strong>
+            </div>
+            <div class="p-3 bg-purple-50 border border-purple-200 rounded-lg text-center">
+              <span class="text-xs text-purple-700 block">Active Learned Patches</span>
+              <strong class="text-xl text-purple-700" id="sh-stat-patches">0</strong>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between mb-3 bg-slate-100 p-2.5 rounded-lg border">
+            <div>
+              <strong class="text-xs text-slate-700">Self-Healing Heuristic Simulation</strong>
+              <p class="text-[11px] text-muted">Simulate a sudden UI selector change or DOM refactor to observe real-time recovery.</p>
+            </div>
+            <button id="sh-simulate-btn" class="btn btn-primary btn-sm">⚡ Simulate UI Refactor & Heal</button>
+          </div>
+
+          <div class="table-container" style="max-height: 280px; overflow-y: auto;">
+            <table class="data-table text-xs w-full" id="sh-table">
+              <thead>
+                <tr>
+                  <th>Component / Target</th>
+                  <th>Original Broken Selector</th>
+                  <th>Auto-Healed Replacement</th>
+                  <th>Strategy</th>
+                  <th>Confidence</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="sh-tbody">
+                <tr><td colspan="6" class="text-center py-4 text-muted">Loading self-healing ledger...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer flex items-center justify-between">
+          <span class="text-xs text-muted">Healed registry saved in reports/self-healing/healed-registry.json</span>
+          <button type="button" class="btn btn-secondary btn-sm" id="self-healing-modal-footer-close">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: OPTION C - IN-FLIGHT API CONTRACT DRIFT SNIFFER -->
+    <div id="contract-drift-modal" class="modal-overlay hidden">
+      <div class="modal-card glass-card" style="max-width: 880px; width: 95%;">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">📡</span>
+            <div>
+              <h3 class="modal-title font-bold text-base">In-Flight API Contract Drift Sniffer</h3>
+              <span class="text-xs text-muted">Option C • Passive Network Sniffing • Schema Drift Detection • Latency SLA Auditing</span>
+            </div>
+          </div>
+          <button class="modal-close-btn" id="contract-drift-modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="grid grid-cols-4 gap-3 mb-4">
+            <div class="p-3 bg-slate-50 border rounded-lg text-center">
+              <span class="text-xs text-muted block">APIs Monitored</span>
+              <strong class="text-xl text-slate-800" id="drift-stat-inspected">0</strong>
+            </div>
+            <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-center">
+              <span class="text-xs text-emerald-700 block">Contract Health</span>
+              <strong class="text-xl text-emerald-700" id="drift-stat-health">100%</strong>
+            </div>
+            <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-center">
+              <span class="text-xs text-red-700 block">Critical Breaches</span>
+              <strong class="text-xl text-red-700" id="drift-stat-critical">0</strong>
+            </div>
+            <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-center">
+              <span class="text-xs text-amber-700 block">SLA Warnings</span>
+              <strong class="text-xl text-amber-700" id="drift-stat-warnings">0</strong>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between mb-3 bg-slate-100 p-2.5 rounded-lg border">
+            <div>
+              <strong class="text-xs text-slate-700">Contract Verification Diagnostics</strong>
+              <p class="text-[11px] text-muted">Passively captures live REST/GraphQL responses to detect schema mutations or missing fields.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="drift-clear-btn" class="btn btn-secondary btn-sm">🗑️ Clear Audit</button>
+              <button id="drift-simulate-btn" class="btn btn-primary btn-sm">⚡ Simulate In-Flight Drift</button>
+            </div>
+          </div>
+
+          <div class="table-container" style="max-height: 280px; overflow-y: auto;">
+            <table class="data-table text-xs w-full" id="drift-table">
+              <thead>
+                <tr>
+                  <th>Endpoint & Method</th>
+                  <th>Drift Classification</th>
+                  <th>Severity</th>
+                  <th>Latency</th>
+                  <th>Description & Contract Delta</th>
+                </tr>
+              </thead>
+              <tbody id="drift-tbody">
+                <tr><td colspan="5" class="text-center py-4 text-muted">Loading contract drift ledger...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer flex items-center justify-between">
+          <span class="text-xs text-muted">Contract audit saved in reports/contract-drift/drift-audit.json</span>
+          <button type="button" class="btn btn-secondary btn-sm" id="contract-drift-modal-footer-close">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: OPTION D - COLLISION-FREE TEST DATA TEARDOWN & QUARANTINE SWEEPER -->
+    <div id="sweeper-modal" class="modal-overlay hidden">
+      <div class="modal-card glass-card" style="max-width: 860px; width: 95%;">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">🧹</span>
+            <div>
+              <h3 class="modal-title font-bold text-base">Collision-Free Test Data Teardown & Quarantine Sweeper</h3>
+              <span class="text-xs text-muted">Option D • Automated Post-Test Cleanup • Seed Protection • Quarantine Sweeps</span>
+            </div>
+          </div>
+          <button class="modal-close-btn" id="sweeper-modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="grid grid-cols-4 gap-3 mb-4">
+            <div class="p-3 bg-slate-50 border rounded-lg text-center">
+              <span class="text-xs text-muted block">Total Tracked Entities</span>
+              <strong class="text-xl text-slate-800" id="sweeper-stat-total">0</strong>
+            </div>
+            <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
+              <span class="text-xs text-blue-700 block">Active Entities</span>
+              <strong class="text-xl text-blue-700" id="sweeper-stat-active">0</strong>
+            </div>
+            <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-center">
+              <span class="text-xs text-amber-700 block">Quarantined Test Data</span>
+              <strong class="text-xl text-amber-700" id="sweeper-stat-quarantined">0</strong>
+            </div>
+            <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-center">
+              <span class="text-xs text-emerald-700 block">Cleaned / Swept</span>
+              <strong class="text-xl text-emerald-700" id="sweeper-stat-swept">0</strong>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between mb-3 bg-slate-100 p-2.5 rounded-lg border">
+            <div>
+              <strong class="text-xs text-slate-700">Quarantine Sweep Controls</strong>
+              <p class="text-[11px] text-muted">Safe soft-delete of all ephemeral test accounts, SIM profiles, and mock orders generated in DEV.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="sweeper-preview-btn" class="btn btn-secondary btn-sm">👁️ Preview Sweep (Dry Run)</button>
+              <button id="sweeper-run-btn" class="btn btn-primary btn-sm">🧹 Execute Quarantine Sweep</button>
+            </div>
+          </div>
+
+          <div id="sweeper-result-banner" class="hidden p-3 rounded-lg border mb-3 flex items-center justify-between text-xs"></div>
+
+          <div class="table-container" style="max-height: 260px; overflow-y: auto;">
+            <table class="data-table text-xs w-full" id="sweeper-table">
+              <thead>
+                <tr>
+                  <th>Entity ID</th>
+                  <th>Type</th>
+                  <th>Created At</th>
+                  <th>Lifecycle Status</th>
+                  <th>Metadata</th>
+                </tr>
+              </thead>
+              <tbody id="sweeper-tbody">
+                <tr><td colspan="5" class="text-center py-4 text-muted">Loading tracked test entities...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer flex items-center justify-between">
+          <span class="text-xs text-muted">Active entities registry in reports/teardown/active_entities.json</span>
+          <button type="button" class="btn btn-secondary btn-sm" id="sweeper-modal-footer-close">Close</button>
         </div>
       </div>
     </div>
@@ -1682,12 +2822,12 @@
 
           <div class="form-group" id="dispatch-email-group">
             <label class="form-label">Recipient Email Address(es) *</label>
-            <input type="email" id="dispatch-recipient-email" class="form-input" placeholder="stakeholders@nokiawing.com, client-leads@partner.com" value="stakeholders@nokiawing.com">
+            <input type="email" id="dispatch-recipient-email" class="form-input" placeholder="stakeholders@iothub.com, client-leads@partner.com" value="stakeholders@iothub.com">
           </div>
 
           <div class="form-group hidden" id="dispatch-webhook-group">
             <label class="form-label">Webhook URL / Endpoint</label>
-            <input type="url" id="dispatch-webhook-url" class="form-input" placeholder="https://nokia.webhook.office.com/webhookb2/..." value="https://nokia.webhook.office.com/webhookb2/wdh-automation-channel">
+            <input type="url" id="dispatch-webhook-url" class="form-input" placeholder="https://iothub.webhook.office.com/webhookb2/..." value="https://iothub.webhook.office.com/webhookb2/automation-channel">
           </div>
 
           <div class="form-group">
@@ -1729,6 +2869,279 @@
         <button class="lightbox-close" id="lightbox-close" onclick="window.closeLightbox()" aria-label="Close Lightbox" title="Close Lightbox (Esc)">✕</button>
         <img id="lightbox-img" src="" alt="Screenshot Full View">
         <div class="lightbox-caption" id="lightbox-caption"></div>
+      </div>
+    </div>
+
+    <!-- MODAL: VIDEO EXECUTION PLAYBACK MODAL -->
+    <div id="video-player-modal" class="modal-overlay hidden" onclick="window.closeVideoModal(event)">
+      <div class="modal-card glass-card" style="max-width: 860px; width: 95%;" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">🎥</span>
+            <h3 class="modal-title" id="video-modal-title">Test Execution Video Playback</h3>
+          </div>
+          <button class="modal-close-btn" onclick="window.closeVideoModal()">✕</button>
+        </div>
+        <div class="modal-body p-3">
+          <video id="video-player-element" controls autoplay style="width: 100%; max-height: 520px; border-radius: 8px; background: #000;"></video>
+          <div class="flex items-center justify-between text-xs text-muted mt-2">
+            <span id="video-modal-filename">recording.webm</span>
+            <a id="video-modal-download" href="" download class="text-blue-400 hover:underline">⬇ Download Video</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE-OVER FAILURE TRIAGE & RCA DRAWER -->
+    <div id="failure-triage-backdrop" class="drawer-backdrop hidden" onclick="window.closeFailureDrawer()"></div>
+    <aside id="failure-triage-drawer" class="failure-drawer glass-card hidden" role="dialog" aria-modal="true">
+      <div class="drawer-header">
+        <div class="drawer-title-group">
+          <span class="badge badge-fail text-xs">FAILED TEST TRIAGE</span>
+          <span class="font-mono text-sm font-bold text-slate-100" id="drawer-scenario-id">TC_UNKNOWN</span>
+        </div>
+        <button class="drawer-close-btn" id="drawer-close-btn" onclick="window.closeFailureDrawer()" title="Close Drawer (Esc)">✕</button>
+      </div>
+      
+      <div class="drawer-scroll-body">
+        <!-- Test Overview -->
+        <div class="drawer-section">
+          <h3 class="drawer-test-title text-base font-semibold text-slate-100 mb-2" id="drawer-test-title">Test Name</h3>
+          <div class="flex flex-wrap items-center gap-2 mb-3">
+            <span class="badge badge-env" id="drawer-env-badge">Azure FrontDoor</span>
+            <span class="badge badge-secondary font-mono text-xs" id="drawer-browser-badge">Chromium</span>
+            <span class="badge badge-fail font-mono text-xs" id="drawer-duration-badge">Duration: 0.0s</span>
+          </div>
+        </div>
+
+        <!-- Error Summary -->
+        <div class="drawer-section">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="drawer-label text-xs font-bold text-rose-400 uppercase tracking-wider">ERROR SUMMARY</span>
+            <button class="btn-link text-xs text-slate-400 hover:text-slate-200" onclick="window.copyDrawerError()">📋 Copy Error</button>
+          </div>
+          <div class="drawer-code-box text-rose-300 font-mono text-xs" id="drawer-error-summary">
+            No active error recorded
+          </div>
+        </div>
+
+        <!-- Call Stack Snippet -->
+        <div class="drawer-section">
+          <span class="drawer-label text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1.5">FAILING CALL STACK</span>
+          <pre class="drawer-code-box text-slate-300 font-mono text-xs overflow-x-auto" id="drawer-call-stack">Waiting for test output...</pre>
+        </div>
+
+        <!-- Failure Screenshot Preview -->
+        <div class="drawer-section">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="drawer-label text-xs font-bold text-slate-400 uppercase tracking-wider">FAILURE SCREENSHOT CAPTURE</span>
+            <button id="drawer-zoom-img-btn" class="btn-link text-xs text-blue-400 hover:text-blue-300" onclick="window.zoomDrawerScreenshot()">🔍 Expand View</button>
+          </div>
+          <div class="drawer-screenshot-box" id="drawer-screenshot-box">
+            <img id="drawer-screenshot-img" src="" alt="Failure Screenshot" class="drawer-img hidden" onclick="window.zoomDrawerScreenshot()" />
+            <div id="drawer-screenshot-placeholder" class="text-xs text-slate-400 p-4 text-center">
+              <span>📷 Failure screenshot captured during execution</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI RCA Diagnostic Recommendation -->
+        <div class="drawer-section" id="drawer-rca-section">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="ai-rca-robot-icon text-sm">🤖</span>
+            <span class="drawer-label text-xs font-bold text-cyan-400 uppercase tracking-wider">AI ROOT CAUSE & FIX</span>
+          </div>
+          <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-700/50 text-xs text-slate-300 space-y-1.5">
+            <div id="drawer-rca-cause" class="text-slate-200">Analyzing failure pattern...</div>
+            <div id="drawer-rca-remedy" class="text-slate-400">Recommendation: Verify target endpoint availability and selector readiness.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Action Bar -->
+      <div class="drawer-footer">
+        <button id="drawer-rerun-btn" class="btn btn-primary btn-glow btn-sm flex-1" onclick="window.rerunDrawerScenario()">
+          <span>⚡ Re-Run Only This Scenario</span>
+        </button>
+        <button id="drawer-jira-btn" class="btn btn-secondary btn-sm" onclick="window.copyJiraBugReport()" title="Copy Bug Report formatted for Jira / Markdown">
+          <span>📋 Copy Jira Bug</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MODAL: RUN DETAILS & EXECUTED TEST CASES BREAKDOWN -->
+    <div id="run-details-modal" class="modal-overlay hidden" onclick="if(event.target===this) window.closeRunDetailsModal()">
+      <div class="modal-card glass-card run-details-modal-card" onclick="event.stopPropagation()">
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <div class="run-details-header-left">
+            <div class="run-details-icon-wrapper">🚀</div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="modal-title font-bold text-base" id="rd-run-id">RUN-XXXXXXXX-XXXXXX</h3>
+                <button class="copy-run-id-btn" title="Copy Run ID" onclick="navigator.clipboard.writeText(document.getElementById('rd-run-id').textContent); window.showToast('Copied Run ID')">📋</button>
+                <span class="badge" id="rd-status-badge">PASSED</span>
+                <span class="badge badge-env" id="rd-env-badge">AT&T DEV2</span>
+              </div>
+              <p class="suite-modal-sub" id="rd-subtitle">Target: Environment & Configuration | Engine: Chromium</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <a id="rd-allure-btn" href="#" target="_blank" class="btn btn-sm btn-allure-link" title="Open Allure Report for this Execution">
+              📊 Allure Report
+            </a>
+            <button id="rd-download-standalone-btn" class="btn btn-sm btn-secondary" onclick="window.downloadStandaloneAllure(currentRdRun?.runId)" title="Export self-contained standalone Allure report (HTML) for this execution">
+              📥 Standalone HTML
+            </button>
+            <button class="modal-close-btn" id="run-details-modal-close" onclick="window.closeRunDetailsModal()">✕</button>
+          </div>
+        </div>
+
+        <!-- Run Summary KPI Cards -->
+        <div class="run-details-summary-strip">
+          <div class="rd-kpi-card">
+            <span class="rd-kpi-label">TOTAL TESTS</span>
+            <span class="rd-kpi-val" id="rd-total-tests">0</span>
+          </div>
+          <div class="rd-kpi-card">
+            <span class="rd-kpi-label">PASSED</span>
+            <span class="rd-kpi-val text-success" id="rd-passed-tests">0</span>
+          </div>
+          <div class="rd-kpi-card">
+            <span class="rd-kpi-label">FAILED</span>
+            <span class="rd-kpi-val text-danger" id="rd-failed-tests">0</span>
+          </div>
+          <div class="rd-kpi-card">
+            <span class="rd-kpi-label">DURATION</span>
+            <span class="rd-kpi-val font-mono" id="rd-duration">0.0s</span>
+          </div>
+          <div class="rd-kpi-card">
+            <span class="rd-kpi-label">CREATED RESOURCES</span>
+            <span class="rd-kpi-val text-primary" id="rd-resources-count">0</span>
+          </div>
+          <div class="rd-kpi-card">
+            <span class="rd-kpi-label">STARTED AT</span>
+            <span class="rd-kpi-val rd-time-val" id="rd-start-time">--:--:--</span>
+          </div>
+        </div>
+
+        <!-- Created Resources Bar (if any) -->
+        <div id="rd-resources-container" class="rd-resources-container hidden">
+          <div class="rd-section-title">📦 Dynamic Entities & Accounts Created During This Run:</div>
+          <div class="entity-pill-list" id="rd-resources-list"></div>
+        </div>
+
+        <!-- Test Cases Search & Filter Toolbar -->
+        <div class="rd-toolbar">
+          <div class="rd-search-wrapper">
+            <span class="rd-search-icon">🔍</span>
+            <input type="text" id="rd-test-search" class="rd-search-input" placeholder="Search executed test cases by title, ID, spec file, or status..." oninput="window.filterRunDetailsTests(this.value)" />
+          </div>
+          <div class="rd-filter-tabs">
+            <button class="rd-filter-btn active" data-filter="all" onclick="window.setRunDetailsFilter('all')">All (<span id="rd-filter-count-all">0</span>)</button>
+            <button class="rd-filter-btn" data-filter="passed" onclick="window.setRunDetailsFilter('passed')">Passed (<span id="rd-filter-count-passed">0</span>)</button>
+            <button class="rd-filter-btn" data-filter="failed" onclick="window.setRunDetailsFilter('failed')">Failed (<span id="rd-filter-count-failed">0</span>)</button>
+          </div>
+        </div>
+
+        <!-- Test Cases Breakdown Table / List -->
+        <div class="modal-body run-details-body">
+          <div class="rd-tests-table-wrapper">
+            <table class="rd-tests-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">#</th>
+                  <th style="width: 105px;">Status</th>
+                  <th style="width: 125px;">Test ID</th>
+                  <th>Test Case Title & Spec File</th>
+                  <th style="width: 90px;">Duration</th>
+                  <th style="width: 140px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="rd-tests-tbody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer flex items-center justify-between">
+          <div style="font-size: 0.75rem; color: var(--text-dim);" id="rd-footer-info">
+            Showing all test cases executed for this run. Click any test to inspect error details & created resources.
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.closeRunDetailsModal()">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMMAND PALETTE MODAL (CMD + K) -->
+    <div id="command-palette-backdrop" class="palette-backdrop hidden" onclick="window.closeCommandPalette(event)">
+      <div class="command-palette glass-card" id="command-palette-card" onclick="event.stopPropagation()">
+        <div class="palette-header">
+          <span class="palette-icon">🔍</span>
+          <input type="text" id="palette-search-input" class="palette-input" placeholder="Search 288 scenarios, suites, environments, or actions (e.g. TC_AUTH, smoke, azure)..." autocomplete="off" spellcheck="false" />
+          <kbd class="palette-esc-badge" onclick="window.closeCommandPalette()">ESC</kbd>
+        </div>
+        <div class="palette-results-container" id="palette-results-list">
+          <!-- Populated dynamically with grouped results -->
+        </div>
+        <div class="palette-footer">
+          <div class="palette-shortcuts">
+            <span><kbd>↑</kbd><kbd>↓</kbd> to navigate</span>
+            <span><kbd>↵</kbd> to select</span>
+            <span><kbd>ESC</kbd> to close</span>
+          </div>
+          <span class="palette-meta-badge" id="palette-meta-badge">288 Test Scenarios Ready</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- FLOATING BATCH LAUNCHPAD DOCK (Appears when scenarios checked in Matrix) -->
+    <div id="matrix-batch-dock" class="matrix-batch-dock glass-card hidden">
+      <div class="batch-dock-info">
+        <div class="batch-count-orb" id="batch-dock-count">0</div>
+        <div>
+          <div class="batch-dock-title">Scenarios Selected</div>
+          <div class="batch-dock-sub" id="batch-dock-sub">Ready for 4x parallel execution</div>
+        </div>
+      </div>
+      <div class="batch-dock-actions">
+        <button class="btn btn-secondary btn-sm" id="batch-dock-clear-btn" onclick="window.clearBatchSelection()">Clear</button>
+        <button class="btn btn-primary btn-glow btn-sm" id="batch-dock-run-btn" onclick="window.triggerBatchRun()">
+          <span>⚡ Run Batch (<span id="batch-dock-workers-label">4</span>x Workers)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CENTER -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- ENTERPRISE IN-APP DIALOG SYSTEM (CONFIRM / ALERT / PROMPT) -->
+    <div id="app-dialog-overlay" class="modal-overlay app-dialog-overlay hidden" tabindex="-1" role="dialog" aria-modal="true">
+      <div class="modal-card glass-card app-dialog-card" id="app-dialog-card" onclick="event.stopPropagation()">
+        <div class="app-dialog-header">
+          <div class="app-dialog-icon-wrapper" id="app-dialog-icon">⚠️</div>
+          <div class="app-dialog-title-group">
+            <h3 class="app-dialog-title" id="app-dialog-title">Confirmation Required</h3>
+            <span class="app-dialog-badge badge" id="app-dialog-badge">ACTION REQUIRED</span>
+          </div>
+          <button class="modal-close-btn" id="app-dialog-close-btn" title="Dismiss dialog">✕</button>
+        </div>
+
+        <div class="app-dialog-body">
+          <p class="app-dialog-message" id="app-dialog-message"></p>
+          <div id="app-dialog-prompt-container" class="app-dialog-prompt-container hidden">
+            <input type="text" id="app-dialog-input" class="app-dialog-input" autocomplete="off" spellcheck="false" />
+          </div>
+        </div>
+
+        <div class="app-dialog-footer">
+          <button type="button" class="btn btn-secondary btn-sm" id="app-dialog-cancel-btn">Cancel</button>
+          <button type="button" class="btn btn-primary btn-sm" id="app-dialog-confirm-btn">Confirm</button>
+        </div>
       </div>
     </div>
   </div>

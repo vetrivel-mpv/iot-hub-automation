@@ -1,7 +1,7 @@
 {
-  "name": "wdh-portal-automation",
+  "name": "iot-hub-automation",
   "version": "1.0.0",
-  "description": "End-to-End Test Automation Framework for IoT Hub (WDH) Portal using Playwright and TypeScript",
+  "description": "End-to-End Test Automation Framework for IoT Hub Portal using Playwright and TypeScript",
   "main": "index.js",
   "scripts": {
     "app": "node server.js",
@@ -34,8 +34,8 @@
     "typescript",
     "e2e-testing",
     "pom",
-    "wdh",
-    "nokia-wing"
+    "iot-hub",
+    "automation"
   ],
   "author": "",
   "license": "ISC",

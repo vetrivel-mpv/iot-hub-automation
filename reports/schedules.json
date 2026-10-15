@@ -1,0 +1,44 @@
+[
+  {
+    "id": "SCHED-01",
+    "name": "Smoke Health Check (Hourly)",
+    "cron": "0 * * * *",
+    "suiteId": "auth",
+    "suiteName": "Authentication & Access",
+    "envId": "sit-stg2",
+    "envName": "SIT - STG 2",
+    "browser": "chromium",
+    "enabled": false,
+    "lastRun": "2026-09-26T07:13:53.224Z",
+    "lastStatus": "PASSED",
+    "nextRun": "Paused"
+  },
+  {
+    "id": "SCHED-02",
+    "name": "Nightly Full Regression Run",
+    "cron": "0 1 * * *",
+    "suiteId": "all",
+    "suiteName": "Full Regression Suite (176 Tests)",
+    "envId": "sit-stg2",
+    "envName": "SIT - STG 2",
+    "browser": "chromium",
+    "enabled": false,
+    "lastRun": "2026-09-25T08:13:53.226Z",
+    "lastStatus": "PASSED",
+    "nextRun": "Paused"
+  },
+  {
+    "id": "SCHED-03",
+    "name": "Pre-Deployment Gatekeeper (UAT)",
+    "cron": "0 */6 * * *",
+    "suiteId": "account_lifecycle",
+    "suiteName": "Account Creation & Activation Flow",
+    "envId": "uat-eur",
+    "envName": "UAT - Western Europe",
+    "browser": "chromium",
+    "enabled": false,
+    "lastRun": "2026-09-24T08:13:53.226Z",
+    "lastStatus": "FAILED",
+    "nextRun": "Paused"
+  }
+]

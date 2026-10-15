@@ -19,7 +19,7 @@ export class LoginPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    // Multi-selector fallbacks for IoT Hub Portal / Keycloak / Nokia SSO Form
+    // Multi-selector fallbacks for IoT Hub Portal / Keycloak / SSO Form
     this.usernameInput = page.locator(
       'input#username, input[name="username"], input[name="email"], input[type="email"], input[placeholder*="user" i], input[placeholder*="email" i], input[id*="user" i]'
     );
@@ -45,10 +45,10 @@ export class LoginPage extends BasePage {
       'a:has-text("Forgot Password"), a:has-text("Forgot your password"), a#forgot-password'
     );
     this.portalLogo = page.locator(
-      'img.logo, .navbar-brand img, .brand-logo, [alt*="WING" i], [alt*="Nokia" i], svg.logo'
+      'img.logo, .navbar-brand img, .brand-logo, [alt*="IoT Hub" i], [alt*="WING" i], svg.logo'
     );
     this.pageHeading = page.locator(
-      'h1, h2, .login-title, #kc-page-title, .auth-title, div:has-text("WING Hub")'
+      'h1, h2, .login-title, #kc-page-title, .auth-title, div:has-text("IoT Hub")'
     );
   }
 

@@ -1,5 +1,5 @@
 {
-  "activeEnvironmentId": "azure-fd",
+  "activeEnvironmentId": "sit-stg2",
   "environments": [
     {
       "id": "azure-fd",
@@ -9,10 +9,67 @@
       "description": "IoT Hub on Azure FrontDoor (CMPaaS)",
       "auth": {
         "username": "cmpaas-csp-user",
-        "password": "hMIscf751jLXncx"
+        "password": ""
+      },
+      "isDefault": false,
+      "isProtected": false,
+      "timeouts": {
+        "short": 5000,
+        "medium": 15000,
+        "long": 30000,
+        "pageLoad": 45000
+      }
+    },
+    {
+      "id": "att-dev2",
+      "name": "AT&T Dev2 (ACM)",
+      "category": "DEV",
+      "baseUrl": "https://acmgr.dev2.azprv.3pc.att.com",
+      "description": "AT&T Connection Manager Dev2 Environment",
+      "auth": {
+        "username": "vm7485",
+        "password": ""
+      },
+      "isDefault": false,
+      "isProtected": false,
+      "timeouts": {
+        "short": 5000,
+        "medium": 15000,
+        "long": 30000,
+        "pageLoad": 45000
+      }
+    },
+    {
+      "id": "sit-stg2",
+      "name": "SIT - STG 2 (IoT Hub)",
+      "category": "SIT",
+      "baseUrl": "https://wdh-sitstg2.nokiawing.com",
+      "description": "IoT Hub System Integration Stage 2",
+      "auth": {
+        "username": "vetrivel_m",
+        "password": ""
       },
       "isDefault": true,
       "isProtected": false,
+      "timeouts": {
+        "short": 5000,
+        "medium": 15000,
+        "long": 30000,
+        "pageLoad": 45000
+      }
+    },
+    {
+      "id": "prod-master",
+      "name": "Production Master (PROD)",
+      "category": "PROD",
+      "baseUrl": "https://iothub.nokiawing.com",
+      "description": "IoT Hub Enterprise Production Cluster (Write Protected)",
+      "auth": {
+        "username": "prod_auditor",
+        "password": ""
+      },
+      "isDefault": false,
+      "isProtected": true,
       "timeouts": {
         "short": 5000,
         "medium": 15000,

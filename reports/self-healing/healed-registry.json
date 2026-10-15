@@ -1,0 +1,4 @@
+{
+  "#btn-search-static-legacy": "#random_btn_3389",
+  "#create-account-old-v1": "[data-testid=\"create-account-btn\"]"
+}

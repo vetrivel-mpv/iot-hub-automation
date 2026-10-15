@@ -54,7 +54,7 @@ export function loadEnvironmentsRegistry(): EnvironmentsRegistry {
         description: 'IoT Hub System Integration 2',
         auth: {
           username: process.env.WDH_USERNAME || 'vetrivel_m',
-          password: process.env.WDH_PASSWORD || 'DH@328bEfrz2@pG',
+          password: process.env.WDH_PASSWORD || '',
         },
         isDefault: true,
       },

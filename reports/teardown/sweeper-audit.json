@@ -1,0 +1,556 @@
+[
+  {
+    "sweepId": "sweep_1791998363532_m595",
+    "timestamp": 1791998363534,
+    "dryRun": false,
+    "entitiesScanned": 27,
+    "entitiesSwept": 4,
+    "entitiesPreserved": 23,
+    "reclaimedEstimateKb": 16.8,
+    "sweptEntities": [
+      {
+        "id": "ent_1791998363529_ibvqh",
+        "type": "ACCOUNT",
+        "entityId": "wdh_sweep_target_corp_77"
+      },
+      {
+        "id": "ent_1791998363279_6todg",
+        "type": "ACCOUNT",
+        "entityId": "wdh_mock_customer_corp_99"
+      },
+      {
+        "id": "ent_1791998363078_vxspn",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W1_MV8DK2BP_002_M80B"
+      },
+      {
+        "id": "ent_1791998363077_dn5c9",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W0_MV8DK2BO_001_0GDG"
+      }
+    ],
+    "status": "COMPLETED"
+  },
+  {
+    "sweepId": "sweep_1791998363530_kuoi",
+    "timestamp": 1791998363530,
+    "dryRun": true,
+    "entitiesScanned": 27,
+    "entitiesSwept": 4,
+    "entitiesPreserved": 23,
+    "reclaimedEstimateKb": 16.8,
+    "sweptEntities": [
+      {
+        "id": "ent_1791998363529_ibvqh",
+        "type": "ACCOUNT",
+        "entityId": "wdh_sweep_target_corp_77"
+      },
+      {
+        "id": "ent_1791998363279_6todg",
+        "type": "ACCOUNT",
+        "entityId": "wdh_mock_customer_corp_99"
+      },
+      {
+        "id": "ent_1791998363078_vxspn",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W1_MV8DK2BP_002_M80B"
+      },
+      {
+        "id": "ent_1791998363077_dn5c9",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W0_MV8DK2BO_001_0GDG"
+      }
+    ],
+    "status": "DRY_RUN"
+  },
+  {
+    "sweepId": "sweep_1791998272667_gbwi",
+    "timestamp": 1791998272667,
+    "dryRun": false,
+    "entitiesScanned": 22,
+    "entitiesSwept": 4,
+    "entitiesPreserved": 18,
+    "reclaimedEstimateKb": 16.8,
+    "sweptEntities": [
+      {
+        "id": "ent_1791998272663_1s4h6",
+        "type": "ACCOUNT",
+        "entityId": "wdh_sweep_target_corp_77"
+      },
+      {
+        "id": "ent_1791998272065_hpr6u",
+        "type": "ACCOUNT",
+        "entityId": "wdh_mock_customer_corp_99"
+      },
+      {
+        "id": "ent_1791998271002_b449e",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W1_MV8DI39X_002_9QYI"
+      },
+      {
+        "id": "ent_1791998270976_u2lss",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W0_MV8DI396_001_QU0E"
+      }
+    ],
+    "status": "COMPLETED"
+  },
+  {
+    "sweepId": "sweep_1791998272664_s1m5",
+    "timestamp": 1791998272664,
+    "dryRun": true,
+    "entitiesScanned": 22,
+    "entitiesSwept": 4,
+    "entitiesPreserved": 18,
+    "reclaimedEstimateKb": 16.8,
+    "sweptEntities": [
+      {
+        "id": "ent_1791998272663_1s4h6",
+        "type": "ACCOUNT",
+        "entityId": "wdh_sweep_target_corp_77"
+      },
+      {
+        "id": "ent_1791998272065_hpr6u",
+        "type": "ACCOUNT",
+        "entityId": "wdh_mock_customer_corp_99"
+      },
+      {
+        "id": "ent_1791998271002_b449e",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W1_MV8DI39X_002_9QYI"
+      },
+      {
+        "id": "ent_1791998270976_u2lss",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W0_MV8DI396_001_QU0E"
+      }
+    ],
+    "status": "DRY_RUN"
+  },
+  {
+    "sweepId": "sweep_1791998267525_hkki",
+    "timestamp": 1791998267525,
+    "dryRun": false,
+    "entitiesScanned": 17,
+    "entitiesSwept": 4,
+    "entitiesPreserved": 13,
+    "reclaimedEstimateKb": 16.8,
+    "sweptEntities": [
+      {
+        "id": "ent_1791998267521_9fytz",
+        "type": "ACCOUNT",
+        "entityId": "wdh_sweep_target_corp_77"
+      },
+      {
+        "id": "ent_1791998267254_wj4lm",
+        "type": "ACCOUNT",
+        "entityId": "wdh_mock_customer_corp_99"
+      },
+      {
+        "id": "ent_1791998267013_nilgi",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W1_MV8DI079_002_K4KO"
+      },
+      {
+        "id": "ent_1791998267012_474hh",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W0_MV8DI078_001_64XM"
+      }
+    ],
+    "status": "COMPLETED"
+  },
+  {
+    "sweepId": "sweep_1791998267521_8bgi",
+    "timestamp": 1791998267521,
+    "dryRun": true,
+    "entitiesScanned": 17,
+    "entitiesSwept": 4,
+    "entitiesPreserved": 13,
+    "reclaimedEstimateKb": 16.8,
+    "sweptEntities": [
+      {
+        "id": "ent_1791998267521_9fytz",
+        "type": "ACCOUNT",
+        "entityId": "wdh_sweep_target_corp_77"
+      },
+      {
+        "id": "ent_1791998267254_wj4lm",
+        "type": "ACCOUNT",
+        "entityId": "wdh_mock_customer_corp_99"
+      },
+      {
+        "id": "ent_1791998267013_nilgi",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W1_MV8DI079_002_K4KO"
+      },
+      {
+        "id": "ent_1791998267012_474hh",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W0_MV8DI078_001_64XM"
+      }
+    ],
+    "status": "DRY_RUN"
+  },
+  {
+    "sweepId": "sweep_1791996834431_z3u7",
+    "timestamp": 1791996834431,
+    "dryRun": false,
+    "entitiesScanned": 12,
+    "entitiesSwept": 4,
+    "entitiesPreserved": 8,
+    "reclaimedEstimateKb": 16.8,
+    "sweptEntities": [
+      {
+        "id": "ent_1791996834427_4zzqd",
+        "type": "ACCOUNT",
+        "entityId": "wdh_sweep_target_corp_77"
+      },
+      {
+        "id": "ent_1791996834194_arjek",
+        "type": "ACCOUNT",
+        "entityId": "wdh_mock_customer_corp_99"
+      },
+      {
+        "id": "ent_1791996833947_d6yki",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W1_MV8CNAFV_002_YJO7"
+      },
+      {
+        "id": "ent_1791996833946_verqg",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W0_MV8CNAFT_001_OLV4"
+      }
+    ],
+    "status": "COMPLETED"
+  },
+  {
+    "sweepId": "sweep_1791996834428_yxx7",
+    "timestamp": 1791996834428,
+    "dryRun": true,
+    "entitiesScanned": 12,
+    "entitiesSwept": 4,
+    "entitiesPreserved": 8,
+    "reclaimedEstimateKb": 16.8,
+    "sweptEntities": [
+      {
+        "id": "ent_1791996834427_4zzqd",
+        "type": "ACCOUNT",
+        "entityId": "wdh_sweep_target_corp_77"
+      },
+      {
+        "id": "ent_1791996834194_arjek",
+        "type": "ACCOUNT",
+        "entityId": "wdh_mock_customer_corp_99"
+      },
+      {
+        "id": "ent_1791996833947_d6yki",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W1_MV8CNAFV_002_YJO7"
+      },
+      {
+        "id": "ent_1791996833946_verqg",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W0_MV8CNAFT_001_OLV4"
+      }
+    ],
+    "status": "DRY_RUN"
+  },
+  {
+    "sweepId": "sweep_1791996775374_lehe",
+    "timestamp": 1791996775374,
+    "dryRun": true,
+    "entitiesScanned": 7,
+    "entitiesSwept": 2,
+    "entitiesPreserved": 5,
+    "reclaimedEstimateKb": 8.4,
+    "sweptEntities": [
+      {
+        "id": "ent_1791996692871_xucl1",
+        "type": "ACCOUNT",
+        "entityId": "PROD_SEED_PRIMARY_OPERATOR_001"
+      },
+      {
+        "id": "ent_1791996596226_hyx0w",
+        "type": "ACCOUNT",
+        "entityId": "PROD_SEED_PRIMARY_OPERATOR_001"
+      }
+    ],
+    "status": "DRY_RUN"
+  },
+  {
+    "sweepId": "sweep_1791996693094_jf4w",
+    "timestamp": 1791996693094,
+    "dryRun": false,
+    "entitiesScanned": 7,
+    "entitiesSwept": 5,
+    "entitiesPreserved": 2,
+    "reclaimedEstimateKb": 21,
+    "sweptEntities": [
+      {
+        "id": "ent_1791996693092_st61p",
+        "type": "ACCOUNT",
+        "entityId": "wdh_sweep_target_corp_77"
+      },
+      {
+        "id": "ent_1791996692871_p6yxa",
+        "type": "ACCOUNT",
+        "entityId": "wdh_mock_customer_corp_99"
+      },
+      {
+        "id": "ent_1791996692684_sl5c9",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W1_MV8CK9FW_002_N26K"
+      },
+      {
+        "id": "ent_1791996692683_r0gyo",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W0_MV8CK9FV_001_H58W"
+      },
+      {
+        "id": "ent_1791996596225_orgbv",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W0_MV8CI70G_001_97I3"
+      }
+    ],
+    "status": "COMPLETED"
+  },
+  {
+    "sweepId": "sweep_1791996693092_5rjl",
+    "timestamp": 1791996693092,
+    "dryRun": true,
+    "entitiesScanned": 7,
+    "entitiesSwept": 5,
+    "entitiesPreserved": 2,
+    "reclaimedEstimateKb": 21,
+    "sweptEntities": [
+      {
+        "id": "ent_1791996693092_st61p",
+        "type": "ACCOUNT",
+        "entityId": "wdh_sweep_target_corp_77"
+      },
+      {
+        "id": "ent_1791996692871_p6yxa",
+        "type": "ACCOUNT",
+        "entityId": "wdh_mock_customer_corp_99"
+      },
+      {
+        "id": "ent_1791996692684_sl5c9",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W1_MV8CK9FW_002_N26K"
+      },
+      {
+        "id": "ent_1791996692683_r0gyo",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W0_MV8CK9FV_001_H58W"
+      },
+      {
+        "id": "ent_1791996596225_orgbv",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W0_MV8CI70G_001_97I3"
+      }
+    ],
+    "status": "DRY_RUN"
+  },
+  {
+    "sweepId": "sweep_1791996596903_dile",
+    "timestamp": 1791996596903,
+    "dryRun": true,
+    "entitiesScanned": 2,
+    "entitiesSwept": 1,
+    "entitiesPreserved": 1,
+    "reclaimedEstimateKb": 4.2,
+    "sweptEntities": [
+      {
+        "id": "ent_1791996596225_orgbv",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W0_MV8CI70G_001_97I3"
+      }
+    ],
+    "status": "DRY_RUN"
+  },
+  {
+    "sweepId": "sweep_1791996523381_67l5",
+    "timestamp": 1791996523382,
+    "dryRun": false,
+    "entitiesScanned": 9,
+    "entitiesSwept": 8,
+    "entitiesPreserved": 1,
+    "reclaimedEstimateKb": 33.6,
+    "sweptEntities": [
+      {
+        "id": "ent_1791996523374_swnew",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W1_MV8CGMST_002_ZJXY"
+      },
+      {
+        "id": "ent_1791996523373_bknyz",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W0_MV8CGMST_001_1MA0"
+      },
+      {
+        "id": "ent_1791996523372_dx422",
+        "type": "ACCOUNT",
+        "entityId": "wdh_mock_customer_corp_99"
+      },
+      {
+        "id": "ent_1791996318177_nmkz3",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W1_MV8CC8GW_002_VDLB"
+      },
+      {
+        "id": "ent_1791996318175_4racl",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W0_MV8CC8GV_001_GA90"
+      },
+      {
+        "id": "ent_1791996318171_4v9gc",
+        "type": "ACCOUNT",
+        "entityId": "PROD_SEED_PRIMARY_OPERATOR_001"
+      },
+      {
+        "id": "ent_1791996318169_fda61",
+        "type": "ACCOUNT",
+        "entityId": "wdh_mock_customer_corp_99"
+      },
+      {
+        "id": "ent_1791996020772_8pwmg",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_corp_881"
+      }
+    ],
+    "status": "COMPLETED"
+  },
+  {
+    "sweepId": "sweep_1791996523375_8je9",
+    "timestamp": 1791996523375,
+    "dryRun": true,
+    "entitiesScanned": 9,
+    "entitiesSwept": 8,
+    "entitiesPreserved": 1,
+    "reclaimedEstimateKb": 33.6,
+    "sweptEntities": [
+      {
+        "id": "ent_1791996523374_swnew",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W1_MV8CGMST_002_ZJXY"
+      },
+      {
+        "id": "ent_1791996523373_bknyz",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W0_MV8CGMST_001_1MA0"
+      },
+      {
+        "id": "ent_1791996523372_dx422",
+        "type": "ACCOUNT",
+        "entityId": "wdh_mock_customer_corp_99"
+      },
+      {
+        "id": "ent_1791996318177_nmkz3",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W1_MV8CC8GW_002_VDLB"
+      },
+      {
+        "id": "ent_1791996318175_4racl",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W0_MV8CC8GV_001_GA90"
+      },
+      {
+        "id": "ent_1791996318171_4v9gc",
+        "type": "ACCOUNT",
+        "entityId": "PROD_SEED_PRIMARY_OPERATOR_001"
+      },
+      {
+        "id": "ent_1791996318169_fda61",
+        "type": "ACCOUNT",
+        "entityId": "wdh_mock_customer_corp_99"
+      },
+      {
+        "id": "ent_1791996020772_8pwmg",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_corp_881"
+      }
+    ],
+    "status": "DRY_RUN"
+  },
+  {
+    "sweepId": "sweep_1791996318433_2v52",
+    "timestamp": 1791996318433,
+    "dryRun": false,
+    "entitiesScanned": 5,
+    "entitiesSwept": 4,
+    "entitiesPreserved": 1,
+    "reclaimedEstimateKb": 16.8,
+    "sweptEntities": [
+      {
+        "id": "ent_1791996318177_nmkz3",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W1_MV8CC8GW_002_VDLB"
+      },
+      {
+        "id": "ent_1791996318175_4racl",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W0_MV8CC8GV_001_GA90"
+      },
+      {
+        "id": "ent_1791996318169_fda61",
+        "type": "ACCOUNT",
+        "entityId": "wdh_mock_customer_corp_99"
+      },
+      {
+        "id": "ent_1791996020772_8pwmg",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_corp_881"
+      }
+    ],
+    "status": "COMPLETED"
+  },
+  {
+    "sweepId": "sweep_1791996318427_82an",
+    "timestamp": 1791996318427,
+    "dryRun": true,
+    "entitiesScanned": 5,
+    "entitiesSwept": 4,
+    "entitiesPreserved": 1,
+    "reclaimedEstimateKb": 16.8,
+    "sweptEntities": [
+      {
+        "id": "ent_1791996318177_nmkz3",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W1_MV8CC8GW_002_VDLB"
+      },
+      {
+        "id": "ent_1791996318175_4racl",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_acc_W0_MV8CC8GV_001_GA90"
+      },
+      {
+        "id": "ent_1791996318169_fda61",
+        "type": "ACCOUNT",
+        "entityId": "wdh_mock_customer_corp_99"
+      },
+      {
+        "id": "ent_1791996020772_8pwmg",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_corp_881"
+      }
+    ],
+    "status": "DRY_RUN"
+  },
+  {
+    "sweepId": "sweep_1791996020779_qpkk",
+    "timestamp": 1791996020779,
+    "dryRun": true,
+    "entitiesScanned": 1,
+    "entitiesSwept": 1,
+    "entitiesPreserved": 0,
+    "reclaimedEstimateKb": 4.2,
+    "sweptEntities": [
+      {
+        "id": "ent_1791996020772_8pwmg",
+        "type": "ACCOUNT",
+        "entityId": "wdh_test_corp_881"
+      }
+    ],
+    "status": "DRY_RUN"
+  }
+]

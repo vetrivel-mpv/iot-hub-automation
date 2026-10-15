@@ -71,64 +71,64 @@ export class AccountDetailsPage extends BasePage {
     // Account Header Details
     this.accountHeaderName = page.locator('h1, h2, .MuiTypography-h5, .account-title, [data-testid="account-name"]').first();
     this.accountStatusBadge = page.locator('.MuiChip-root, .status-badge, .badge, [data-testid="account-status"]');
-    this.accountActionMenuButton = page.locator('button:has-text("Actions"), button:has-text("ACTION"), button[aria-label*="action" i]').first();
-    this.activateAccountButton = page.locator('button:has-text("ACTIVATE"), button:has-text("Activate"), li:has-text("Activate"), [role="menuitem"]:has-text("Activate")').first();
-    this.confirmActionButton = page.locator('button:has-text("CONFIRM"), button:has-text("Confirm"), button:has-text("YES"), button:has-text("Yes"), button:has-text("PROCEED")').first();
+    this.accountActionMenuButton = page.locator('button:has-text("more_vert"), button[aria-describedby*="mui" i]:has(.material-icons:has-text("more_vert")), button:has-text("Actions")').first();
+    this.activateAccountButton = page.locator('li[role="menuitem"]:has-text("ACTIVATE"), [role="menuitem"]:has-text("ACTIVATE"), li:has-text("public ACTIVATE"), button:has-text("ACTIVATE")').first();
+    this.confirmActionButton = page.locator('button:has-text("YES"), button:has-text("CONFIRM"), button:has-text("Confirm"), button:has-text("Yes"), button:has-text("OK")').first();
 
-    // Sub-Navigation Tabs
-    this.rolesTab = page.locator('button[role="tab"]:has-text("Roles"), [role="tab"]:has-text("Roles"), button:has-text("ROLES"), a:has-text("Roles")').first();
-    this.apnTab = page.locator('button[role="tab"]:has-text("APN"), [role="tab"]:has-text("APN"), button:has-text("APN/DNN"), a:has-text("APN")').first();
-    this.apnGroupTab = page.locator('button[role="tab"]:has-text("APN Group"), [role="tab"]:has-text("APN Group"), button:has-text("APN/DNN GROUP"), a:has-text("APN Group")').first();
-    this.networkProfileTab = page.locator('button[role="tab"]:has-text("Network Profile"), [role="tab"]:has-text("Network Profile"), button:has-text("NETWORK PROFILE"), a:has-text("Network Profile")').first();
-    this.ratePlanTab = page.locator('button[role="tab"]:has-text("Rate Plan"), [role="tab"]:has-text("Rate Plan"), button:has-text("RATE PLAN"), a:has-text("Rate Plan")').first();
-    this.roamingProfileTab = page.locator('button[role="tab"]:has-text("Roaming Profile"), [role="tab"]:has-text("Roaming Profile"), button:has-text("ROAMING PROFILE"), a:has-text("Roaming Profile")').first();
-    this.ccsOfferTab = page.locator('button[role="tab"]:has-text("CCS Offer"), [role="tab"]:has-text("CCS Offer"), button:has-text("CCS OFFER ID"), a:has-text("CCS Offer")').first();
-    this.numberingPlanTab = page.locator('button[role="tab"]:has-text("Numbering Plan"), [role="tab"]:has-text("Numbering Plan"), button:has-text("NUMBERING PLAN"), a:has-text("Numbering Plan")').first();
+    // Sub-Navigation Tabs & Accordions (Based on Inspector ACT_062 - ACT_207)
+    this.rolesTab = page.locator('#accounts-contact-tab, [role="button"]:has-text("Roles"), button[role="tab"]:has-text("Roles"), a:has-text("Roles")').first();
+    this.apnTab = page.locator('#accounts-apn-tab, [role="button"]:has-text("APN/DNN"), #accounts-apn').first();
+    this.apnGroupTab = page.locator('#accounts-apn-group-tab, [role="button"]:has-text("APN/DNN Group"), #accounts-apn-group').first();
+    this.networkProfileTab = page.locator('#accounts-network-profile-tab, [role="button"]:has-text("Network Profile"), #accounts-network-profile').first();
+    this.ratePlanTab = page.locator('#accounts-rate-plan-tab, [role="button"]:has-text("Rate Plan"), #accounts-rate-plan').first();
+    this.roamingProfileTab = page.locator('#accounts-roaming-profile-tab, [role="button"]:has-text("Roaming Profile"), #accounts-roaming-profile').first();
+    this.ccsOfferTab = page.locator('#accounts-ccs-offer-tab, [role="button"]:has-text("CCS Offer ID"), #accounts-ccs-offer').first();
+    this.numberingPlanTab = page.locator('#accounts-msisdn-profile-tab, [role="button"]:has-text("Numbering Plan"), #accounts-msisdn-profile').first();
 
     // Dialogs & Modals
     this.modalDialog = page.locator('.MuiDialog-root, [role="dialog"], .modal');
-    this.modalSaveButton = page.locator('button:has-text("SAVE"), button:has-text("Save"), button:has-text("ASSIGN"), button:has-text("Assign"), button:has-text("CREATE"), button:has-text("SUBMIT")');
+    this.modalSaveButton = page.locator('button:has-text("OK"), button:has-text("Ok"), button:has-text("SAVE"), button:has-text("Save"), button:has-text("ASSIGN")');
     this.modalCancelButton = page.locator('button:has-text("CANCEL"), button:has-text("Cancel"), button:has-text("CLOSE")');
-    this.modalConfirmButton = page.locator('button:has-text("CONFIRM"), button:has-text("Confirm"), button:has-text("OK"), button:has-text("Ok")');
+    this.modalConfirmButton = page.locator('button:has-text("OK"), button:has-text("Ok"), button:has-text("YES"), button:has-text("CONFIRM")');
 
     // Role Assignment
-    this.assignRoleButton = page.locator('button:has-text("ASSIGN ROLE"), button:has-text("Assign Role"), button:has-text("+ ROLE"), button:has-text("CHANGE ROLE")');
+    this.assignRoleButton = page.locator('li[role="menuitem"]:has-text("Assign/unassign"), button:has-text("Assign/unassign"), button:has-text("ASSIGN ROLE")');
     this.roleSelectDropdown = page.locator('[aria-label*="Role" i], [name="role"], div:has-text("Select Role"), .MuiSelect-select');
-    this.accountAdminRoleOption = page.locator('li:has-text("Account Admin"), [role="option"]:has-text("Account Admin"), label:has-text("Account Admin")');
+    this.accountAdminRoleOption = page.locator('li:has-text("ATT_CUSTACCT_ADMIN"), [role="option"]:has-text("ATT_CUSTACCT_ADMIN"), [role="listitem"]:has-text("ATT_CUSTACCT_API_ADMIN")');
 
     // APN / DNN
-    this.assignApnButton = page.locator('button:has-text("ASSIGN APN"), button:has-text("Assign APN"), button:has-text("+ APN"), button:has-text("+ APN/DNN")');
+    this.assignApnButton = page.locator('button:has-text("add_outlined"), button:has(.material-icons:has-text("add_outlined")), button:has-text("ASSIGN APN")');
     this.apnSelectDropdown = page.locator('[aria-label*="APN" i], [name="apn"], div:has-text("Select APN"), .MuiSelect-select');
 
     // APN Group
-    this.createApnGroupButton = page.locator('button:has-text("CREATE APN GROUP"), button:has-text("Create APN Group"), button:has-text("+ APN GROUP"), button:has-text("+ Group")');
-    this.apnGroupNameInput = page.locator('input[name*="group" i], input[placeholder*="Group Name" i], label:has-text("Group Name") + div input');
-    this.defaultApnCheckbox = page.locator('input[type="checkbox"][name*="default" i], label:has-text("Default") input, label:has-text("Make Default") input');
+    this.createApnGroupButton = page.locator('button:has-text("add_outlined"), button:has(.material-icons:has-text("add_outlined")), button:has-text("+ APN GROUP")');
+    this.apnGroupNameInput = page.locator('input[placeholder="APN Group Name"], [aria-label="APN Group Name"], input[name*="group" i]');
+    this.defaultApnCheckbox = page.locator('button:has(.material-icons:has-text("pin_drop_outlined")), input[type="checkbox"][name*="default" i]');
 
     // Network Profile
-    this.assignNetworkProfileButton = page.locator('button:has-text("ASSIGN NETWORK PROFILE"), button:has-text("Assign Network Profile"), button:has-text("+ NETWORK PROFILE"), button:has-text("+ Profile")');
-    this.networkProfileDropdown = page.locator('[aria-label*="Network Profile" i], [name="networkProfile"], div:has-text("Select Network Profile"), .MuiSelect-select');
-    this.defaultNetworkProfileCheckbox = page.locator('input[type="checkbox"][name*="default" i], label:has-text("Default") input');
+    this.assignNetworkProfileButton = page.locator('button:has-text("add_outlined"), button:has(.material-icons:has-text("add_outlined")), button:has-text("+ NETWORK PROFILE")');
+    this.networkProfileDropdown = page.locator('[aria-label*="Network Profile" i], [name="networkProfile"], div:has-text("Select Network Profile")');
+    this.defaultNetworkProfileCheckbox = page.locator('button:has(.material-icons:has-text("pin_drop_outlined")), input[type="checkbox"][name*="default" i]');
 
     // Rate Plan
-    this.assignRatePlanButton = page.locator('button:has-text("ASSIGN RATE PLAN"), button:has-text("Assign Rate Plan"), button:has-text("+ RATE PLAN"), button:has-text("+ Rate Plan")');
-    this.ratePlanDropdown = page.locator('[aria-label*="Rate Plan" i], [name="ratePlan"], div:has-text("Select Rate Plan"), .MuiSelect-select');
-    this.defaultRatePlanCheckbox = page.locator('input[type="checkbox"][name*="default" i], label:has-text("Default") input');
+    this.assignRatePlanButton = page.locator('button:has-text("add_outlined"), button:has(.material-icons:has-text("add_outlined")), button:has-text("+ RATE PLAN")');
+    this.ratePlanDropdown = page.locator('[aria-label*="Rate Plan" i], [name="ratePlan"], div:has-text("Select Rate Plan")');
+    this.defaultRatePlanCheckbox = page.locator('button:has(.material-icons:has-text("pin_drop_outlined")), input[type="checkbox"][name*="default" i]');
 
     // Roaming Profile
-    this.assignRoamingProfileButton = page.locator('button:has-text("ASSIGN ROAMING PROFILE"), button:has-text("Assign Roaming Profile"), button:has-text("+ ROAMING PROFILE")');
-    this.roamingProfileDropdown = page.locator('[aria-label*="Roaming Profile" i], [name="roamingProfile"], div:has-text("Select Roaming Profile"), .MuiSelect-select');
-    this.defaultRoamingProfileCheckbox = page.locator('input[type="checkbox"][name*="default" i], label:has-text("Default") input');
+    this.assignRoamingProfileButton = page.locator('button:has-text("add_outlined"), button:has(.material-icons:has-text("add_outlined")), button:has-text("+ ROAMING PROFILE")');
+    this.roamingProfileDropdown = page.locator('[aria-label*="Roaming Profile" i], [name="roamingProfile"], div:has-text("Select Roaming Profile")');
+    this.defaultRoamingProfileCheckbox = page.locator('button:has(.material-icons:has-text("pin_drop_outlined")), input[type="checkbox"][name*="default" i]');
 
     // CCS Offer ID
-    this.assignCcsOfferButton = page.locator('button:has-text("ASSIGN CCS OFFER"), button:has-text("Assign CCS Offer"), button:has-text("+ CCS OFFER ID"), button:has-text("+ Offer")');
-    this.ccsOfferDropdown = page.locator('[aria-label*="CCS" i], [name="ccsOffer"], div:has-text("Select CCS Offer"), .MuiSelect-select');
-    this.defaultCcsOfferCheckbox = page.locator('input[type="checkbox"][name*="default" i], label:has-text("Default") input');
+    this.assignCcsOfferButton = page.locator('button:has-text("add_outlined"), button:has(.material-icons:has-text("add_outlined")), button:has-text("+ CCS OFFER ID")');
+    this.ccsOfferDropdown = page.locator('[aria-label*="CCS" i], [name="ccsOffer"], div:has-text("Select CCS Offer")');
+    this.defaultCcsOfferCheckbox = page.locator('button:has(.material-icons:has-text("pin_drop_outlined")), input[type="checkbox"][name*="default" i]');
 
     // Numbering Plan
-    this.assignNumberingPlanButton = page.locator('button:has-text("ASSIGN NUMBERING PLAN"), button:has-text("Assign Numbering Plan"), button:has-text("+ NUMBERING PLAN")');
-    this.numberingPlanDropdown = page.locator('[aria-label*="Numbering Plan" i], [name="numberingPlan"], div:has-text("Select Numbering Plan"), .MuiSelect-select');
-    this.defaultNumberingPlanCheckbox = page.locator('input[type="checkbox"][name*="default" i], label:has-text("Default") input');
+    this.assignNumberingPlanButton = page.locator('button:has-text("add_outlined"), button:has(.material-icons:has-text("add_outlined")), button:has-text("+ NUMBERING PLAN")');
+    this.numberingPlanDropdown = page.locator('[aria-label*="Numbering Plan" i], [name="numberingPlan"], div:has-text("Select Numbering Plan")');
+    this.defaultNumberingPlanCheckbox = page.locator('button:has(.material-icons:has-text("pin_drop_outlined")), input[type="checkbox"][name*="default" i]');
   }
 
   /**

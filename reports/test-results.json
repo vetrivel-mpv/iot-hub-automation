@@ -1,0 +1,541 @@
+{
+  "config": {
+    "argv": [
+      "/opt/homebrew/Cellar/node/26.7.0/bin/node",
+      "/Users/vetri/antigravity/iot-hub-automation/node_modules/.bin/playwright",
+      "test",
+      "tests/config/config_check.spec.ts"
+    ],
+    "configFile": "/Users/vetri/antigravity/iot-hub-automation/playwright.config.ts",
+    "rootDir": "/Users/vetri/antigravity/iot-hub-automation/tests",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 4
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "setup",
+        "name": "setup",
+        "testDir": "/Users/vetri/antigravity/iot-hub-automation/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*\\.setup\\.ts/"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/vetri/antigravity/iot-hub-automation/tests",
+        "testIgnore": [
+          "/.*\\.setup\\.ts/"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/Users/vetri/antigravity/iot-hub-automation/tests",
+        "testIgnore": [
+          "/.*\\.setup\\.ts/"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/Users/vetri/antigravity/iot-hub-automation/tests",
+        "testIgnore": [
+          "/.*\\.setup\\.ts/"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "reports/html-report",
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "reports/test-results.json"
+        }
+      ],
+      [
+        "/Users/vetri/antigravity/iot-hub-automation/node_modules/allure-playwright/dist/cjs/index.js",
+        {
+          "outputFolder": "reports/allure-results",
+          "detail": true,
+          "suiteTitle": false,
+          "environmentInfo": {
+            "Portal": "IoT Hub Enterprise Portal",
+            "Target Environment": "Azure FrontDoor DEV (azure-fd)",
+            "Base URL": "https://acmgr.dev2.azprv.3pc.att.com",
+            "Quality Gate Status": "PASSED (Production Safety Enforced)",
+            "Concurrency Engine": "4x Parallel Workers (100ms Cached Bootstrap)",
+            "Session Architecture": "Keycloak Encrypted Auth Persistence",
+            "Unique Data Generator": "Collision-Free Dynamic Entity Engine",
+            "Production Safety Guardrail": "ACTIVE (Write Protection on PROD)",
+            "Framework": "Playwright TypeScript v1.50+",
+            "Report Engine": "Allure 2.43.0 Executive Analytics"
+          }
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 4,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "setup/auth.setup.ts",
+      "file": "setup/auth.setup.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Authenticate and Save Storage State",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "setup",
+              "projectName": "setup",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 282,
+                  "error": {
+                    "message": "Error: page.goto: net::ERR_NAME_NOT_RESOLVED at https://acmgr.dev2.azprv.3pc.att.com/\nCall log:\n\u001b[2m  - navigating to \"https://acmgr.dev2.azprv.3pc.att.com/\", waiting until \"domcontentloaded\"\u001b[22m\n",
+                    "stack": "Error: page.goto: net::ERR_NAME_NOT_RESOLVED at https://acmgr.dev2.azprv.3pc.att.com/\nCall log:\n\u001b[2m  - navigating to \"https://acmgr.dev2.azprv.3pc.att.com/\", waiting until \"domcontentloaded\"\u001b[22m\n\n    at LoginPage.navigate (/Users/vetri/antigravity/iot-hub-automation/src/pages/BasePage.ts:67:21)\n    at LoginPage.goto (/Users/vetri/antigravity/iot-hub-automation/src/pages/LoginPage.ts:60:16)\n    at /Users/vetri/antigravity/iot-hub-automation/tests/setup/auth.setup.ts:87:19",
+                    "location": {
+                      "file": "/Users/vetri/antigravity/iot-hub-automation/src/pages/BasePage.ts",
+                      "column": 21,
+                      "line": 67
+                    },
+                    "snippet": "   at ../src/pages/BasePage.ts:67\n\n  65 |   async navigate(path: string = ''): Promise<void> {\n  66 |     Logger.action('Navigate', path || '/');\n> 67 |     await this.page.goto(path, { waitUntil: 'domcontentloaded' });\n     |                     ^\n  68 |     await this.waitForLoadingSpinnerToDisappear();\n  69 |   }\n  70 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/vetri/antigravity/iot-hub-automation/src/pages/BasePage.ts",
+                        "column": 21,
+                        "line": 67
+                      },
+                      "message": "Error: page.goto: net::ERR_NAME_NOT_RESOLVED at https://acmgr.dev2.azprv.3pc.att.com/\nCall log:\n\u001b[2m  - navigating to \"https://acmgr.dev2.azprv.3pc.att.com/\", waiting until \"domcontentloaded\"\u001b[22m\n\n\n   at ../src/pages/BasePage.ts:67\n\n  65 |   async navigate(path: string = ''): Promise<void> {\n  66 |     Logger.action('Navigate', path || '/');\n> 67 |     await this.page.goto(path, { waitUntil: 'domcontentloaded' });\n     |                     ^\n  68 |     await this.waitForLoadingSpinnerToDisappear();\n  69 |   }\n  70 |\n    at LoginPage.navigate (/Users/vetri/antigravity/iot-hub-automation/src/pages/BasePage.ts:67:21)\n    at LoginPage.goto (/Users/vetri/antigravity/iot-hub-automation/src/pages/LoginPage.ts:60:16)\n    at /Users/vetri/antigravity/iot-hub-automation/tests/setup/auth.setup.ts:87:19"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "\u001b[36m[2026-10-15T12:30:23.060Z] [INFO] [GLOBAL AUTH] Probing cached session against: https://acmgr.dev2.azprv.3pc.att.com/dashboard\u001b[0m\n"
+                    },
+                    {
+                      "text": "\u001b[36m[2026-10-15T12:30:23.107Z] [INFO] [GLOBAL AUTH] Performing one-time global authentication against: https://acmgr.dev2.azprv.3pc.att.com\u001b[0m\n"
+                    },
+                    {
+                      "text": "\u001b[36m[2026-10-15T12:30:23.113Z] [INFO] Navigating to IoT Hub Portal login page\u001b[0m\n"
+                    },
+                    {
+                      "text": "\u001b[34m[2026-10-15T12:30:23.113Z] [ACTION] Navigate -> /\u001b[0m\n"
+                    }
+                  ],
+                  "stderr": [
+                    {
+                      "text": "\u001b[33m[2026-10-15T12:30:23.107Z] [WARN] [GLOBAL AUTH] Cached storageState could not be read. Re-authenticating fresh session.\u001b[0m\n"
+                    },
+                    {
+                      "text": "\u001b[33m[2026-10-15T12:30:23.127Z] [WARN] [GLOBAL AUTH] Navigation to login page failed: page.goto: net::ERR_NAME_NOT_RESOLVED at https://acmgr.dev2.azprv.3pc.att.com/\nCall log:\n\u001b[2m  - navigating to \"https://acmgr.dev2.azprv.3pc.att.com/\", waiting until \"domcontentloaded\"\u001b[22m\n\u001b[0m\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-10-15T12:30:22.716Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts/setup-auth.setup.ts-Authenticate-and-Save-Storage-State-setup/test-failed-1.png"
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts/setup-auth.setup.ts-Authenticate-and-Save-Storage-State-setup/video.webm"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts/setup-auth.setup.ts-Authenticate-and-Save-Storage-State-setup/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts/setup-auth.setup.ts-Authenticate-and-Save-Storage-State-setup/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/vetri/antigravity/iot-hub-automation/src/pages/BasePage.ts",
+                    "column": 21,
+                    "line": 67
+                  }
+                },
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 151,
+                  "error": {
+                    "message": "Error: page.goto: net::ERR_NAME_NOT_RESOLVED at https://acmgr.dev2.azprv.3pc.att.com/\nCall log:\n\u001b[2m  - navigating to \"https://acmgr.dev2.azprv.3pc.att.com/\", waiting until \"domcontentloaded\"\u001b[22m\n",
+                    "stack": "Error: page.goto: net::ERR_NAME_NOT_RESOLVED at https://acmgr.dev2.azprv.3pc.att.com/\nCall log:\n\u001b[2m  - navigating to \"https://acmgr.dev2.azprv.3pc.att.com/\", waiting until \"domcontentloaded\"\u001b[22m\n\n    at LoginPage.navigate (/Users/vetri/antigravity/iot-hub-automation/src/pages/BasePage.ts:67:21)\n    at LoginPage.goto (/Users/vetri/antigravity/iot-hub-automation/src/pages/LoginPage.ts:60:16)\n    at /Users/vetri/antigravity/iot-hub-automation/tests/setup/auth.setup.ts:87:19",
+                    "location": {
+                      "file": "/Users/vetri/antigravity/iot-hub-automation/src/pages/BasePage.ts",
+                      "column": 21,
+                      "line": 67
+                    },
+                    "snippet": "   at ../src/pages/BasePage.ts:67\n\n  65 |   async navigate(path: string = ''): Promise<void> {\n  66 |     Logger.action('Navigate', path || '/');\n> 67 |     await this.page.goto(path, { waitUntil: 'domcontentloaded' });\n     |                     ^\n  68 |     await this.waitForLoadingSpinnerToDisappear();\n  69 |   }\n  70 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/vetri/antigravity/iot-hub-automation/src/pages/BasePage.ts",
+                        "column": 21,
+                        "line": 67
+                      },
+                      "message": "Error: page.goto: net::ERR_NAME_NOT_RESOLVED at https://acmgr.dev2.azprv.3pc.att.com/\nCall log:\n\u001b[2m  - navigating to \"https://acmgr.dev2.azprv.3pc.att.com/\", waiting until \"domcontentloaded\"\u001b[22m\n\n\n   at ../src/pages/BasePage.ts:67\n\n  65 |   async navigate(path: string = ''): Promise<void> {\n  66 |     Logger.action('Navigate', path || '/');\n> 67 |     await this.page.goto(path, { waitUntil: 'domcontentloaded' });\n     |                     ^\n  68 |     await this.waitForLoadingSpinnerToDisappear();\n  69 |   }\n  70 |\n    at LoginPage.navigate (/Users/vetri/antigravity/iot-hub-automation/src/pages/BasePage.ts:67:21)\n    at LoginPage.goto (/Users/vetri/antigravity/iot-hub-automation/src/pages/LoginPage.ts:60:16)\n    at /Users/vetri/antigravity/iot-hub-automation/tests/setup/auth.setup.ts:87:19"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "\u001b[36m[2026-10-15T12:30:23.633Z] [INFO] [GLOBAL AUTH] Probing cached session against: https://acmgr.dev2.azprv.3pc.att.com/dashboard\u001b[0m\n"
+                    },
+                    {
+                      "text": "\u001b[36m[2026-10-15T12:30:23.664Z] [INFO] [GLOBAL AUTH] Performing one-time global authentication against: https://acmgr.dev2.azprv.3pc.att.com\u001b[0m\n"
+                    },
+                    {
+                      "text": "\u001b[36m[2026-10-15T12:30:23.670Z] [INFO] Navigating to IoT Hub Portal login page\u001b[0m\n"
+                    },
+                    {
+                      "text": "\u001b[34m[2026-10-15T12:30:23.670Z] [ACTION] Navigate -> /\u001b[0m\n"
+                    }
+                  ],
+                  "stderr": [
+                    {
+                      "text": "\u001b[33m[2026-10-15T12:30:23.664Z] [WARN] [GLOBAL AUTH] Cached storageState could not be read. Re-authenticating fresh session.\u001b[0m\n"
+                    },
+                    {
+                      "text": "\u001b[33m[2026-10-15T12:30:23.677Z] [WARN] [GLOBAL AUTH] Navigation to login page failed: page.goto: net::ERR_NAME_NOT_RESOLVED at https://acmgr.dev2.azprv.3pc.att.com/\nCall log:\n\u001b[2m  - navigating to \"https://acmgr.dev2.azprv.3pc.att.com/\", waiting until \"domcontentloaded\"\u001b[22m\n\u001b[0m\n"
+                    }
+                  ],
+                  "retry": 1,
+                  "startTime": "2026-10-15T12:30:23.511Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts/setup-auth.setup.ts-Authenticate-and-Save-Storage-State-setup-retry1/test-failed-1.png"
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts/setup-auth.setup.ts-Authenticate-and-Save-Storage-State-setup-retry1/video.webm"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts/setup-auth.setup.ts-Authenticate-and-Save-Storage-State-setup-retry1/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts/setup-auth.setup.ts-Authenticate-and-Save-Storage-State-setup-retry1/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/vetri/antigravity/iot-hub-automation/src/pages/BasePage.ts",
+                    "column": 21,
+                    "line": 67
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "e717b06d8d484d1cd946-5cb0a928747ff52aab6a",
+          "file": "setup/auth.setup.ts",
+          "line": 10,
+          "column": 6
+        }
+      ]
+    },
+    {
+      "title": "config/config_check.spec.ts",
+      "file": "config/config_check.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "IoT Hub Portal - Environment & Runtime Configuration Suite",
+          "file": "config/config_check.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "CFG-01: Verify active environment and runtime configuration integrity",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "cff47e618186e92100e5-9b5a068f72c167a1e9eb",
+              "file": "config/config_check.spec.ts",
+              "line": 6,
+              "column": 7
+            },
+            {
+              "title": "CFG-02: Verify timeout hierarchy and network retry configuration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "cff47e618186e92100e5-de956518eaf2a9d092a0",
+              "file": "config/config_check.spec.ts",
+              "line": 43,
+              "column": 7
+            },
+            {
+              "title": "CFG-03: Initialize dynamic execution resources & unique customer profile",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "cff47e618186e92100e5-5017b347843cf08897a6",
+              "file": "config/config_check.spec.ts",
+              "line": 54,
+              "column": 7
+            },
+            {
+              "title": "CFG-01: Verify active environment and runtime configuration integrity",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "cff47e618186e92100e5-a3356c38c94440709222",
+              "file": "config/config_check.spec.ts",
+              "line": 6,
+              "column": 7
+            },
+            {
+              "title": "CFG-02: Verify timeout hierarchy and network retry configuration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "cff47e618186e92100e5-a97cb54b31c6323e79f7",
+              "file": "config/config_check.spec.ts",
+              "line": 43,
+              "column": 7
+            },
+            {
+              "title": "CFG-03: Initialize dynamic execution resources & unique customer profile",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "cff47e618186e92100e5-33a93ac5e966e172c9ab",
+              "file": "config/config_check.spec.ts",
+              "line": 54,
+              "column": 7
+            },
+            {
+              "title": "CFG-01: Verify active environment and runtime configuration integrity",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "cff47e618186e92100e5-7e0f0c5d9dd779ed0958",
+              "file": "config/config_check.spec.ts",
+              "line": 6,
+              "column": 7
+            },
+            {
+              "title": "CFG-02: Verify timeout hierarchy and network retry configuration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "cff47e618186e92100e5-712e438d89d9ddd23159",
+              "file": "config/config_check.spec.ts",
+              "line": 43,
+              "column": 7
+            },
+            {
+              "title": "CFG-03: Initialize dynamic execution resources & unique customer profile",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "cff47e618186e92100e5-eecb6e41cfaa1099b2d1",
+              "file": "config/config_check.spec.ts",
+              "line": 54,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-15T12:30:22.289Z",
+    "duration": 1517.456,
+    "expected": 0,
+    "skipped": 9,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

@@ -1,6 +1,6 @@
-# IoT Hub Portal Automation Framework
+# IoT Hub Automation Framework
 
-Enterprise End-to-End Test Automation Framework for the **IoT Hub (WDH)** portal (`https://wdh-sitstg2.nokiawing.com/`) built with **Playwright**, **TypeScript**, and the **Page Object Model (POM)** pattern.
+Enterprise End-to-End Test Automation Framework for the **IoT Hub** portal built with **Playwright**, **TypeScript**, and the **Page Object Model (POM)** pattern.
 
 ---
 
@@ -15,14 +15,14 @@ Enterprise End-to-End Test Automation Framework for the **IoT Hub (WDH)** portal
   - Automated Screenshots on Failure
   - Full Execution Traces with DOM snapshot inspection
   - JSON and formatted CLI logs
-- **Environment Driven**: Seamless multi-environment switching (SIT, STG, PROD) via `.env`.
+- **Environment Driven**: Seamless multi-environment switching (DEV, SIT, PROD) via `.env`.
 
 ---
 
 ## 📁 Project Structure
 
 ```
-wdh-automation/
+IOT HUB Automation/
 ├── .env.example              # Environment variables template
 ├── .env                      # Active test environment variables
 ├── .gitignore                # Git ignore rules
@@ -78,7 +78,7 @@ cp .env.example .env
 Edit `.env`:
 ```env
 WDH_BASE_URL=https://wdh-sitstg2.nokiawing.com
-WDH_USERNAME=your_username@nokiawing.com
+WDH_USERNAME=your_username@iothub.com
 WDH_PASSWORD=your_password
 WDH_ENV=SIT
 ```

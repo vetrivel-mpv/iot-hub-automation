@@ -50,6 +50,7 @@ export class SubscriptionsPage extends BasePage {
   readonly exportButton: Locator;
   readonly refreshButton: Locator;
   readonly columnVisibilityButton: Locator;
+  readonly clearSearchButton: Locator;
   readonly filterIccid: Locator;
   readonly filterImsi: Locator;
   readonly filterMsisdn: Locator;
@@ -60,6 +61,9 @@ export class SubscriptionsPage extends BasePage {
   readonly changeRatePlanButton: Locator;
   readonly addAddonButton: Locator;
   readonly assignTagButton: Locator;
+  readonly applyConfirmOperationBtn: Locator;
+  readonly smsMessageTextarea: Locator;
+  readonly smsSendBtn: Locator;
   readonly simTable: Locator;
   readonly tableRows: Locator;
   readonly selectAllCheckbox: Locator;
@@ -111,25 +115,30 @@ export class SubscriptionsPage extends BasePage {
     this.singleSimPairing = page.locator('[role="menuitem"]:has-text("Pairing"), a:has-text("Pairing")');
     this.singleSimUnpairing = page.locator('[role="menuitem"]:has-text("Unpairing"), a:has-text("Unpairing")');
 
+    // Search, Table, and Action properties
     this.searchInput = page.locator('input[placeholder*="Search" i], input[type="search"]');
-    this.searchButton = page.locator('button:has-text("search"), .MuiSvgIcon-root[data-testid="SearchIcon"], button:has(svg[data-testid="SearchIcon"])');
-    this.exportButton = page.locator('[data-testid="SaveAltIcon"], [data-testid="SaveIcon"], button:has(svg[data-testid*="Save" i])');
-    this.refreshButton = page.locator('[data-testid="RefreshIcon"], button:has(svg[data-testid*="Refresh" i])');
-    this.columnVisibilityButton = page.locator('[data-testid="VisibilityIcon"], button:has(svg[data-testid*="Visibility" i])');
+    this.searchButton = page.locator('button:has-text("search"), .MuiSvgIcon-root[data-testid="SearchIcon"], button:has(svg[data-testid="SearchIcon"]), button:has-text("search_outlined")');
+    this.exportButton = page.locator('[data-testid="export-data"], [data-testid="SaveAltIcon"], [data-testid="SaveIcon"], button:has(svg[data-testid*="Save" i])');
+    this.refreshButton = page.locator('[data-testid="refresh-button"], [data-testid="RefreshIcon"], button[aria-label="Refresh"], button:has(svg[data-testid*="Refresh" i])');
+    this.columnVisibilityButton = page.locator('[data-testid="column-chooser"], [data-testid="VisibilityIcon"], button[aria-label="Choose columns"], button:has(svg[data-testid*="Visibility" i])');
+    this.clearSearchButton = page.locator('[data-testid="clear-search"], button[aria-label="Clear Search"], button:has-text("Clear Search")');
 
-    // Filter Fields
+    // Filter Fields (from report inspector)
     this.filterIccid = page.locator('input[placeholder*="ICCID" i], input[name*="iccid" i]');
     this.filterImsi = page.locator('input[placeholder*="IMSI" i], input[name*="imsi" i]');
     this.filterMsisdn = page.locator('input[placeholder*="MSISDN" i], input[name*="msisdn" i]');
-    this.filterAccount = page.locator('input[placeholder*="Account" i], input[name*="account" i]');
-    this.filterStateDropdown = page.locator('div:has-text("Select to Filter"), select[name*="state" i]');
+    this.filterAccount = page.locator('input[placeholder*="Account" i], input[name*="account" i], [aria-label="Filter"]').first();
+    this.filterStateDropdown = page.locator('div:has-text("Select to Filter"), select[name*="state" i], [aria-label="Open"]').first();
     this.filterRatePlan = page.locator('input[placeholder*="Rate Plan" i], input[name*="ratePlan" i]');
 
-    // Action Controls
+    // Action Controls & Test IDs
     this.changeStateButton = page.locator('button:has-text("Change State"), button:has-text("Set State")');
     this.changeRatePlanButton = page.locator('button:has-text("Change Rate Plan"), button:has-text("Rate Plan")');
-    this.addAddonButton = page.locator('button:has-text("Add-on"), button:has-text("Add Addon")');
-    this.assignTagButton = page.locator('button:has-text("Tag"), button:has-text("Assign Tag")');
+    this.addAddonButton = page.locator('button:has-text("Add-on"), button:has-text("Add Addon"), [aria-label="Assign Pool Add-on bundles"]');
+    this.assignTagButton = page.locator('[data-testid="assign-tag"], button:has-text("Tag"), button:has-text("Assign Tag"), button:has-text("Apply")');
+    this.applyConfirmOperationBtn = page.locator('[data-testid="apply-confirm-operation"], button:has-text("Confirm")');
+    this.smsMessageTextarea = page.locator('textarea[name="message"], textarea');
+    this.smsSendBtn = page.locator('button:has-text("Send")');
 
     // Table elements
     this.simTable = page.locator('table, [role="grid"], .MuiTable-root');

@@ -3,32 +3,7 @@
  * Formats rich, responsive executive summary cards for leadership & stakeholders.
  */
 
-interface RunReportData {
-  runId: string;
-  suiteName: string;
-  envName: string;
-  baseUrl: string;
-  browser: string;
-  duration: number;
-  exitCode: number;
-  stats: {
-    passed: number;
-    failed: number;
-    skipped?: number;
-    total: number;
-  };
-  rca?: {
-    summary: string;
-    rootCause: string;
-    categoryTitle?: string;
-    failingStep?: string;
-    suggestedRemediation?: string[];
-  } | null;
-  serverHost?: string;
-  completedAt?: string;
-}
-
-export function generateExecutiveEmailHtml(data: RunReportData): string {
+function generateExecutiveEmailHtml(data) {
   const isPassed = data.exitCode === 0;
   const passCount = data.stats?.passed || 0;
   const failCount = data.stats?.failed || 0;
@@ -84,7 +59,7 @@ export function generateExecutiveEmailHtml(data: RunReportData): string {
         <table width="100%" border="0" cellpadding="0" cellspacing="0">
           <tr>
             <td>
-              <span style="color: #ffffff; font-size: 18px; font-weight: 800; letter-spacing: -0.5px;">NOKIA <span style="color: #60a5fa; font-weight: 400;">IoT Hub Portal</span></span>
+              <span style="color: #ffffff; font-size: 18px; font-weight: 800; letter-spacing: -0.5px;">IoT <span style="color: #60a5fa; font-weight: 400;">HUB Automation</span></span>
             </td>
             <td align="right">
               <span style="font-size: 11px; font-weight: 700; color: #93c5fd; background-color: rgba(0, 102, 255, 0.25); border: 1px solid rgba(0, 102, 255, 0.4); padding: 4px 10px; border-radius: 6px; text-transform: uppercase;">Executive Summary</span>
@@ -179,3 +154,7 @@ export function generateExecutiveEmailHtml(data: RunReportData): string {
 </html>
   `;
 }
+
+module.exports = {
+  generateExecutiveEmailHtml,
+};

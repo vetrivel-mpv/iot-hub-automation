@@ -101,9 +101,16 @@ export class ConfigValidator {
       }
     }
 
-    Logger.info(
-      `${titlePrefix}[CONFIG CHECK: PASSED] Env: [${result.configSummary.environment}] ${result.configSummary.activeEnvironmentId} | URL: ${result.configSummary.baseUrl} | User: ${result.configSummary.username} | Timeout: ${result.configSummary.timeouts.medium}ms`
-    );
+    const isDebug = process.env.LOG_LEVEL === 'DEBUG';
+    if (isDebug) {
+      Logger.info(
+        `${titlePrefix}[CONFIG: OK] Env: [${result.configSummary.environment}] ${result.configSummary.activeEnvironmentId} | URL: ${result.configSummary.baseUrl} | User: ${result.configSummary.username} | Timeout: ${result.configSummary.timeouts.medium}ms`
+      );
+    } else {
+      Logger.info(
+        `${titlePrefix}[CONFIG: OK] [${result.configSummary.environment}:${result.configSummary.activeEnvironmentId}]`
+      );
+    }
 
     return result;
   }

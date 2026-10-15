@@ -36,33 +36,33 @@ export class DashboardPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.headerNavbar = page.locator('nav, header, .navbar, .top-bar');
-    this.brandLogo = page.locator('.navbar-brand, a:has-text("IoT Hub")');
+    this.headerNavbar = page.locator('nav, header, .navbar, .top-bar, .MuiToolbar-root');
+    this.brandLogo = page.locator('.navbar-brand, a:has-text("IoT Hub"), a:has-text("Connection Manager")');
     this.tenantDropdown = page.locator('.tenant-select, button:has-text("All"), .realm-select');
     this.languageSelector = page.locator('button:has-text("English"), .lang-select');
-    this.userProfileDropdown = page.locator('button:has-text("vetrivel_m"), div:has-text("vetrivel_m"), a:has-text("vetrivel_m"), [data-testid="AccountCircleIcon"], [aria-label*="profile" i], .user-profile').first();
-    this.userProfileName = page.locator('text="vetrivel_m"');
+    this.userProfileDropdown = page.locator('button:has-text("vetrivel_m"), button:has-text("vm7485"), div:has-text("VETRIVEL"), [data-testid="AccountCircleIcon"], [aria-label*="profile" i], .user-profile').first();
+    this.userProfileName = page.locator('text="vetrivel_m", text="vm7485", text="VETRIVEL MUTHUSAMY"');
     this.logoutButton = page.locator('a:has-text("Logout"), button:has-text("Logout"), [role="menuitem"]:has-text("Logout"), a:has-text("Log Out"), button:has-text("Log Out"), [role="menuitem"]:has-text("Log Out"), a:has-text("Sign Out"), button:has-text("Sign Out"), [role="menuitem"]:has-text("Sign Out")');
 
     // Dashboard Tabs
-    this.tabAccounts = page.locator('button:has-text("ACCOUNTS"), a:has-text("ACCOUNTS")');
-    this.tabSubscriptions = page.locator('button:has-text("SUBSCRIPTIONS"), a:has-text("SUBSCRIPTIONS")');
-    this.tabUsage = page.locator('button:has-text("USAGE"), a:has-text("USAGE")');
+    this.tabAccounts = page.locator('button:has-text("Accounts"), button:has-text("ACCOUNTS"), a:has-text("Accounts")');
+    this.tabSubscriptions = page.locator('button:has-text("Subscriptions"), button:has-text("SUBSCRIPTIONS"), a:has-text("Subscriptions")');
+    this.tabUsage = page.locator('button:has-text("Usage"), button:has-text("USAGE"), a:has-text("Usage")');
 
     // Metric Cards
-    this.totalAccountsCard = page.locator('div:has-text("TOTAL ACCOUNTS")');
-    this.activeAccountsCard = page.locator('div:has-text("ACTIVE ACCOUNTS")');
-    this.allocatedSimsCard = page.locator('div:has-text("ALLOCATED SIMS")');
-    this.simInventoryCard = page.locator('div:has-text("SIM INVENTORY")');
-    this.allocatedEsimsCard = page.locator('div:has-text("ALLOCATED ESIMS")');
-    this.esimInventoryCard = page.locator('div:has-text("ESIM INVENTORY")');
+    this.totalAccountsCard = page.locator('div:has-text("TOTAL ACCOUNTS"), div:has-text("Total Accounts")');
+    this.activeAccountsCard = page.locator('div:has-text("ACTIVE ACCOUNTS"), div:has-text("Active Accounts")');
+    this.allocatedSimsCard = page.locator('div:has-text("ALLOCATED SIMS"), div:has-text("Allocated SIMs")');
+    this.simInventoryCard = page.locator('div:has-text("SIM INVENTORY"), div:has-text("ENTERPRISE-INVENTORY")');
+    this.allocatedEsimsCard = page.locator('div:has-text("ALLOCATED ESIMS"), div:has-text("Allocated eSIMs")');
+    this.esimInventoryCard = page.locator('div:has-text("ESIM INVENTORY"), div:has-text("eSIM Inventory")');
 
-    // Charts & Panels
-    this.accountStatusCard = page.locator('div:has-text("ACCOUNT STATUS")');
-    this.accountTypeCard = page.locator('div:has-text("ACCOUNT TYPE")');
-    this.topAccountsTable = page.locator('div:has-text("TOP 15 ACTIVE ACCOUNTS")');
-    this.accountEvolutionChart = page.locator('div:has-text("ACCOUNT EVOLUTION")');
-    this.widgetHeaders = page.locator('.card-header, .widget-title, .panel-heading, h3, h4');
+    // Charts & Panels (Recharts & MUI Data Grids)
+    this.accountStatusCard = page.locator('div:has-text("ACCOUNT STATUS"), div:has-text("Account Status")');
+    this.accountTypeCard = page.locator('div:has-text("ACCOUNT TYPE"), div:has-text("Account Type")');
+    this.topAccountsTable = page.locator('div:has-text("TOP 15 ACTIVE ACCOUNTS"), table.MuiTable-root');
+    this.accountEvolutionChart = page.locator('div:has-text("ACCOUNT EVOLUTION"), div:has-text("SUBSCRIPTION EVOLUTION"), .recharts-wrapper, svg.recharts-surface');
+    this.widgetHeaders = page.locator('.card-header, .widget-title, .panel-heading, h3, h4, .MuiTypography-h6');
     this.globalSearchInput = page.locator('input[placeholder*="Search" i], input[type="search"], .search-input');
   }
 

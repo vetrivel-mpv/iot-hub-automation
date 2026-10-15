@@ -1,0 +1,64 @@
+[
+  {
+    "id": "heal_1791996771013_rpuj",
+    "testTitle": "[TC_ACC_002] Verify Accounts Table & Action Controls",
+    "description": "SIM State Activation Switch",
+    "originalSelector": ".toggle-switch-input",
+    "healedSelector": "[role=\"switch\"][aria-label=\"Activate SIM\"]",
+    "healingStrategy": "ARIA_ROLE_INFERENCE",
+    "confidenceScore": 0.94,
+    "timestamp": 1791996771013,
+    "approved": false
+  },
+  {
+    "id": "heal_1791996596928_y5mle",
+    "description": "Create Account Modal Trigger",
+    "originalSelector": "#create-account-old-v1",
+    "healedSelector": "[data-testid=\"create-account-btn\"]",
+    "healingStrategy": "CANDIDATE_FALLBACK",
+    "confidenceScore": 0.84,
+    "timestamp": 1791996596928,
+    "approved": false
+  },
+  {
+    "id": "heal_1791996318971_p6ock",
+    "description": "Execute Subscriber Search",
+    "originalSelector": "#btn-search-static-legacy",
+    "healedSelector": "#random_btn_3389",
+    "healingStrategy": "FUZZY_TEXT_HEURISTIC",
+    "confidenceScore": 0.88,
+    "timestamp": 1791996318971,
+    "approved": false
+  },
+  {
+    "id": "heal_1791996318968_9wfrl",
+    "description": "Create Account Modal Trigger",
+    "originalSelector": "#create-account-old-v1",
+    "healedSelector": "[data-testid=\"create-account-btn\"]",
+    "healingStrategy": "CANDIDATE_FALLBACK",
+    "confidenceScore": 0.84,
+    "timestamp": 1791996318968,
+    "approved": false
+  },
+  {
+    "id": "heal_1791996318962_q2jkv",
+    "description": "Cached Learned Resolution Test",
+    "originalSelector": "#create-account-old-v1",
+    "healedSelector": "[data-testid=\"create-account-btn\"]",
+    "healingStrategy": "CANDIDATE_FALLBACK",
+    "confidenceScore": 0.92,
+    "timestamp": 1791996318962,
+    "approved": false
+  },
+  {
+    "id": "heal_1791996020754_2spg",
+    "testTitle": "[TC_ACC_002] Verify Accounts Table & Action Controls",
+    "description": "Subscriptions Table Filter Dropdown",
+    "originalSelector": "#sub-filter-select-v1",
+    "healedSelector": "select[name=\"subscription_status\"]",
+    "healingStrategy": "FUZZY_TEXT_HEURISTIC",
+    "confidenceScore": 0.89,
+    "timestamp": 1791996020754,
+    "approved": false
+  }
+]

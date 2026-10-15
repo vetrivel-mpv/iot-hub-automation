@@ -1,11 +1,46 @@
+# Dependencies
 node_modules/
 dist/
-reports/
+
+# Test Results & Artifacts
 test-results/
 playwright-report/
 blob-report/
+allure-results/
+allure-report/
+reports/allure-report/
+reports/allure-results/
+reports/allure-runs/
+reports/archive/
+reports/artifacts/
+reports/html-report/
+reports/python-audit/
+reports/*.png
+reports/*.zip
+reports/*.webm
+reports/api-performance-metrics.json
 playwright/.auth/
 playwright/.cache/
+corp-migration/
+*.zip
+
+# Local Environment & Secrets (Never commit secrets to Corp repo)
 .env
+*.local.env
+
+# Python Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Temporary / Scratch Files
+scratch/
 *.log
 .DS_Store
+~$*.xlsx
+*.tmp
+acm_report*.html
+
+# IDE configuration
+.vscode/
+.idea/
