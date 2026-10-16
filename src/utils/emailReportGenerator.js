@@ -11,7 +11,7 @@ function generateExecutiveEmailHtml(data) {
   const passRate = Math.round((passCount / total) * 100);
   const durationSec = data.duration ? (data.duration / 1000).toFixed(1) + 's' : '0.0s';
   const serverHost = data.serverHost || 'localhost:3030';
-  const reportUrl = `http://${serverHost}/reports/allure/index.html`;
+  const reportUrl = `http://${serverHost}/reports/html/index.html`;
   const dashboardUrl = `http://${serverHost}`;
 
   const statusColor = isPassed ? '#10b981' : '#ef4444';
@@ -132,7 +132,7 @@ function generateExecutiveEmailHtml(data) {
         <table align="center" border="0" cellpadding="0" cellspacing="0">
           <tr>
             <td style="padding-right: 12px;">
-              <a href="${reportUrl}" target="_blank" style="display: inline-block; background-color: #0052cc; color: #ffffff; text-decoration: none; padding: 12px 22px; border-radius: 6px; font-size: 13px; font-weight: 600; box-shadow: 0 2px 8px rgba(0, 82, 204, 0.3);">📊 Open Allure Report ↗</a>
+              <a href="${reportUrl}" target="_blank" style="display: inline-block; background-color: #0052cc; color: #ffffff; text-decoration: none; padding: 12px 22px; border-radius: 6px; font-size: 13px; font-weight: 600; box-shadow: 0 2px 8px rgba(0, 82, 204, 0.3);">📊 Open Quality Report ↗</a>
             </td>
             <td>
               <a href="${dashboardUrl}" target="_blank" style="display: inline-block; background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; text-decoration: none; padding: 12px 20px; border-radius: 6px; font-size: 13px; font-weight: 600;">🖥️ Open Live Dashboard</a>

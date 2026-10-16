@@ -1,5 +1,4 @@
 import { Page, Locator, expect, test } from '@playwright/test';
-import { allure } from 'allure-playwright';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Logger } from '../utils/logger';
@@ -30,7 +29,7 @@ export abstract class BasePage {
   }
 
   /**
-   * Executes a business action wrapped in an Allure BDD Step with timing and screenshot-on-failure
+   * Executes a business action wrapped in a native Playwright Step with timing and screenshot-on-failure
    */
   async step<T>(stepTitle: string, action: () => Promise<T>): Promise<T> {
     Logger.info(`[STEP] ${stepTitle}`);
@@ -40,7 +39,10 @@ export abstract class BasePage {
         const result = await action();
         const duration = Date.now() - startTime;
         try {
-          allure.parameter(`${stepTitle} Duration`, `${duration}ms`);
+          test.info().annotations.push({
+            type: 'Step Timing',
+            description: `${stepTitle}: ${duration}ms`,
+          });
         } catch (e) {}
         return result;
       } catch (err: any) {
@@ -50,7 +52,10 @@ export abstract class BasePage {
           const shot = await this.page.screenshot({ fullPage: false }).catch(() => null);
           if (shot) {
             try {
-              allure.attachment(`Screenshot on Step Failure - ${stepTitle.slice(0, 50)}`, shot, 'image/png');
+              await test.info().attach(`Screenshot on Step Failure - ${stepTitle.slice(0, 50)}`, {
+                body: shot,
+                contentType: 'image/png',
+              });
             } catch (e) {}
           }
         }

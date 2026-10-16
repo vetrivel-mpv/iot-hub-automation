@@ -1,5 +1,4 @@
 import { test as baseTest, expect, Page } from '@playwright/test';
-import { allure } from 'allure-playwright';
 import * as path from 'path';
 import * as fs from 'fs';
 import { LoginPage } from '../pages/LoginPage';
@@ -142,7 +141,7 @@ export const test = baseTest.extend<PageFixtures>({
         fs.mkdirSync(testArtifactFolder, { recursive: true });
       }
 
-      // Attach Execution ID & Environment to Test Report Annotations & Allure
+      // Attach Execution ID & Environment to Test Report Annotations & Native HTML Report
       testInfo.annotations.push({
         type: 'Execution ID',
         description: runId,
@@ -164,16 +163,10 @@ export const test = baseTest.extend<PageFixtures>({
         description: `Short: ${config.timeouts.short}ms | Med: ${config.timeouts.medium}ms | Long: ${config.timeouts.long}ms`,
       });
 
-      try {
-        allure.parameter('Execution ID', runId);
-        allure.parameter('Environment', `[${config.environment}] ${config.activeEnvironmentId}`);
-        allure.parameter('Base URL', config.baseUrl);
-        allure.parameter('Worker', `Worker #${testInfo.workerIndex}`);
-        allure.tag(runId);
-        allure.tag(config.activeEnvironmentId);
-      } catch {
-        // Safe fallback if allure reporter not active
-      }
+      testInfo.annotations.push({
+        type: 'Worker',
+        description: `Worker #${testInfo.workerIndex}`,
+      });
 
       // Track created entities starting snapshot
       const entityStartIndex = DataFactory.registeredEntities.length;
@@ -269,15 +262,16 @@ export const test = baseTest.extend<PageFixtures>({
         const moduleName = matchedMod ? matchedMod.name : '🌐 Portal Operations';
         const featureName = matchedMod ? matchedMod.feature : 'Core Navigation';
 
-        allure.parentSuite(moduleName);
-        allure.suite(testInfo.titlePath[1] || featureName);
-        if (testInfo.titlePath[2]) {
-          allure.subSuite(testInfo.titlePath[2]);
-        }
-        allure.epic('IoT Hub Enterprise Portal');
-        allure.feature(featureName);
+        testInfo.annotations.push({
+          type: 'Module',
+          description: moduleName,
+        });
+        testInfo.annotations.push({
+          type: 'Feature',
+          description: featureName,
+        });
       } catch {
-        // Safe fallback if allure reporter not active
+        // Safe fallback
       }
 
       await use();
@@ -308,7 +302,7 @@ export const test = baseTest.extend<PageFixtures>({
             }).catch(() => {});
           }
 
-          // Embedded Interactive Screenshot Carousel HTML Attachment in Allure
+          // Embedded Interactive Screenshot Carousel HTML Attachment in Native Playwright HTML Report
           if (b64Viewport || b64Final) {
             const carouselHtml = `
               <!DOCTYPE html>
@@ -361,9 +355,6 @@ export const test = baseTest.extend<PageFixtures>({
               body: carouselHtml,
               contentType: 'text/html',
             }).catch(() => {});
-            try {
-              allure.attachment('📸 Visual Evidence Carousel (HTML)', carouselHtml, 'text/html');
-            } catch (e) {}
           }
         }
 
@@ -372,10 +363,6 @@ export const test = baseTest.extend<PageFixtures>({
         if (traceAttachment && traceAttachment.path) {
           const traceFileName = path.basename(traceAttachment.path);
           const viewerUrl = `https://trace.playwright.dev/?trace=${encodeURIComponent(`http://localhost:3030/traces/${traceFileName}`)}`;
-          try {
-            allure.link(viewerUrl, '🔍 Open Interactive Playwright Trace Viewer');
-          } catch(e) {}
-
           const traceEmbedHtml = `
             <!DOCTYPE html>
             <html>
@@ -405,9 +392,6 @@ export const test = baseTest.extend<PageFixtures>({
             body: traceEmbedHtml,
             contentType: 'text/html',
           }).catch(() => {});
-          try {
-            allure.attachment('🔍 Interactive Trace Viewer (HTML)', traceEmbedHtml, 'text/html');
-          } catch(e) {}
         }
 
         // Save execution console & error logs tagged with Run ID
@@ -447,10 +431,6 @@ export const test = baseTest.extend<PageFixtures>({
             body: jsonContent,
             contentType: 'application/json',
           }).catch(() => {});
-
-          try {
-            allure.attachment(`🌐 HTTP 4xx/5xx API Failures (${failedApiTransactions.length})`, jsonContent, 'application/json');
-          } catch (e) {}
 
           const htmlTable = `
             <!DOCTYPE html>
@@ -498,9 +478,6 @@ export const test = baseTest.extend<PageFixtures>({
             body: htmlTable,
             contentType: 'text/html',
           }).catch(() => {});
-          try {
-            allure.attachment('🚨 HTTP Errors Table', htmlTable, 'text/html');
-          } catch (e) {}
         }
 
         // Automated Failure Diagnostics: URL, Title, Failed Requests & Visible Alerts

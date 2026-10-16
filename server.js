@@ -21,41 +21,47 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/screenshots', express.static(path.join(__dirname, 'reports/artifacts/screenshots')));
 app.use('/reports/html', express.static(path.join(__dirname, 'reports/html-report')));
-app.use('/reports/allure', express.static(path.join(__dirname, 'reports/allure-report')));
-app.use('/reports/allure-runs', express.static(path.join(__dirname, 'reports/allure-runs')));
-// SPA / 404 Fallback for Allure Run Reports:
-// If a user clicks an internal or relative link in an Allure run that is not a static asset,
-// seamlessly redirect them back to the Allure Report index.html rather than returning "Cannot GET ..."
-app.get(/^\/reports\/allure-runs\/([^/]+)\/(.+)$/, (req, res) => {
+app.use('/reports/html-runs', express.static(path.join(__dirname, 'reports/html-runs')));
+// SPA / 404 Fallback for Run-Specific HTML Reports
+app.get(/^\/reports\/html-runs\/([^/]+)\/(.+)$/, (req, res) => {
   const runId = req.params[0];
-  const targetReport = path.join(__dirname, 'reports/allure-runs', runId, 'index.html');
+  const targetReport = path.join(__dirname, 'reports/html-runs', runId, 'index.html');
   if (fs.existsSync(targetReport)) {
-    return res.redirect(`/reports/allure-runs/${runId}/index.html`);
+    return res.redirect(`/reports/html-runs/${runId}/index.html`);
   }
   res.redirect('/#history');
 });
 
-app.get(/^\/reports\/allure\/(.+)$/, (req, res) => {
-  res.redirect('/reports/allure/index.html');
+// Backward-compatible redirects from legacy Allure paths to Dual-Layer HTML reports
+app.get(/^\/reports\/allure-runs\/([^/]+)/, (req, res) => {
+  const runId = req.params[0];
+  const htmlRun = path.join(__dirname, 'reports/html-runs', runId, 'index.html');
+  if (fs.existsSync(htmlRun)) {
+    return res.redirect(`/reports/html-runs/${runId}/index.html`);
+  }
+  res.redirect('/reports/html/index.html');
 });
+app.get(/^\/reports\/allure/, (req, res) => {
+  res.redirect('/reports/html/index.html');
+});
+
 app.use('/traces', express.static(path.join(__dirname, 'reports/artifacts')));
 app.use('/artifacts', express.static(path.join(__dirname, 'reports/artifacts')));
-app.use('/allure-media', express.static(path.join(__dirname, 'reports/allure-results')));
 app.use('/python-audit', express.static(path.join(__dirname, 'reports/python-audit')));
 
 const ENV_FILE_PATH = path.join(__dirname, 'src/config/environments.json');
 const HISTORY_FILE_PATH = path.join(__dirname, 'reports/execution-history.json');
 const PERF_METRICS_PATH = path.join(__dirname, 'reports/api-performance-metrics.json');
+const DOTENV_PATH = path.join(__dirname, '.env');
 
-// Ensure reports directories exist
+// Ensure reports directories exist for Dual-Layer Architecture
 [
   'reports',
   'reports/artifacts',
   'reports/artifacts/screenshots',
-  'reports/allure-results',
-  'reports/allure-report',
-  'reports/allure-runs',
   'reports/html-report',
+  'reports/html-runs',
+  'reports/blob-report',
   'reports/python-audit'
 ].forEach(dir => {
   const fullPath = path.join(__dirname, dir);
@@ -120,10 +126,189 @@ function loadEnvironments() {
   return DEFAULT_ENVIRONMENTS;
 }
 
+// -------------------------------------------------------------
+// ARBITRARY KEY-VALUE ENVIRONMENT VARIABLES ENGINE
+// -------------------------------------------------------------
+function parseEnvFile() {
+  if (!fs.existsSync(DOTENV_PATH)) return { raw: '', lines: [], entries: {} };
+  const raw = fs.readFileSync(DOTENV_PATH, 'utf8');
+  const lines = raw.split(/\r?\n/);
+  const entries = {};
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIdx = trimmed.indexOf('=');
+    if (eqIdx !== -1) {
+      const key = trimmed.slice(0, eqIdx).trim();
+      let val = trimmed.slice(eqIdx + 1).trim();
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+        val = val.slice(1, -1);
+      }
+      entries[key] = val;
+    }
+  }
+  return { raw, lines, entries };
+}
+
+function getEnvVariableMetadata(key) {
+  const upper = key.toUpperCase();
+  const isSecret = /KEY|PASS|SECRET|TOKEN|CREDENTIAL|AUTH/i.test(upper);
+
+  const METADATA_MAP = {
+    WDH_BASE_URL: { category: 'Core Portal', description: 'IoT Hub Portal target entrypoint URL' },
+    WDH_USERNAME: { category: 'Core Portal', description: 'Portal automation authentication user' },
+    WDH_PASSWORD: { category: 'Core Portal', description: 'Portal authentication password (stored securely)' },
+    WDH_ENV: { category: 'Core Portal', description: 'Active environment tier (DEV, SIT, UAT, PROD, CUSTOM)' },
+    HEADLESS: { category: 'Engine & Playwright', description: 'Run browsers without graphical window (true/false)' },
+    DEFAULT_TIMEOUT: { category: 'Engine & Playwright', description: 'Global test timeout in milliseconds (e.g. 30000)' },
+    ACTION_TIMEOUT: { category: 'Engine & Playwright', description: 'Element click, fill, and locator timeout in ms (e.g. 15000)' },
+    NAVIGATION_TIMEOUT: { category: 'Engine & Playwright', description: 'Page navigation timeout threshold in ms (e.g. 30000)' },
+    SLOW_MO: { category: 'Engine & Playwright', description: 'Artificial slow-motion delay in ms between browser actions (e.g. 50)' },
+    WORKERS: { category: 'Engine & Playwright', description: 'Number of parallel worker execution threads (1, 2, 4, 8)' },
+    RETRIES: { category: 'Engine & Playwright', description: 'Number of automatic retries on test failure (0, 1, 2)' },
+    ENABLE_TRACING: { category: 'Engine & Playwright', description: 'Record Playwright execution trace archives (true/false)' },
+    LOG_LEVEL: { category: 'Engine & Playwright', description: 'Logging verbosity level (INFO, DEBUG, WARN, ERROR)' },
+    SIDECAR_TELECOM_PORT: { category: 'Telecom Sidecar', description: 'Python Telecom Sidecar Service port (e.g. 5055)' },
+    JIRA_PROJECT_KEY: { category: 'Integrations & Reporting', description: 'Target Jira Project Key for 1-click bug filing (e.g. IOTHUB)' },
+    SLACK_WEBHOOK_URL: { category: 'Integrations & Reporting', description: 'Slack channel incoming webhook URL for run notifications' },
+    TEAMS_WEBHOOK_URL: { category: 'Integrations & Reporting', description: 'Microsoft Teams connector webhook URL' },
+  };
+
+  const meta = METADATA_MAP[upper];
+  return {
+    isSecret,
+    category: meta ? meta.category : 'Custom Keys',
+    description: meta ? meta.description : 'Custom environment variable for runtime automation context',
+    isCustom: !meta,
+  };
+}
+
+function updateEnvFile(updates) {
+  try {
+    const { lines, entries } = parseEnvFile();
+    const updatedEntries = { ...entries, ...updates };
+
+    const handledKeys = new Set();
+    const newLines = [];
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('#') || !trimmed) {
+        newLines.push(line);
+        continue;
+      }
+      const eqIdx = trimmed.indexOf('=');
+      if (eqIdx !== -1) {
+        const key = trimmed.slice(0, eqIdx).trim();
+        if (key in updatedEntries) {
+          newLines.push(`${key}=${updatedEntries[key]}`);
+          handledKeys.add(key);
+        } else {
+          newLines.push(line);
+        }
+      } else {
+        newLines.push(line);
+      }
+    }
+    for (const [key, val] of Object.entries(updatedEntries)) {
+      if (!handledKeys.has(key)) {
+        newLines.push(`${key}=${val}`);
+      }
+      process.env[key] = String(val);
+    }
+    fs.writeFileSync(DOTENV_PATH, newLines.join('\n') + '\n', 'utf8');
+    return true;
+  } catch (err) {
+    console.error('[EnvHelper] Error updating .env file:', err);
+    return false;
+  }
+}
+
+function removeEnvKey(keyToRemove) {
+  try {
+    const { lines } = parseEnvFile();
+    const newLines = [];
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('#') || !trimmed) {
+        newLines.push(line);
+        continue;
+      }
+      const eqIdx = trimmed.indexOf('=');
+      if (eqIdx !== -1) {
+        const key = trimmed.slice(0, eqIdx).trim();
+        if (key === keyToRemove) {
+          continue;
+        }
+      }
+      newLines.push(line);
+    }
+    delete process.env[keyToRemove];
+    fs.writeFileSync(DOTENV_PATH, newLines.join('\n') + '\n', 'utf8');
+    return true;
+  } catch (err) {
+    console.error('[EnvHelper] Error removing key from .env file:', err);
+    return false;
+  }
+}
+
+function validateEnvVariablesMap(entries) {
+  const errors = [];
+  const warnings = [];
+
+  // Validate Base URL
+  const baseUrl = entries.WDH_BASE_URL || process.env.WDH_BASE_URL;
+  if (!baseUrl) {
+    errors.push('Base URL (WDH_BASE_URL) is required.');
+  } else {
+    try {
+      const u = new URL(baseUrl);
+      if (!['http:', 'https:'].includes(u.protocol)) {
+        errors.push(`Invalid protocol for WDH_BASE_URL: "${u.protocol}". Must be http: or https:.`);
+      }
+    } catch {
+      errors.push(`WDH_BASE_URL "${baseUrl}" is not a valid URL.`);
+    }
+  }
+
+  // Validate Username
+  const username = entries.WDH_USERNAME || process.env.WDH_USERNAME;
+  if (!username) {
+    errors.push('Authentication username (WDH_USERNAME) is missing.');
+  } else if (username.includes('testuser@') || username === 'changeme') {
+    warnings.push('Using default placeholder username. Authenticated tests may fail.');
+  }
+
+  // Validate Timeouts
+  if (entries.DEFAULT_TIMEOUT) {
+    const t = parseInt(entries.DEFAULT_TIMEOUT, 10);
+    if (isNaN(t) || t < 5000) {
+      errors.push('DEFAULT_TIMEOUT must be a number greater than or equal to 5000ms.');
+    }
+  }
+  if (entries.ACTION_TIMEOUT) {
+    const t = parseInt(entries.ACTION_TIMEOUT, 10);
+    if (isNaN(t) || t < 1000) {
+      errors.push('ACTION_TIMEOUT must be a number greater than or equal to 1000ms.');
+    }
+  }
+  if (entries.WORKERS) {
+    const w = parseInt(entries.WORKERS, 10);
+    if (isNaN(w) || w < 1 || w > 32) {
+      warnings.push('WORKERS should typically be between 1 and 16.');
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+  };
+}
+
 function saveEnvironments(registry) {
   try {
     fs.writeFileSync(ENV_FILE_PATH, JSON.stringify(registry, null, 2), 'utf8');
-    // Sync active env to .env file
+    // Sync active env into .env file while preserving all custom variables
     const active = registry.environments.find(e => e.id === registry.activeEnvironmentId) || registry.environments[0];
     if (active) {
       process.env.WDH_BASE_URL = active.baseUrl;
@@ -131,8 +316,12 @@ function saveEnvironments(registry) {
       process.env.WDH_PASSWORD = active.auth.password || '';
       process.env.WDH_ENV = active.category;
 
-      const envContent = `# IoT Hub Portal Active Environment Configuration\nWDH_BASE_URL=${active.baseUrl}\nWDH_USERNAME=${active.auth.username}\nWDH_PASSWORD=${active.auth.password || ''}\nWDH_ENV=${active.category}\nHEADLESS=true\nDEFAULT_TIMEOUT=30000\n`;
-      fs.writeFileSync(path.join(__dirname, '.env'), envContent, 'utf8');
+      updateEnvFile({
+        WDH_BASE_URL: active.baseUrl,
+        WDH_USERNAME: active.auth.username,
+        WDH_PASSWORD: active.auth.password || '',
+        WDH_ENV: active.category,
+      });
     }
     return true;
   } catch (err) {
@@ -791,6 +980,123 @@ app.post('/api/config/validate', async (req, res) => {
   });
 });
 
+// =============================================================
+// ARBITRARY KEY-VALUE ENVIRONMENT VARIABLES MANAGEMENT API
+// =============================================================
+app.get('/api/env-vars', (req, res) => {
+  try {
+    const { entries, raw } = parseEnvFile();
+    const variables = Object.entries(entries).map(([key, value]) => {
+      const meta = getEnvVariableMetadata(key);
+      return {
+        key,
+        value,
+        isSecret: meta.isSecret,
+        category: meta.category,
+        description: meta.description,
+        isCustom: meta.isCustom,
+      };
+    });
+
+    res.json({
+      success: true,
+      variables,
+      raw,
+      activeEnvironment: process.env.WDH_ENV || 'DEV',
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/env-vars', (req, res) => {
+  const { key, value } = req.body;
+  if (!key || typeof key !== 'string') {
+    return res.status(400).json({ success: false, error: 'Key is required' });
+  }
+
+  const cleanKey = key.trim().toUpperCase().replace(/[^A-Z0-9_]/g, '_');
+  if (!/^[A-Z_][A-Z0-9_]*$/.test(cleanKey)) {
+    return res.status(400).json({ success: false, error: 'Invalid key format. Use uppercase letters, numbers, and underscores.' });
+  }
+
+  const stringValue = value !== undefined && value !== null ? String(value) : '';
+  const success = updateEnvFile({ [cleanKey]: stringValue });
+  if (!success) {
+    return res.status(500).json({ success: false, error: 'Failed to write variable to .env' });
+  }
+
+  const meta = getEnvVariableMetadata(cleanKey);
+  res.json({
+    success: true,
+    message: `Environment variable "${cleanKey}" saved successfully`,
+    variable: {
+      key: cleanKey,
+      value: stringValue,
+      isSecret: meta.isSecret,
+      category: meta.category,
+      description: meta.description,
+      isCustom: meta.isCustom,
+    },
+  });
+});
+
+app.delete('/api/env-vars/:key', (req, res) => {
+  const { key } = req.params;
+  if (!key) return res.status(400).json({ success: false, error: 'Key is required' });
+
+  const cleanKey = key.trim();
+  const success = removeEnvKey(cleanKey);
+  if (!success) {
+    return res.status(500).json({ success: false, error: 'Failed to remove variable from .env' });
+  }
+
+  res.json({ success: true, message: `Environment variable "${cleanKey}" deleted successfully` });
+});
+
+app.put('/api/env-vars/raw', (req, res) => {
+  const { content } = req.body;
+  if (content === undefined || content === null) {
+    return res.status(400).json({ success: false, error: 'Raw content is required' });
+  }
+
+  try {
+    fs.writeFileSync(DOTENV_PATH, content, 'utf8');
+    dotenv.config({ path: DOTENV_PATH, override: true });
+    res.json({ success: true, message: '.env configuration updated and reloaded' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/env-vars/validate', (req, res) => {
+  try {
+    const { entries } = parseEnvFile();
+    const result = validateEnvVariablesMap(entries);
+    res.json({
+      success: true,
+      ...result,
+      activeEnvironment: process.env.WDH_ENV || 'DEV',
+      baseUrl: process.env.WDH_BASE_URL,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/env-vars/reload', (req, res) => {
+  try {
+    dotenv.config({ path: DOTENV_PATH, override: true });
+    const { entries } = parseEnvFile();
+    res.json({
+      success: true,
+      message: 'Environment configuration reloaded from disk',
+      count: Object.keys(entries).length,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 // 2. Multi-Environment APIs
 app.get('/api/environments', (req, res) => {
@@ -1384,7 +1690,8 @@ app.get('/api/history/:runId', (req, res) => {
     run: {
       ...run,
       status: run.exitCode === 0 ? 'PASSED' : 'FAILED',
-      allureReportUrl: run.allureReportUrl || `/reports/allure-runs/${run.runId}/index.html`,
+      htmlReportUrl: run.htmlReportUrl || `/reports/html-runs/${run.runId}/index.html`,
+      allureReportUrl: run.htmlReportUrl || run.allureReportUrl || `/reports/html-runs/${run.runId}/index.html`,
       tests,
       testsCount: tests.length,
       passedCount: tests.filter(t => t.status === 'passed').length,
@@ -2430,8 +2737,70 @@ app.post('/api/sweeper/register-entity', (req, res) => {
 });
 
 
-// 6. Allure Report Generation & Status API
-function generateAllureReport(runContext, callback) {
+// 6. Dual-Layer Reporting Engine (Playwright HTML Snapshot + Executive Telemetry)
+function generateDualLayerReport(runContext, callback) {
+  if (typeof runContext === 'function') {
+    callback = runContext;
+    runContext = currentRun || {};
+  }
+  const runInfo = runContext || currentRun || {};
+  const runId = runInfo.runId || `RUN-${Date.now().toString().slice(-6)}`;
+  const htmlReportDir = path.join(__dirname, 'reports/html-report');
+  const runReportDir = path.join(__dirname, 'reports/html-runs', runId);
+
+  // 1. Snapshot Layer 1 Playwright Native HTML Report into per-run isolated folder
+  try {
+    if (fs.existsSync(htmlReportDir)) {
+      copyDirectorySync(htmlReportDir, runReportDir);
+      console.log(`[Dual-Layer Reporting] Preserved Playwright HTML execution snapshot: reports/html-runs/${runId}`);
+    } else {
+      console.log('[Dual-Layer Reporting] Base reports/html-report directory awaiting test execution.');
+    }
+  } catch (snapErr) {
+    console.warn('[Dual-Layer Reporting] Warning snapshotting HTML run report:', snapErr.message);
+  }
+
+  // 2. Compute Layer 2 Executive Metrics from test-results.json and history
+  let testStats = runInfo.stats || { total: 0, passed: 0, failed: 0, skipped: 0, flaky: 0, duration: 0 };
+  const testResultsPath = path.join(__dirname, 'reports/test-results.json');
+  if (fs.existsSync(testResultsPath)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(testResultsPath, 'utf8'));
+      if (data.stats) {
+        testStats = {
+          total: (data.stats.expected || 0) + (data.stats.unexpected || 0) + (data.stats.skipped || 0) + (data.stats.flaky || 0),
+          passed: data.stats.expected || 0,
+          failed: data.stats.unexpected || 0,
+          skipped: data.stats.skipped || 0,
+          flaky: data.stats.flaky || 0,
+          duration: Math.round(data.stats.duration || 0),
+        };
+      }
+    } catch (e) {}
+  }
+
+  const reportUrl = fs.existsSync(path.join(runReportDir, 'index.html'))
+    ? `/reports/html-runs/${runId}/index.html`
+    : '/reports/html/index.html';
+
+  console.log(`[Dual-Layer Reporting] Layer 1 Report Ready: ${reportUrl}`);
+
+  if (callback) {
+    callback(null, {
+      runId,
+      url: reportUrl,
+      htmlReportUrl: reportUrl,
+      stats: testStats,
+      exitCode: runInfo.exitCode,
+      passed: runInfo.exitCode === 0,
+    });
+  }
+}
+
+// Backward-compatible alias
+const generateAllureReport = generateDualLayerReport;
+
+function legacyAllureStub(runContext, callback) {
   if (typeof runContext === 'function') {
     callback = runContext;
     runContext = currentRun || {};
@@ -2738,54 +3107,69 @@ function generateAllureReport(runContext, callback) {
   });
 }
 
-app.get('/api/reports/allure/status', (req, res) => {
-  const allureIndexPath = path.join(__dirname, 'reports/allure-report/index.html');
-  const exists = fs.existsSync(allureIndexPath);
+app.get(['/api/reports/status', '/api/reports/allure/status'], (req, res) => {
+  const htmlIndexPath = path.join(__dirname, 'reports/html-report/index.html');
+  const exists = fs.existsSync(htmlIndexPath);
   let lastUpdated = null;
   if (exists) {
-    const stats = fs.statSync(allureIndexPath);
+    const stats = fs.statSync(htmlIndexPath);
     lastUpdated = stats.mtime;
   }
   res.json({
     exists,
-    url: '/reports/allure/index.html',
+    url: '/reports/html/index.html',
     lastUpdated,
+    engine: 'Dual-Layer Architecture (Playwright HTML + Executive HUD)',
   });
 });
 
-// Direct Dashboard Integration: Serve compiled Allure metrics, categories & environment
-app.get('/api/reports/allure/summary', (req, res) => {
-  const allureReportDir = path.join(__dirname, 'reports/allure-report');
-  const widgetsDir = path.join(allureReportDir, 'widgets');
-
-  if (!fs.existsSync(widgetsDir)) {
-    return res.json({ available: false });
-  }
-
+// Direct Dashboard Integration: Serve compiled Executive Quality metrics & environment
+app.get(['/api/reports/summary', '/api/reports/allure/summary'], (req, res) => {
   try {
-    const readJson = (file) => {
-      const p = path.join(widgetsDir, file);
-      return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : null;
-    };
+    const history = loadExecutionHistory();
+    const latestRun = history[0] || currentRun || null;
 
-    const summary = readJson('summary.json');
-    const categories = readJson('categories.json');
-    const environment = readJson('environment.json');
-    const executors = readJson('executors.json');
-    const suites = readJson('suites.json');
+    let stats = latestRun?.stats || { total: 0, passed: 0, failed: 0, skipped: 0 };
+    const total = Math.max(stats.total || (stats.passed + stats.failed + stats.skipped), 1);
+    const passRate = Math.round(((stats.passed || 0) / total) * 100);
 
-    const indexPath = path.join(allureReportDir, 'index.html');
-    const lastUpdated = fs.existsSync(indexPath) ? fs.statSync(indexPath).mtime : null;
+    const htmlIndexPath = path.join(__dirname, 'reports/html-report/index.html');
+    const lastUpdated = fs.existsSync(htmlIndexPath)
+      ? fs.statSync(htmlIndexPath).mtime
+      : (latestRun?.endTime || new Date().toISOString());
+
+    const activeEnv = loadEnvironments();
+    const targetEnvObj = activeEnv.environments.find(e => e.id === activeEnv.activeEnvironmentId) || activeEnv.environments[0];
 
     res.json({
-      available: !!summary,
-      summary,
-      categories,
-      environment,
-      executors,
-      suites,
+      available: true,
+      engine: 'Dual-Layer Architecture (Playwright Native HTML + Automation HUD)',
+      summary: {
+        statistic: {
+          total: stats.total || (stats.passed + stats.failed + stats.skipped) || 0,
+          passed: stats.passed || 0,
+          failed: stats.failed || 0,
+          skipped: stats.skipped || 0,
+          passRate,
+        },
+        time: {
+          duration: latestRun?.duration || 0,
+          start: latestRun?.startTime,
+          stop: latestRun?.endTime,
+        },
+      },
+      environment: {
+        Portal: 'IoT Hub Enterprise Portal',
+        'Target Environment': latestRun?.envName || targetEnvObj?.name || 'Azure FrontDoor DEV (azure-fd)',
+        'Base URL': latestRun?.baseUrl || process.env.WDH_BASE_URL || targetEnvObj?.baseUrl || 'https://wdh-ekbbe2e2bbe4addc.a02.azurefd.net',
+        'Quality Gate Status': (latestRun?.exitCode === 0) ? 'PASSED (Production Safety Enforced)' : 'FAILED / ACTION REQUIRED',
+        'Report Architecture': 'Dual-Layer (Playwright HTML + Executive HUD)',
+        'Concurrency Engine': `${process.env.WORKERS || 4}x Parallel Workers`,
+        'Session Persistence': 'Keycloak Encrypted Auth Cache',
+        'Tracing Engine': 'Active Action-by-Action DOM Waterfall',
+      },
+      reportUrl: latestRun?.htmlReportUrl || latestRun?.allureReportUrl || '/reports/html/index.html',
       lastUpdated,
-      reportUrl: '/reports/allure/index.html',
     });
   } catch (err) {
     res.status(500).json({ available: false, error: err.message });
@@ -3701,13 +4085,19 @@ app.post('/api/run', async (req, res) => {
       }
     }
 
-    // Auto-generate Allure Report with Execution ID snapshot and notify SSE clients
-    generateAllureReport(currentRun, (allureErr, allureData) => {
-      if (!allureErr) {
+    // Auto-generate Dual-Layer Report with Execution ID snapshot and notify SSE clients
+    generateDualLayerReport(currentRun, (reportErr, reportData) => {
+      if (!reportErr) {
+        broadcast('report_updated', {
+          timestamp: new Date().toISOString(),
+          runId: currentRun.runId,
+          url: reportData?.url || `/reports/html-runs/${currentRun.runId}/index.html`,
+          htmlReportUrl: reportData?.htmlReportUrl || `/reports/html-runs/${currentRun.runId}/index.html`,
+        });
         broadcast('allure_updated', {
           timestamp: new Date().toISOString(),
           runId: currentRun.runId,
-          url: allureData?.url || `/reports/allure-runs/${currentRun.runId}/index.html`,
+          url: reportData?.url || `/reports/html-runs/${currentRun.runId}/index.html`,
         });
       }
     });
@@ -3747,7 +4137,8 @@ app.post('/api/run', async (req, res) => {
       latestTrace: currentRun.latestTrace,
       completedTests: currentRun.completedTests,
       createdResources: currentRun.createdResources,
-      allureReportUrl: `/reports/allure-runs/${currentRun.runId}/index.html`,
+      htmlReportUrl: `/reports/html-runs/${currentRun.runId}/index.html`,
+      allureReportUrl: `/reports/html-runs/${currentRun.runId}/index.html`,
     });
 
     broadcast('finish', currentRun);

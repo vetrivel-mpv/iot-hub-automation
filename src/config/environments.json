@@ -1,5 +1,5 @@
 {
-  "activeEnvironmentId": "sit-stg2",
+  "activeEnvironmentId": "azure-fd",
   "environments": [
     {
       "id": "azure-fd",
@@ -9,7 +9,7 @@
       "description": "IoT Hub on Azure FrontDoor (CMPaaS)",
       "auth": {
         "username": "cmpaas-csp-user",
-        "password": ""
+        "password": "hMIscf751jLXncx"
       },
       "isDefault": false,
       "isProtected": false,

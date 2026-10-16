@@ -24,9 +24,13 @@ const state = {
   perfSortOrder: 'COUNT_DESC',
   pendingRunPayload: null, // For PROD safety modal confirmation
   activeModalSuiteId: null, // Currently opened suite in modal
-  activeReportTab: 'allure', // 'allure' | 'playwright' | 'traces'
+  activeReportTab: 'playwright', // 'playwright' | 'traces' | 'executive'
   latestTrace: null,
   latestRca: null,
+  envVarsList: [],
+  envVarsActiveCat: 'all',
+  envVarsSearchTerm: '',
+  envVarsMaskState: {},
 };
 
 // DOM Elements with safe dynamic getters
@@ -208,8 +212,22 @@ const elements = new Proxy({}, {
       reportIframe: () => document.getElementById('report-iframe'),
       tracesArchiveView: () => document.getElementById('traces-archive-view'),
       tracesListGrid: () => document.getElementById('traces-list-grid'),
+      executiveTelemetryView: () => document.getElementById('executive-telemetry-view'),
       refreshReportBtn: () => document.getElementById('refresh-report-btn'),
       openReportTabBtn: () => document.getElementById('open-report-tab-btn'),
+
+      // Arbitrary Key-Value Env Vars Modal
+      envVarsModal: () => document.getElementById('env-vars-modal'),
+      openEnvVarsBtn: () => document.getElementById('open-env-vars-btn'),
+      envVarsModalClose: () => document.getElementById('env-vars-modal-close'),
+      envVarsTbody: () => document.getElementById('env-vars-tbody'),
+      newEnvKeyInput: () => document.getElementById('new-env-key'),
+      newEnvValInput: () => document.getElementById('new-env-val'),
+      newEnvHint: () => document.getElementById('new-env-hint'),
+      newEnvPresetSelect: () => document.getElementById('env-var-preset-select'),
+      envRawTextarea: () => document.getElementById('env-raw-textarea'),
+      envVarsValidationBanner: () => document.getElementById('env-vars-validation-banner'),
+      envVarsSearch: () => document.getElementById('env-vars-search'),
 
       // Suite Details Modal
       suiteDetailsModal: () => document.getElementById('suite-details-modal'),
@@ -1164,16 +1182,25 @@ function setupEventListeners() {
   if (elements.rcaOpenTraceBtn) elements.rcaOpenTraceBtn.addEventListener('click', openLatestTrace);
   if (elements.rcaOpenAllureBtn) elements.rcaOpenAllureBtn.addEventListener('click', () => {
     switchTab('report');
-    switchReportView('allure');
+    switchReportView('playwright');
   });
 
-  // Terminal Trace & Allure Actions (Live Execution Canvas)
+  // Terminal Trace & Report Actions (Live Execution Canvas)
   if (elements.terminalTraceBtn) elements.terminalTraceBtn.addEventListener('click', openLatestTrace);
   if (elements.terminalDownloadTraceBtn) elements.terminalDownloadTraceBtn.addEventListener('click', downloadLatestTrace);
   if (elements.terminalAllureBtn) elements.terminalAllureBtn.addEventListener('click', () => {
     switchTab('report');
-    switchReportView('allure');
+    switchReportView('playwright');
   });
+
+  // Arbitrary Key-Value Env Modal Listeners
+  if (elements.openEnvVarsBtn) elements.openEnvVarsBtn.addEventListener('click', window.openEnvVarsModal);
+  if (elements.envVarsModalClose) elements.envVarsModalClose.addEventListener('click', window.closeEnvVarsModal);
+  if (elements.envVarsModal) {
+    elements.envVarsModal.addEventListener('click', (e) => {
+      if (e.target === elements.envVarsModal) window.closeEnvVarsModal();
+    });
+  }
 
   // Multi-Report Sub-Tabs
   if (elements.reportSubTabs) {
@@ -1460,7 +1487,7 @@ function switchTab(tabId) {
   if (tabId === 'performance') fetchPerformanceMetrics();
   if (tabId === 'environments') renderEnvironmentFleet();
   if (tabId === 'report') {
-    switchReportView(state.activeReportTab || 'allure');
+    switchReportView(state.activeReportTab || 'playwright');
     if (typeof loadFailureIntelligence === 'function') loadFailureIntelligence();
   }
   if (tabId === 'schedules') fetchSchedules();
@@ -2584,14 +2611,23 @@ function setupSSE() {
     handleRunFinish(data);
   });
 
-  eventSource.addEventListener('allure_updated', (e) => {
-    const data = JSON.parse(e.data);
-    const targetUrl = data.url || `/reports/allure/index.html?t=${Date.now()}`;
-    // Automatically reload embedded Allure iframe in real-time when new results are compiled
-    if (elements.reportIframe && state.activeReportTab === 'allure') {
-      elements.reportIframe.src = `${targetUrl}?t=${Date.now()}`;
-    }
-  });
+  const handleReportUpdate = (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      const targetUrl = data.url || `/reports/html/index.html?t=${Date.now()}`;
+      if (elements.reportIframe && (state.activeReportTab === 'playwright' || state.activeReportTab === 'allure')) {
+        elements.reportIframe.src = `${targetUrl}?t=${Date.now()}`;
+      }
+      if (typeof loadExecutiveTelemetryReport === 'function') {
+        loadExecutiveTelemetryReport();
+      }
+      if (typeof loadAllureDashboardWidget === 'function') {
+        loadAllureDashboardWidget();
+      }
+    } catch (err) {}
+  };
+  eventSource.addEventListener('report_updated', handleReportUpdate);
+  eventSource.addEventListener('allure_updated', handleReportUpdate);
 
   eventSource.addEventListener('env_switched', (e) => {
     const data = JSON.parse(e.data);
@@ -3231,51 +3267,502 @@ function copyRcaCode() {
 }
 
 // -------------------------------------------------------------
-// MULTI-REPORT SUITE (ALLURE, PLAYWRIGHT, TRACES)
+// DUAL-LAYER REPORTING SUITE (PLAYWRIGHT HTML, TRACES, EXECUTIVE)
 // -------------------------------------------------------------
 function switchReportView(reportType) {
+  // Gracefully handle legacy 'allure' tab references by directing to native Playwright HTML report
+  if (reportType === 'allure') reportType = 'playwright';
   state.activeReportTab = reportType;
 
   elements.reportSubTabs.forEach(tab => {
     tab.classList.toggle('active', tab.dataset.report === reportType);
   });
 
-  if (reportType === 'allure') {
-    elements.reportIframe.classList.remove('hidden');
-    elements.tracesArchiveView.classList.add('hidden');
-    if (!elements.reportIframe.src || !elements.reportIframe.src.endsWith('/reports/allure/index.html')) {
-      elements.reportIframe.src = '/reports/allure/index.html';
-    }
-    elements.openReportTabBtn.href = '/reports/allure/index.html';
-    elements.openReportTabBtn.textContent = 'Open in New Tab ↗';
-  } else if (reportType === 'playwright') {
-    elements.reportIframe.classList.remove('hidden');
-    elements.tracesArchiveView.classList.add('hidden');
+  const execView = elements.executiveTelemetryView || document.getElementById('executive-telemetry-view');
+
+  if (reportType === 'playwright') {
+    elements.reportIframe?.classList.remove('hidden');
+    elements.tracesArchiveView?.classList.add('hidden');
+    if (execView) execView.classList.add('hidden');
     if (!elements.reportIframe.src || !elements.reportIframe.src.endsWith('/reports/html/index.html')) {
       elements.reportIframe.src = '/reports/html/index.html';
     }
     elements.openReportTabBtn.href = '/reports/html/index.html';
     elements.openReportTabBtn.textContent = 'Open in New Tab ↗';
   } else if (reportType === 'traces') {
-    elements.reportIframe.classList.add('hidden');
-    elements.tracesArchiveView.classList.remove('hidden');
+    elements.reportIframe?.classList.add('hidden');
+    elements.tracesArchiveView?.classList.remove('hidden');
+    if (execView) execView.classList.add('hidden');
     elements.openReportTabBtn.href = 'https://trace.playwright.dev/';
     elements.openReportTabBtn.textContent = 'Launch Trace Viewer ↗';
     fetchTraces();
+  } else if (reportType === 'executive') {
+    elements.reportIframe?.classList.add('hidden');
+    elements.tracesArchiveView?.classList.add('hidden');
+    if (execView) {
+      execView.classList.remove('hidden');
+      loadExecutiveTelemetryReport();
+    }
+    elements.openReportTabBtn.href = '#';
+    elements.openReportTabBtn.textContent = 'Executive Telemetry HUD';
   }
 }
 
 async function refreshCurrentReport() {
-  if (state.activeReportTab === 'allure') {
-    appendLog('[SYSTEM] Triggering on-demand Allure report regeneration...', 'system');
-    await fetch('/api/reports/allure/generate');
-    elements.reportIframe.src = `/reports/allure/index.html?t=${Date.now()}`;
-  } else if (state.activeReportTab === 'playwright') {
+  if (state.activeReportTab === 'playwright') {
     elements.reportIframe.src = `/reports/html/index.html?t=${Date.now()}`;
+    showToast('Report Refreshed', 'Playwright Native HTML Report reloaded', 'info');
   } else if (state.activeReportTab === 'traces') {
-    fetchTraces();
+    await fetchTraces();
+    showToast('Traces Refreshed', 'Trace file archive updated', 'info');
+  } else if (state.activeReportTab === 'executive') {
+    await loadExecutiveTelemetryReport();
+    showToast('Executive Telemetry', 'Executive metrics and defect clusters updated', 'info');
   }
 }
+
+window.refreshReportFrame = function() {
+  refreshCurrentReport();
+};
+
+window.refreshExecutiveTelemetry = async function() {
+  await loadExecutiveTelemetryReport();
+  showToast('Executive Telemetry', 'Executive metrics refreshed successfully', 'success');
+};
+
+async function loadExecutiveTelemetryReport() {
+  const grid = document.getElementById('exec-view-metrics-grid');
+  const clustersList = document.getElementById('exec-clusters-list');
+  const clusterCountEl = document.getElementById('exec-cluster-count');
+  const runsList = document.getElementById('exec-runs-list');
+  const runsCountEl = document.getElementById('exec-runs-count');
+
+  try {
+    const res = await fetch('/api/reports/summary');
+    if (!res.ok) return;
+    const data = await res.json();
+    const stat = (data.summary && data.summary.statistic) || {};
+    const passed = stat.passed || 0;
+    const failed = stat.failed || 0;
+    const broken = stat.broken || 0;
+    const skipped = stat.skipped || 0;
+    const executed = passed + failed + broken;
+    const total = stat.total || (executed + skipped) || 1;
+    const passPct = executed > 0 ? ((passed / executed) * 100).toFixed(1) : '100.0';
+
+    if (grid) {
+      grid.innerHTML = `
+        <div class="exec-metric-card">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-muted">Quality SLA Status</div>
+          <div class="text-2xl font-black font-mono mt-1 ${parseFloat(passPct) >= 90 ? 'text-emerald-600' : 'text-rose-600'}">${passPct}% Pass</div>
+          <div class="text-xs text-muted mt-1">${passed} passed / ${executed} executed</div>
+        </div>
+        <div class="exec-metric-card">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-muted">Defects & Failures</div>
+          <div class="text-2xl font-black font-mono mt-1 ${failed + broken > 0 ? 'text-rose-600' : 'text-emerald-600'}">${failed + broken} Failures</div>
+          <div class="text-xs text-muted mt-1">${broken} broken, ${failed} failed</div>
+        </div>
+        <div class="exec-metric-card">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-muted">Safety Guardrails</div>
+          <div class="text-2xl font-black font-mono mt-1 text-amber-600">${skipped} Guarded</div>
+          <div class="text-xs text-muted mt-1">Intentionally skipped for safety</div>
+        </div>
+        <div class="exec-metric-card">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-muted">Latest Run ID</div>
+          <div class="text-xl font-bold font-mono mt-1 text-blue-600 truncate">${data.summary?.reportName || 'LATEST'}</div>
+          <div class="text-xs text-muted mt-1">${data.summary?.time?.stop ? new Date(data.summary.time.stop).toLocaleTimeString() : 'Just now'}</div>
+        </div>
+      `;
+    }
+
+    if (clustersList && clusterCountEl) {
+      const items = (data.categories && data.categories.items) || [];
+      clusterCountEl.textContent = `${items.length} Defect Clusters`;
+      if (items.length === 0) {
+        clustersList.innerHTML = `<div class="text-xs text-muted p-4 text-center">No active defect clusters detected. All test scenarios compliant!</div>`;
+      } else {
+        clustersList.innerHTML = items.map(cat => {
+          const cFailed = (cat.statistic?.failed || 0) + (cat.statistic?.broken || 0);
+          return `
+            <div class="exec-cluster-item">
+              <div>
+                <div class="font-semibold text-xs text-slate-800 dark:text-slate-200">🔍 ${cat.name || 'Defect Cluster'}</div>
+                <div class="text-[11px] text-muted">${cat.description || 'Root cause cluster across test steps'}</div>
+              </div>
+              <span class="badge ${cFailed > 0 ? 'badge-fail' : 'badge-env'}">${cFailed} Failures</span>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    // Load available historical run reports
+    if (runsList && runsCountEl) {
+      try {
+        const histRes = await fetch('/api/reports/status');
+        const histData = await histRes.json();
+        const runs = histData.runs || [];
+        runsCountEl.textContent = `${runs.length} Snapshots`;
+        if (runs.length === 0) {
+          runsList.innerHTML = `
+            <div class="exec-run-item">
+              <span>Current Execution (reports/html-report)</span>
+              <a href="/reports/html/index.html" target="_blank" class="btn btn-secondary btn-sm">Open ↗</a>
+            </div>
+          `;
+        } else {
+          runsList.innerHTML = runs.slice(0, 10).map(r => `
+            <div class="exec-run-item">
+              <div>
+                <span class="font-mono font-bold text-xs">${r.runId}</span>
+                <span class="text-[10px] text-muted block">${new Date(r.timestamp).toLocaleString()}</span>
+              </div>
+              <a href="${r.url || `/reports/html-runs/${r.runId}/index.html`}" target="_blank" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 2px 8px;">View Snapshot ↗</a>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.warn('Could not fetch historical runs:', err);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load executive telemetry report:', err);
+  }
+}
+
+// ============================================================
+// ARBITRARY KEY-VALUE ENVIRONMENT VARIABLES & SECRETS MANAGER
+// ============================================================
+const ENV_PRESETS = {
+  HEADLESS: { value: 'false', hint: 'Run browser in headless mode (true) or headed with visual UI (false).' },
+  DEFAULT_TIMEOUT: { value: '30000', hint: 'Global test timeout in milliseconds (e.g. 30000ms = 30s).' },
+  ACTION_TIMEOUT: { value: '15000', hint: 'Timeout for click, fill, hover actions in milliseconds.' },
+  NAVIGATION_TIMEOUT: { value: '30000', hint: 'Timeout for page.goto() navigation in milliseconds.' },
+  SLOW_MO: { value: '50', hint: 'Artificially slow down Playwright actions by X ms for human observation.' },
+  WORKERS: { value: '2', hint: 'Number of parallel worker processes for test suite execution.' },
+  RETRIES: { value: '1', hint: 'Automatic test retry count on CI/CD or local test failure.' },
+  ENABLE_TRACING: { value: 'true', hint: 'Capture deep trace files (.zip) with DOM actions & network waterfalls.' },
+  LOG_LEVEL: { value: 'INFO', hint: 'Logging granularity: DEBUG | INFO | WARN | ERROR.' },
+  SIDECAR_TELECOM_PORT: { value: '5055', hint: 'Port for telecom APN & QoS emulation microservice sidecar.' },
+  JIRA_PROJECT_KEY: { value: 'IOTHUB', hint: 'Jira project key for automated bug and test failure filing.' },
+  SLACK_WEBHOOK_URL: { value: 'https://hooks.slack.com/services/...', hint: 'Slack Incoming Webhook URL for executive failure alerts.' },
+  TEAMS_WEBHOOK_URL: { value: 'https://outlook.office.com/webhook/...', hint: 'Microsoft Teams Incoming Webhook URL for test run reports.' },
+  CUSTOM: { value: '', hint: 'Define any arbitrary key-value pair for custom sidecars, secrets, or scripts.' }
+};
+
+window.openEnvVarsModal = async function() {
+  const modal = elements.envVarsModal || document.getElementById('env-vars-modal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  await window.loadEnvVarsList();
+  await window.validateEnvVars();
+};
+
+window.closeEnvVarsModal = function() {
+  const modal = elements.envVarsModal || document.getElementById('env-vars-modal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.onEnvPresetSelected = function(presetKey) {
+  const keyInput = document.getElementById('new-env-key');
+  const valInput = document.getElementById('new-env-val');
+  const hintEl = document.getElementById('new-env-hint');
+  if (!presetKey) return;
+
+  if (presetKey === 'CUSTOM') {
+    if (keyInput) keyInput.value = '';
+    if (valInput) valInput.value = '';
+    if (hintEl) hintEl.textContent = ENV_PRESETS.CUSTOM.hint;
+    keyInput?.focus();
+    return;
+  }
+
+  const preset = ENV_PRESETS[presetKey];
+  if (preset) {
+    if (keyInput) keyInput.value = presetKey;
+    if (valInput) valInput.value = preset.value;
+    if (hintEl) hintEl.textContent = preset.hint;
+  }
+};
+
+window.toggleNewEnvMask = function() {
+  const valInput = document.getElementById('new-env-val');
+  const btn = document.getElementById('new-env-toggle-mask');
+  if (!valInput) return;
+  if (valInput.type === 'password') {
+    valInput.type = 'text';
+    if (btn) btn.textContent = '🔒';
+  } else {
+    valInput.type = 'password';
+    if (btn) btn.textContent = '👁️';
+  }
+};
+
+window.toggleRowEnvMask = function(key) {
+  state.envVarsMaskState[key] = !state.envVarsMaskState[key];
+  window.renderEnvVarsTable();
+};
+
+window.editEnvVarRow = function(key) {
+  const item = state.envVarsList.find(v => v.key === key);
+  if (!item) return;
+  const keyInput = document.getElementById('new-env-key');
+  const valInput = document.getElementById('new-env-val');
+  const hintEl = document.getElementById('new-env-hint');
+  if (keyInput) keyInput.value = item.key;
+  if (valInput) valInput.value = item.value;
+  if (hintEl) hintEl.textContent = item.description || `Editing ${item.key} (${item.category})`;
+  window.switchEnvVarsView('grid');
+  keyInput?.scrollIntoView({ behavior: 'smooth' });
+};
+
+window.loadEnvVarsList = async function() {
+  try {
+    const res = await fetch('/api/env-vars');
+    if (!res.ok) return;
+    const data = await res.json();
+    state.envVarsList = data.variables || [];
+    
+    // Set raw textarea
+    const rawEl = document.getElementById('env-raw-textarea');
+    if (rawEl && data.raw) rawEl.value = data.raw;
+
+    // Update count badge
+    const countAllEl = document.getElementById('count-env-all');
+    if (countAllEl) countAllEl.textContent = state.envVarsList.length;
+
+    window.renderEnvVarsTable();
+  } catch (err) {
+    console.error('Failed to load env vars list:', err);
+  }
+};
+
+window.filterEnvVarsByCategory = function(category) {
+  state.envVarsActiveCat = category;
+  document.querySelectorAll('#env-var-category-pills .allure-cat-badge').forEach(pill => {
+    pill.classList.toggle('active', pill.dataset.cat === category);
+  });
+  window.renderEnvVarsTable();
+};
+
+window.filterEnvVarsList = function() {
+  const searchInput = document.getElementById('env-vars-search');
+  state.envVarsSearchTerm = (searchInput ? searchInput.value : '').toLowerCase().trim();
+  window.renderEnvVarsTable();
+};
+
+window.renderEnvVarsTable = function() {
+  const tbody = document.getElementById('env-vars-tbody');
+  if (!tbody) return;
+
+  let filtered = state.envVarsList;
+
+  if (state.envVarsActiveCat && state.envVarsActiveCat !== 'all') {
+    filtered = filtered.filter(v => v.category === state.envVarsActiveCat);
+  }
+
+  if (state.envVarsSearchTerm) {
+    filtered = filtered.filter(v => 
+      v.key.toLowerCase().includes(state.envVarsSearchTerm) ||
+      (v.value && v.value.toLowerCase().includes(state.envVarsSearchTerm)) ||
+      (v.description && v.description.toLowerCase().includes(state.envVarsSearchTerm))
+    );
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" style="text-align: center; padding: 24px; color: #94a3b8;">
+          No environment variables match the filter criteria.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(v => {
+    const isSecret = v.isSecret;
+    const isRevealed = state.envVarsMaskState[v.key];
+    const displayVal = (isSecret && !isRevealed) ? '••••••••••••' : escapeHtml(v.value || '');
+    
+    return `
+      <tr style="border-bottom: 1px solid rgba(148, 163, 184, 0.15);">
+        <td style="padding: 8px 12px;">
+          <div class="font-mono font-bold text-xs flex items-center gap-1.5" style="color: ${isSecret ? '#f59e0b' : '#38bdf8'};">
+            ${isSecret ? '🔒' : '🔑'}
+            <span>${escapeHtml(v.key)}</span>
+          </div>
+          <div class="text-[10px] text-muted truncate max-w-xs" title="${escapeHtml(v.description || '')}">${escapeHtml(v.description || '')}</div>
+        </td>
+        <td style="padding: 8px 12px; font-family: monospace; font-size: 11px; word-break: break-all;">
+          <div class="flex items-center gap-1.5 justify-between">
+            <span class="${isSecret && !isRevealed ? 'env-val-masked' : ''}">${displayVal}</span>
+            ${isSecret ? `
+              <button type="button" class="btn btn-secondary btn-sm" style="padding: 1px 6px; font-size: 10px;" onclick="window.toggleRowEnvMask('${escapeHtml(v.key)}')" title="Toggle secret visibility">
+                ${isRevealed ? '🔒' : '👁️'}
+              </button>
+            ` : ''}
+          </div>
+        </td>
+        <td style="padding: 8px 12px;">
+          <span class="badge" style="font-size: 10px; background: rgba(99, 102, 241, 0.1); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.25);">
+            ${escapeHtml(v.category)}
+          </span>
+        </td>
+        <td style="padding: 8px 12px; text-align: center;">
+          <div class="flex items-center justify-center gap-1">
+            <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 7px; font-size: 11px;" onclick="window.editEnvVarRow('${escapeHtml(v.key)}')" title="Edit Variable">✏️</button>
+            <button type="button" class="btn btn-danger btn-sm" style="padding: 2px 7px; font-size: 11px;" onclick="window.deleteEnvVar('${escapeHtml(v.key)}')" title="Delete Variable">🗑️</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+};
+
+window.submitEnvVar = async function() {
+  const keyInput = document.getElementById('new-env-key');
+  const valInput = document.getElementById('new-env-val');
+  const key = keyInput?.value?.trim().toUpperCase();
+  const value = valInput?.value ?? '';
+
+  if (!key) {
+    showToast('Input Error', 'Variable Key is required and cannot be empty.', 'error');
+    keyInput?.focus();
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/env-vars', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, value })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('Environment Saved', `Successfully updated ${key}`, 'success');
+      keyInput.value = '';
+      valInput.value = '';
+      await window.loadEnvVarsList();
+      await window.validateEnvVars();
+    } else {
+      showToast('Save Failed', data.error || 'Failed to update environment variable', 'error');
+    }
+  } catch (err) {
+    showToast('Network Error', err.message, 'error');
+  }
+};
+
+window.deleteEnvVar = async function(key) {
+  if (!confirm(`Are you sure you want to delete environment variable "${key}" from .env?`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/env-vars/${encodeURIComponent(key)}`, {
+      method: 'DELETE'
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('Variable Deleted', `Removed ${key} from .env`, 'info');
+      await window.loadEnvVarsList();
+      await window.validateEnvVars();
+    } else {
+      showToast('Delete Error', data.error || 'Failed to remove variable', 'error');
+    }
+  } catch (err) {
+    showToast('Network Error', err.message, 'error');
+  }
+};
+
+window.switchEnvVarsView = function(view) {
+  const gridView = document.getElementById('env-vars-grid-view');
+  const rawView = document.getElementById('env-vars-raw-view');
+  const gridBtn = document.getElementById('tab-btn-env-vars-grid');
+  const rawBtn = document.getElementById('tab-btn-env-vars-raw');
+
+  if (view === 'grid') {
+    gridView?.classList.remove('hidden');
+    rawView?.classList.add('hidden');
+    gridBtn?.classList.add('active');
+    rawBtn?.classList.remove('active');
+    window.renderEnvVarsTable();
+  } else {
+    gridView?.classList.add('hidden');
+    rawView?.classList.remove('hidden');
+    gridBtn?.classList.remove('active');
+    rawBtn?.classList.add('active');
+  }
+};
+
+window.saveRawEnvFile = async function() {
+  const rawEl = document.getElementById('env-raw-textarea');
+  if (!rawEl) return;
+  const content = rawEl.value;
+
+  try {
+    const res = await fetch('/api/env-vars/raw', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('Raw .env Saved', 'Root environment file successfully written and reloaded!', 'success');
+      await window.loadEnvVarsList();
+      await window.validateEnvVars();
+    } else {
+      showToast('Save Error', data.error || 'Failed to write raw .env', 'error');
+    }
+  } catch (err) {
+    showToast('Network Error', err.message, 'error');
+  }
+};
+
+window.validateEnvVars = async function() {
+  const banner = document.getElementById('env-vars-validation-banner');
+  const iconEl = document.getElementById('env-vars-val-icon');
+  const msgEl = document.getElementById('env-vars-val-msg');
+  if (!banner) return;
+
+  try {
+    const res = await fetch('/api/env-vars/validate', { method: 'POST' });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      if (data.valid && (!data.warnings || data.warnings.length === 0)) {
+        banner.className = 'env-vars-alert-banner valid flex items-center justify-between';
+        if (iconEl) iconEl.textContent = '✅';
+        if (msgEl) msgEl.innerHTML = `All enterprise environment parameters validated. Active Tier: <strong>${data.environment || 'DEV'}</strong>`;
+      } else if (data.valid && data.warnings && data.warnings.length > 0) {
+        banner.className = 'env-vars-alert-banner warning flex items-center justify-between';
+        if (iconEl) iconEl.textContent = '⚠️';
+        if (msgEl) msgEl.innerHTML = `Configuration valid with ${data.warnings.length} warning(s): ${escapeHtml(data.warnings[0])}`;
+      } else {
+        banner.className = 'env-vars-alert-banner invalid flex items-center justify-between';
+        if (iconEl) iconEl.textContent = '❌';
+        if (msgEl) msgEl.innerHTML = `Validation Error: ${escapeHtml((data.errors && data.errors[0]) || 'Invalid environment parameters')}`;
+      }
+    }
+  } catch (err) {
+    console.error('Validation request failed:', err);
+  }
+};
+
+window.reloadEnvVars = async function() {
+  try {
+    const res = await fetch('/api/env-vars/reload', { method: 'POST' });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('Process Reloaded', 'Active process.env refreshed from latest .env configuration.', 'success');
+      await window.loadEnvVarsList();
+      await window.validateEnvVars();
+    } else {
+      showToast('Reload Error', data.error || 'Failed to reload environment', 'error');
+    }
+  } catch (err) {
+    showToast('Network Error', err.message, 'error');
+  }
+};
 
 async function fetchTraces() {
   try {
@@ -3878,7 +4365,8 @@ window.openRunDetailsModal = async function(runId) {
 
     const allureBtn = document.getElementById('rd-allure-btn');
     if (allureBtn) {
-      allureBtn.href = currentRdRun.allureReportUrl || `/reports/allure-runs/${currentRdRun.runId}/index.html`;
+      allureBtn.href = currentRdRun.htmlReportUrl || currentRdRun.allureReportUrl || `/reports/html-runs/${currentRdRun.runId}/index.html`;
+      allureBtn.textContent = '📊 HTML Report';
     }
 
     // Populate KPIs
@@ -4125,10 +4613,10 @@ function renderHistoryTable(historyList) {
 
     // Reports and diagnostics action buttons
     let diagHtml = [];
-    const allureUrl = h.allureReportUrl || `/reports/allure-runs/${h.runId}/index.html`;
+    const reportUrl = h.htmlReportUrl || h.allureReportUrl || `/reports/html-runs/${h.runId}/index.html`;
     diagHtml.push(`
-      <a href="${allureUrl}" target="_blank" class="btn btn-sm btn-allure-link" title="Open Allure Executive Report for Execution ${h.runId}">
-        📊 Allure
+      <a href="${reportUrl}" target="_blank" class="btn btn-sm btn-allure-link" title="Open Playwright HTML Report for Execution ${h.runId}">
+        📊 Report
       </a>
     `);
     diagHtml.push(`<button class="btn btn-secondary btn-sm" style="padding: 2px 7px; font-size: 0.72rem;" onclick="window.openRunDetailsModal('${h.runId}')" title="View executed test cases breakdown">📋 Tests</button>`);
