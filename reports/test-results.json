@@ -4,7 +4,10 @@
       "/opt/homebrew/Cellar/node/26.7.0/bin/node",
       "/Users/vetri/antigravity/iot-hub-automation/node_modules/.bin/playwright",
       "test",
-      "tests/config/config_check.spec.ts"
+      "--project=chromium",
+      "--grep",
+      "@demo|@billing",
+      "--list"
     ],
     "configFile": "/Users/vetri/antigravity/iot-hub-automation/playwright.config.ts",
     "rootDir": "/Users/vetri/antigravity/iot-hub-automation/tests",
@@ -17,18 +20,14 @@
     "grep": {},
     "grepInvert": null,
     "maxFailures": 0,
-    "metadata": {
-      "actualWorkers": 4
-    },
+    "metadata": {},
     "preserveOutput": "always",
     "projects": [
       {
         "outputDir": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts",
         "repeatEach": 1,
         "retries": 1,
-        "metadata": {
-          "actualWorkers": 4
-        },
+        "metadata": {},
         "id": "setup",
         "name": "setup",
         "testDir": "/Users/vetri/antigravity/iot-hub-automation/tests",
@@ -42,9 +41,7 @@
         "outputDir": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts",
         "repeatEach": 1,
         "retries": 1,
-        "metadata": {
-          "actualWorkers": 4
-        },
+        "metadata": {},
         "id": "chromium",
         "name": "chromium",
         "testDir": "/Users/vetri/antigravity/iot-hub-automation/tests",
@@ -60,9 +57,7 @@
         "outputDir": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts",
         "repeatEach": 1,
         "retries": 1,
-        "metadata": {
-          "actualWorkers": 4
-        },
+        "metadata": {},
         "id": "firefox",
         "name": "firefox",
         "testDir": "/Users/vetri/antigravity/iot-hub-automation/tests",
@@ -78,9 +73,7 @@
         "outputDir": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts",
         "repeatEach": 1,
         "retries": 1,
-        "metadata": {
-          "actualWorkers": 4
-        },
+        "metadata": {},
         "id": "webkit",
         "name": "webkit",
         "testDir": "/Users/vetri/antigravity/iot-hub-automation/tests",
@@ -154,7 +147,7 @@
       "specs": [
         {
           "title": "Authenticate and Save Storage State",
-          "ok": false,
+          "ok": true,
           "tags": [],
           "tests": [
             {
@@ -163,165 +156,8 @@
               "expectedStatus": "passed",
               "projectId": "setup",
               "projectName": "setup",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "failed",
-                  "duration": 282,
-                  "error": {
-                    "message": "Error: page.goto: net::ERR_NAME_NOT_RESOLVED at https://acmgr.dev2.azprv.3pc.att.com/\nCall log:\n\u001b[2m  - navigating to \"https://acmgr.dev2.azprv.3pc.att.com/\", waiting until \"domcontentloaded\"\u001b[22m\n",
-                    "stack": "Error: page.goto: net::ERR_NAME_NOT_RESOLVED at https://acmgr.dev2.azprv.3pc.att.com/\nCall log:\n\u001b[2m  - navigating to \"https://acmgr.dev2.azprv.3pc.att.com/\", waiting until \"domcontentloaded\"\u001b[22m\n\n    at LoginPage.navigate (/Users/vetri/antigravity/iot-hub-automation/src/pages/BasePage.ts:67:21)\n    at LoginPage.goto (/Users/vetri/antigravity/iot-hub-automation/src/pages/LoginPage.ts:60:16)\n    at /Users/vetri/antigravity/iot-hub-automation/tests/setup/auth.setup.ts:87:19",
-                    "location": {
-                      "file": "/Users/vetri/antigravity/iot-hub-automation/src/pages/BasePage.ts",
-                      "column": 21,
-                      "line": 67
-                    },
-                    "snippet": "   at ../src/pages/BasePage.ts:67\n\n  65 |   async navigate(path: string = ''): Promise<void> {\n  66 |     Logger.action('Navigate', path || '/');\n> 67 |     await this.page.goto(path, { waitUntil: 'domcontentloaded' });\n     |                     ^\n  68 |     await this.waitForLoadingSpinnerToDisappear();\n  69 |   }\n  70 |"
-                  },
-                  "errors": [
-                    {
-                      "location": {
-                        "file": "/Users/vetri/antigravity/iot-hub-automation/src/pages/BasePage.ts",
-                        "column": 21,
-                        "line": 67
-                      },
-                      "message": "Error: page.goto: net::ERR_NAME_NOT_RESOLVED at https://acmgr.dev2.azprv.3pc.att.com/\nCall log:\n\u001b[2m  - navigating to \"https://acmgr.dev2.azprv.3pc.att.com/\", waiting until \"domcontentloaded\"\u001b[22m\n\n\n   at ../src/pages/BasePage.ts:67\n\n  65 |   async navigate(path: string = ''): Promise<void> {\n  66 |     Logger.action('Navigate', path || '/');\n> 67 |     await this.page.goto(path, { waitUntil: 'domcontentloaded' });\n     |                     ^\n  68 |     await this.waitForLoadingSpinnerToDisappear();\n  69 |   }\n  70 |\n    at LoginPage.navigate (/Users/vetri/antigravity/iot-hub-automation/src/pages/BasePage.ts:67:21)\n    at LoginPage.goto (/Users/vetri/antigravity/iot-hub-automation/src/pages/LoginPage.ts:60:16)\n    at /Users/vetri/antigravity/iot-hub-automation/tests/setup/auth.setup.ts:87:19"
-                    }
-                  ],
-                  "stdout": [
-                    {
-                      "text": "\u001b[36m[2026-10-15T12:30:23.060Z] [INFO] [GLOBAL AUTH] Probing cached session against: https://acmgr.dev2.azprv.3pc.att.com/dashboard\u001b[0m\n"
-                    },
-                    {
-                      "text": "\u001b[36m[2026-10-15T12:30:23.107Z] [INFO] [GLOBAL AUTH] Performing one-time global authentication against: https://acmgr.dev2.azprv.3pc.att.com\u001b[0m\n"
-                    },
-                    {
-                      "text": "\u001b[36m[2026-10-15T12:30:23.113Z] [INFO] Navigating to IoT Hub Portal login page\u001b[0m\n"
-                    },
-                    {
-                      "text": "\u001b[34m[2026-10-15T12:30:23.113Z] [ACTION] Navigate -> /\u001b[0m\n"
-                    }
-                  ],
-                  "stderr": [
-                    {
-                      "text": "\u001b[33m[2026-10-15T12:30:23.107Z] [WARN] [GLOBAL AUTH] Cached storageState could not be read. Re-authenticating fresh session.\u001b[0m\n"
-                    },
-                    {
-                      "text": "\u001b[33m[2026-10-15T12:30:23.127Z] [WARN] [GLOBAL AUTH] Navigation to login page failed: page.goto: net::ERR_NAME_NOT_RESOLVED at https://acmgr.dev2.azprv.3pc.att.com/\nCall log:\n\u001b[2m  - navigating to \"https://acmgr.dev2.azprv.3pc.att.com/\", waiting until \"domcontentloaded\"\u001b[22m\n\u001b[0m\n"
-                    }
-                  ],
-                  "retry": 0,
-                  "startTime": "2026-10-15T12:30:22.716Z",
-                  "annotations": [],
-                  "attachments": [
-                    {
-                      "name": "screenshot",
-                      "contentType": "image/png",
-                      "path": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts/setup-auth.setup.ts-Authenticate-and-Save-Storage-State-setup/test-failed-1.png"
-                    },
-                    {
-                      "name": "video",
-                      "contentType": "video/webm",
-                      "path": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts/setup-auth.setup.ts-Authenticate-and-Save-Storage-State-setup/video.webm"
-                    },
-                    {
-                      "name": "error-context",
-                      "contentType": "text/markdown",
-                      "path": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts/setup-auth.setup.ts-Authenticate-and-Save-Storage-State-setup/error-context.md"
-                    },
-                    {
-                      "name": "trace",
-                      "contentType": "application/zip",
-                      "path": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts/setup-auth.setup.ts-Authenticate-and-Save-Storage-State-setup/trace.zip"
-                    }
-                  ],
-                  "errorLocation": {
-                    "file": "/Users/vetri/antigravity/iot-hub-automation/src/pages/BasePage.ts",
-                    "column": 21,
-                    "line": 67
-                  }
-                },
-                {
-                  "workerIndex": 1,
-                  "parallelIndex": 0,
-                  "status": "failed",
-                  "duration": 151,
-                  "error": {
-                    "message": "Error: page.goto: net::ERR_NAME_NOT_RESOLVED at https://acmgr.dev2.azprv.3pc.att.com/\nCall log:\n\u001b[2m  - navigating to \"https://acmgr.dev2.azprv.3pc.att.com/\", waiting until \"domcontentloaded\"\u001b[22m\n",
-                    "stack": "Error: page.goto: net::ERR_NAME_NOT_RESOLVED at https://acmgr.dev2.azprv.3pc.att.com/\nCall log:\n\u001b[2m  - navigating to \"https://acmgr.dev2.azprv.3pc.att.com/\", waiting until \"domcontentloaded\"\u001b[22m\n\n    at LoginPage.navigate (/Users/vetri/antigravity/iot-hub-automation/src/pages/BasePage.ts:67:21)\n    at LoginPage.goto (/Users/vetri/antigravity/iot-hub-automation/src/pages/LoginPage.ts:60:16)\n    at /Users/vetri/antigravity/iot-hub-automation/tests/setup/auth.setup.ts:87:19",
-                    "location": {
-                      "file": "/Users/vetri/antigravity/iot-hub-automation/src/pages/BasePage.ts",
-                      "column": 21,
-                      "line": 67
-                    },
-                    "snippet": "   at ../src/pages/BasePage.ts:67\n\n  65 |   async navigate(path: string = ''): Promise<void> {\n  66 |     Logger.action('Navigate', path || '/');\n> 67 |     await this.page.goto(path, { waitUntil: 'domcontentloaded' });\n     |                     ^\n  68 |     await this.waitForLoadingSpinnerToDisappear();\n  69 |   }\n  70 |"
-                  },
-                  "errors": [
-                    {
-                      "location": {
-                        "file": "/Users/vetri/antigravity/iot-hub-automation/src/pages/BasePage.ts",
-                        "column": 21,
-                        "line": 67
-                      },
-                      "message": "Error: page.goto: net::ERR_NAME_NOT_RESOLVED at https://acmgr.dev2.azprv.3pc.att.com/\nCall log:\n\u001b[2m  - navigating to \"https://acmgr.dev2.azprv.3pc.att.com/\", waiting until \"domcontentloaded\"\u001b[22m\n\n\n   at ../src/pages/BasePage.ts:67\n\n  65 |   async navigate(path: string = ''): Promise<void> {\n  66 |     Logger.action('Navigate', path || '/');\n> 67 |     await this.page.goto(path, { waitUntil: 'domcontentloaded' });\n     |                     ^\n  68 |     await this.waitForLoadingSpinnerToDisappear();\n  69 |   }\n  70 |\n    at LoginPage.navigate (/Users/vetri/antigravity/iot-hub-automation/src/pages/BasePage.ts:67:21)\n    at LoginPage.goto (/Users/vetri/antigravity/iot-hub-automation/src/pages/LoginPage.ts:60:16)\n    at /Users/vetri/antigravity/iot-hub-automation/tests/setup/auth.setup.ts:87:19"
-                    }
-                  ],
-                  "stdout": [
-                    {
-                      "text": "\u001b[36m[2026-10-15T12:30:23.633Z] [INFO] [GLOBAL AUTH] Probing cached session against: https://acmgr.dev2.azprv.3pc.att.com/dashboard\u001b[0m\n"
-                    },
-                    {
-                      "text": "\u001b[36m[2026-10-15T12:30:23.664Z] [INFO] [GLOBAL AUTH] Performing one-time global authentication against: https://acmgr.dev2.azprv.3pc.att.com\u001b[0m\n"
-                    },
-                    {
-                      "text": "\u001b[36m[2026-10-15T12:30:23.670Z] [INFO] Navigating to IoT Hub Portal login page\u001b[0m\n"
-                    },
-                    {
-                      "text": "\u001b[34m[2026-10-15T12:30:23.670Z] [ACTION] Navigate -> /\u001b[0m\n"
-                    }
-                  ],
-                  "stderr": [
-                    {
-                      "text": "\u001b[33m[2026-10-15T12:30:23.664Z] [WARN] [GLOBAL AUTH] Cached storageState could not be read. Re-authenticating fresh session.\u001b[0m\n"
-                    },
-                    {
-                      "text": "\u001b[33m[2026-10-15T12:30:23.677Z] [WARN] [GLOBAL AUTH] Navigation to login page failed: page.goto: net::ERR_NAME_NOT_RESOLVED at https://acmgr.dev2.azprv.3pc.att.com/\nCall log:\n\u001b[2m  - navigating to \"https://acmgr.dev2.azprv.3pc.att.com/\", waiting until \"domcontentloaded\"\u001b[22m\n\u001b[0m\n"
-                    }
-                  ],
-                  "retry": 1,
-                  "startTime": "2026-10-15T12:30:23.511Z",
-                  "annotations": [],
-                  "attachments": [
-                    {
-                      "name": "screenshot",
-                      "contentType": "image/png",
-                      "path": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts/setup-auth.setup.ts-Authenticate-and-Save-Storage-State-setup-retry1/test-failed-1.png"
-                    },
-                    {
-                      "name": "video",
-                      "contentType": "video/webm",
-                      "path": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts/setup-auth.setup.ts-Authenticate-and-Save-Storage-State-setup-retry1/video.webm"
-                    },
-                    {
-                      "name": "error-context",
-                      "contentType": "text/markdown",
-                      "path": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts/setup-auth.setup.ts-Authenticate-and-Save-Storage-State-setup-retry1/error-context.md"
-                    },
-                    {
-                      "name": "trace",
-                      "contentType": "application/zip",
-                      "path": "/Users/vetri/antigravity/iot-hub-automation/reports/artifacts/setup-auth.setup.ts-Authenticate-and-Save-Storage-State-setup-retry1/trace.zip"
-                    }
-                  ],
-                  "errorLocation": {
-                    "file": "/Users/vetri/antigravity/iot-hub-automation/src/pages/BasePage.ts",
-                    "column": 21,
-                    "line": 67
-                  }
-                }
-              ],
-              "status": "unexpected"
+              "results": [],
+              "status": "skipped"
             }
           ],
           "id": "e717b06d8d484d1cd946-5cb0a928747ff52aab6a",
@@ -332,22 +168,114 @@
       ]
     },
     {
-      "title": "config/config_check.spec.ts",
-      "file": "config/config_check.spec.ts",
+      "title": "accounts/accounts.spec.ts",
+      "file": "accounts/accounts.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "IoT Hub Portal - Environment & Runtime Configuration Suite",
-          "file": "config/config_check.spec.ts",
+          "title": "IoT Hub Portal - 04: Accounts Management Suite (TC_ACC_001 to TC_ACC_014)",
+          "file": "accounts/accounts.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Group 2: Happy Path - Account Creation Stepper Wizard Lifecycle",
+              "file": "accounts/accounts.spec.ts",
+              "line": 61,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "[TC_ACC_005] Complete Demo Account Creation Lifecycle: 4-Step Stepper (Billing Profile Skipped) and DRAFT Verification",
+                  "ok": true,
+                  "tags": [
+                    "happy-path",
+                    "e2e",
+                    "wizard",
+                    "create",
+                    "lifecycle",
+                    "happy-path",
+                    "e2e",
+                    "wizard",
+                    "demo"
+                  ],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "8130f46b3e0783606a24-9a656065e6b995ca0cfa",
+                  "file": "accounts/accounts.spec.ts",
+                  "line": 67,
+                  "column": 9
+                },
+                {
+                  "title": "[TC_ACC_008] Complete Non-Demo Account Creation Lifecycle: 5-Step Stepper with Billing Profile Configuration and DRAFT Verification",
+                  "ok": true,
+                  "tags": [
+                    "happy-path",
+                    "e2e",
+                    "wizard",
+                    "create",
+                    "lifecycle",
+                    "happy-path",
+                    "e2e",
+                    "wizard",
+                    "billing",
+                    "non-demo"
+                  ],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "8130f46b3e0783606a24-4c9d7c9d130b2d54eaf8",
+                  "file": "accounts/accounts.spec.ts",
+                  "line": 173,
+                  "column": 9
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "e2e/telecom_python_engine.spec.ts",
+      "file": "e2e/telecom_python_engine.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "IoT Hub Portal - 17: Python Telecom Sidecar Engine Integration Suite",
+          "file": "e2e/telecom_python_engine.spec.ts",
           "line": 5,
           "column": 6,
           "specs": [
             {
-              "title": "CFG-01: Verify active environment and runtime configuration integrity",
+              "title": "[TC_TEL_PY_001] ISO/IEC 7812 Luhn Checksum Bulk SIM & GSMA SGP.22 eSIM Profile Generation",
               "ok": true,
-              "tags": [],
+              "tags": [
+                "python",
+                "telecom",
+                "billing",
+                "sim"
+              ],
               "tests": [
                 {
                   "timeout": 60000,
@@ -359,15 +287,20 @@
                   "status": "skipped"
                 }
               ],
-              "id": "cff47e618186e92100e5-9b5a068f72c167a1e9eb",
-              "file": "config/config_check.spec.ts",
-              "line": 6,
+              "id": "1583f7b048d81bfc6008-bf30c81a6f2d3d0bdde1",
+              "file": "e2e/telecom_python_engine.spec.ts",
+              "line": 7,
               "column": 7
             },
             {
-              "title": "CFG-02: Verify timeout hierarchy and network retry configuration",
+              "title": "[TC_TEL_PY_002] High-Velocity Vectorized CDR Rating Reconciliation (Pandas Quota & Tariff Overages)",
               "ok": true,
-              "tags": [],
+              "tags": [
+                "python",
+                "telecom",
+                "billing",
+                "sim"
+              ],
               "tests": [
                 {
                   "timeout": 60000,
@@ -379,15 +312,20 @@
                   "status": "skipped"
                 }
               ],
-              "id": "cff47e618186e92100e5-de956518eaf2a9d092a0",
-              "file": "config/config_check.spec.ts",
-              "line": 43,
+              "id": "1583f7b048d81bfc6008-54d69db178fa92598c6f",
+              "file": "e2e/telecom_python_engine.spec.ts",
+              "line": 36,
               "column": 7
             },
             {
-              "title": "CFG-03: Initialize dynamic execution resources & unique customer profile",
+              "title": "[TC_TEL_PY_003] Enterprise Invoice Line Items & 18% Tax Reconciler with Credit Notes Audit",
               "ok": true,
-              "tags": [],
+              "tags": [
+                "python",
+                "telecom",
+                "billing",
+                "sim"
+              ],
               "tests": [
                 {
                   "timeout": 60000,
@@ -399,130 +337,377 @@
                   "status": "skipped"
                 }
               ],
-              "id": "cff47e618186e92100e5-5017b347843cf08897a6",
-              "file": "config/config_check.spec.ts",
-              "line": 54,
+              "id": "1583f7b048d81bfc6008-5ac90ce8c4e7698d6881",
+              "file": "e2e/telecom_python_engine.spec.ts",
+              "line": 57,
               "column": 7
             },
             {
-              "title": "CFG-01: Verify active environment and runtime configuration integrity",
+              "title": "[TC_TEL_PY_004] End-to-End Unified Telecom Audit Report Generation",
               "ok": true,
-              "tags": [],
+              "tags": [
+                "python",
+                "telecom",
+                "billing",
+                "sim"
+              ],
               "tests": [
                 {
                   "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
                   "results": [],
                   "status": "skipped"
                 }
               ],
-              "id": "cff47e618186e92100e5-a3356c38c94440709222",
-              "file": "config/config_check.spec.ts",
-              "line": 6,
+              "id": "1583f7b048d81bfc6008-1c5d1eb35f3b329b9a1c",
+              "file": "e2e/telecom_python_engine.spec.ts",
+              "line": 80,
               "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "invoice_data/invoice_data.spec.ts",
+      "file": "invoice_data/invoice_data.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "IoT Hub Portal - 10: Invoice Data Suite (21 Test Cases)",
+          "file": "invoice_data/invoice_data.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Group 2: Final Invoices & Export Operations",
+              "file": "invoice_data/invoice_data.spec.ts",
+              "line": 76,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "[TC_INV_006] Verify Final Invoices view displays \"Select account context\" prompt modal if no account is selected",
+                  "ok": true,
+                  "tags": [
+                    "export",
+                    "billing"
+                  ],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "c38ab6e52fc296335c23-89af09bba644cc85766d",
+                  "file": "invoice_data/invoice_data.spec.ts",
+                  "line": 77,
+                  "column": 9
+                },
+                {
+                  "title": "[TC_INV_007] Verify Final Invoices table after selecting valid account context",
+                  "ok": true,
+                  "tags": [
+                    "export",
+                    "billing"
+                  ],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "c38ab6e52fc296335c23-772766212b3a50898343",
+                  "file": "invoice_data/invoice_data.spec.ts",
+                  "line": 98,
+                  "column": 9
+                },
+                {
+                  "title": "[TC_INV_008] Verify download of Final Invoice in PDF and XML formats",
+                  "ok": true,
+                  "tags": [
+                    "export",
+                    "billing"
+                  ],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "c38ab6e52fc296335c23-02436b847bbe5b50427d",
+                  "file": "invoice_data/invoice_data.spec.ts",
+                  "line": 108,
+                  "column": 9
+                },
+                {
+                  "title": "[TC_INV_009] Verify Invoice Payments table (Payment ID, Settlement Date, Amount, Status)",
+                  "ok": true,
+                  "tags": [
+                    "export",
+                    "billing"
+                  ],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "c38ab6e52fc296335c23-de79429a5d16f67a04ac",
+                  "file": "invoice_data/invoice_data.spec.ts",
+                  "line": 118,
+                  "column": 9
+                }
+              ]
             },
             {
-              "title": "CFG-02: Verify timeout hierarchy and network retry configuration",
-              "ok": true,
-              "tags": [],
-              "tests": [
+              "title": "Group 4: Monthly Rating Report & Granular Charge Validations",
+              "file": "invoice_data/invoice_data.spec.ts",
+              "line": 167,
+              "column": 8,
+              "specs": [
                 {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
-                  "results": [],
-                  "status": "skipped"
-                }
-              ],
-              "id": "cff47e618186e92100e5-a97cb54b31c6323e79f7",
-              "file": "config/config_check.spec.ts",
-              "line": 43,
-              "column": 7
-            },
-            {
-              "title": "CFG-03: Initialize dynamic execution resources & unique customer profile",
-              "ok": true,
-              "tags": [],
-              "tests": [
+                  "title": "[TC_INV_013] Verify Monthly Rating Report - Base Subscription & Line Rental Charges",
+                  "ok": true,
+                  "tags": [
+                    "billing",
+                    "rating",
+                    "charges"
+                  ],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "c38ab6e52fc296335c23-674f2f0551357613a515",
+                  "file": "invoice_data/invoice_data.spec.ts",
+                  "line": 179,
+                  "column": 9
+                },
                 {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
-                  "results": [],
-                  "status": "skipped"
-                }
-              ],
-              "id": "cff47e618186e92100e5-33a93ac5e966e172c9ab",
-              "file": "config/config_check.spec.ts",
-              "line": 54,
-              "column": 7
-            },
-            {
-              "title": "CFG-01: Verify active environment and runtime configuration integrity",
-              "ok": true,
-              "tags": [],
-              "tests": [
+                  "title": "[TC_INV_014] Verify Monthly Rating Report - Tiered Data Usage & Overage Charges",
+                  "ok": true,
+                  "tags": [
+                    "billing",
+                    "rating",
+                    "charges"
+                  ],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "c38ab6e52fc296335c23-472026ceacb446619ff2",
+                  "file": "invoice_data/invoice_data.spec.ts",
+                  "line": 190,
+                  "column": 9
+                },
                 {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [],
-                  "status": "skipped"
-                }
-              ],
-              "id": "cff47e618186e92100e5-7e0f0c5d9dd779ed0958",
-              "file": "config/config_check.spec.ts",
-              "line": 6,
-              "column": 7
-            },
-            {
-              "title": "CFG-02: Verify timeout hierarchy and network retry configuration",
-              "ok": true,
-              "tags": [],
-              "tests": [
+                  "title": "[TC_INV_015] Verify Monthly Rating Report - SMS & Messaging Event Charges",
+                  "ok": true,
+                  "tags": [
+                    "billing",
+                    "rating",
+                    "charges"
+                  ],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "c38ab6e52fc296335c23-1f7fc836b2a56b3eda65",
+                  "file": "invoice_data/invoice_data.spec.ts",
+                  "line": 200,
+                  "column": 9
+                },
                 {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [],
-                  "status": "skipped"
-                }
-              ],
-              "id": "cff47e618186e92100e5-712e438d89d9ddd23159",
-              "file": "config/config_check.spec.ts",
-              "line": 43,
-              "column": 7
-            },
-            {
-              "title": "CFG-03: Initialize dynamic execution resources & unique customer profile",
-              "ok": true,
-              "tags": [],
-              "tests": [
+                  "title": "[TC_INV_016] Verify Monthly Rating Report - Voice Call CDR & Telephony Charges",
+                  "ok": true,
+                  "tags": [
+                    "billing",
+                    "rating",
+                    "charges"
+                  ],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "c38ab6e52fc296335c23-1344975ab6f54a225dd2",
+                  "file": "invoice_data/invoice_data.spec.ts",
+                  "line": 210,
+                  "column": 9
+                },
                 {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [],
-                  "status": "skipped"
+                  "title": "[TC_INV_017] Verify Monthly Rating Report - Shared Pool & Add-on Bundle Charges",
+                  "ok": true,
+                  "tags": [
+                    "billing",
+                    "rating",
+                    "charges"
+                  ],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "c38ab6e52fc296335c23-985e7d5aac9e6e12e697",
+                  "file": "invoice_data/invoice_data.spec.ts",
+                  "line": 220,
+                  "column": 9
+                },
+                {
+                  "title": "[TC_INV_018] Verify Monthly Rating Report - One-Time Administrative & Service Fees",
+                  "ok": true,
+                  "tags": [
+                    "billing",
+                    "rating",
+                    "charges"
+                  ],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "c38ab6e52fc296335c23-35b7860f8aea2176f249",
+                  "file": "invoice_data/invoice_data.spec.ts",
+                  "line": 230,
+                  "column": 9
+                },
+                {
+                  "title": "[TC_INV_019] Verify Monthly Rating Report - Contractual Discounts, Rebates & Credits",
+                  "ok": true,
+                  "tags": [
+                    "billing",
+                    "rating",
+                    "charges"
+                  ],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "c38ab6e52fc296335c23-f18df71053b378a05d7a",
+                  "file": "invoice_data/invoice_data.spec.ts",
+                  "line": 240,
+                  "column": 9
+                },
+                {
+                  "title": "[TC_INV_020] Verify Monthly Rating Report - Applicable Taxes (VAT / GST) & Total Net Amount Calculation",
+                  "ok": true,
+                  "tags": [
+                    "billing",
+                    "rating",
+                    "charges"
+                  ],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "c38ab6e52fc296335c23-b9a282525307c9f15c25",
+                  "file": "invoice_data/invoice_data.spec.ts",
+                  "line": 250,
+                  "column": 9
+                },
+                {
+                  "title": "[TC_INV_021] Verify Monthly Rating Report - Export & Document Dispatch (Excel/CSV/PDF)",
+                  "ok": true,
+                  "tags": [
+                    "billing",
+                    "rating",
+                    "charges"
+                  ],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "c38ab6e52fc296335c23-628a53b8b367487a3147",
+                  "file": "invoice_data/invoice_data.spec.ts",
+                  "line": 260,
+                  "column": 9
                 }
-              ],
-              "id": "cff47e618186e92100e5-eecb6e41cfaa1099b2d1",
-              "file": "config/config_check.spec.ts",
-              "line": 54,
-              "column": 7
+              ]
             }
           ]
         }
@@ -531,11 +716,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-10-15T12:30:22.289Z",
-    "duration": 1517.456,
+    "startTime": "2026-10-16T09:23:15.190Z",
+    "duration": 601.625,
     "expected": 0,
-    "skipped": 9,
-    "unexpected": 1,
+    "skipped": 20,
+    "unexpected": 0,
     "flaky": 0
   }
 }
