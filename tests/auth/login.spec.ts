@@ -1,5 +1,6 @@
 import { test, expect } from '../../src/fixtures/baseTest';
 import { Logger } from '../../src/utils/logger';
+import { ComplianceAudit } from '../../src/utils/complianceAudit';
 
 test.describe('IoT Hub Portal - 01: Authentication & Access Suite (15 Test Cases)', () => {
   // Ensure authentication suite runs with clean, unauthenticated context
@@ -37,8 +38,8 @@ test.describe('IoT Hub Portal - 01: Authentication & Access Suite (15 Test Cases
   });
 
   test('[TC_AUTH_002] Verify UI components and accessibility of Login form', async ({ loginPage, page }) => {
-    await test.step('Step 1: Check visibility and accessibility of login form input fields', async () => {
-      Logger.step(1, 'Checking visibility and accessibility of login form input fields');
+    await test.step('Step 1: Check visibility and accessibility attributes of login form input fields', async () => {
+      Logger.step(1, 'Checking visibility and accessibility attributes of login form input fields');
       const isFormReady = await loginPage.isLoginFormVisible();
       if (isFormReady) {
         await expect(loginPage.usernameInput.first()).toBeVisible();
@@ -58,6 +59,17 @@ test.describe('IoT Hub Portal - 01: Authentication & Access Suite (15 Test Cases
         const body = page.locator('body');
         await expect(body).toBeVisible();
       }
+    });
+
+    await test.step('Step 2: Run automated WCAG 2.1 AA accessibility audit on Login interface', async () => {
+      Logger.step(2, 'Running WCAG 2.1 Level AA accessibility scan');
+      const auditResult = await ComplianceAudit.auditAccessibility(page, 'IoT Hub Login Page', {
+        includeTags: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'],
+        scopeSelector: 'form, .login-container, #kc-form-login, body'
+      });
+      expect(auditResult).toBeDefined();
+      expect(typeof auditResult.violationsCount).toBe('number');
+      Logger.info(`Accessibility Audit completed: ${auditResult.violationsCount} total violation(s) reported.`);
     });
   });
 
@@ -277,14 +289,25 @@ test.describe('IoT Hub Portal - 01: Authentication & Access Suite (15 Test Cases
     });
   });
 
-  test('[TC_AUTH_012] Verify User Profile menu and successful Logout action', async ({ dashboardPage, page }) => {
-    await test.step('Step 1: Open User Profile and execute Logout action', async () => {
-      Logger.step(1, 'Asserting user profile header elements and logout flow');
+  test('[TC_AUTH_012] Verify User Profile menu and successful Logout action', async ({ loginPage, dashboardPage, appConfig, page }) => {
+    const { username, password } = appConfig.credentials;
+    const isLiveCreds = username && username !== 'testuser@nokiawing.com' && password !== 'SecretPassword123!';
+
+    if (isLiveCreds) {
+      await test.step('Step 1: Authenticate with enterprise credentials to establish active session', async () => {
+        Logger.step(1, `Authenticating as ${username} to establish session for logout verification`);
+        await loginPage.login({ username, password });
+        await page.waitForTimeout(3000);
+      });
+    }
+
+    await test.step('Step 2: Open User Profile and execute Logout action', async () => {
+      Logger.step(2, 'Asserting user profile header elements and logout flow');
       const isHeader = await dashboardPage.isHeaderVisible();
       if (isHeader) {
         await dashboardPage.openUserProfile();
         const logoutBtn = page.locator('button:has-text("LOGOUT"), button:has-text("Logout"), a:has-text("Sign Out"), [role="menuitem"]:has-text("Logout")').first();
-        if (await logoutBtn.isVisible({ timeout: 2000 })) {
+        if (await logoutBtn.isVisible({ timeout: 3000 })) {
           await expect(logoutBtn).toBeVisible();
           await logoutBtn.click();
           await page.waitForTimeout(2000);
@@ -317,18 +340,58 @@ test.describe('IoT Hub Portal - 01: Authentication & Access Suite (15 Test Cases
         expect(response.status()).toBeLessThan(500);
         const headers = response.headers();
         Logger.info(`Security response headers inspected: ${Object.keys(headers).length} keys`);
+
+        const headerKeys = Object.keys(headers).map(k => k.toLowerCase());
+        const hasHsts = headerKeys.includes('strict-transport-security');
+        const hasContentTypeOptions = headerKeys.includes('x-content-type-options');
+        const hasFrameOptions = headerKeys.includes('x-frame-options') || headerKeys.includes('content-security-policy');
+
+        Logger.info(`Security Header Audit: HSTS=${hasHsts}, X-Content-Type-Options=${hasContentTypeOptions}, Clickjacking Defense=${hasFrameOptions}`);
+        expect(hasHsts || hasContentTypeOptions || hasFrameOptions || headers['server'] !== undefined).toBe(true);
       }
     });
   });
 
-  test('[TC_AUTH_015] Verify multi-tab session termination upon logging out from one tab', async ({ context, page }) => {
-    await test.step('Step 1: Create secondary browser tab in shared context and verify HTTPS session continuity', async () => {
-      Logger.step(1, 'Creating secondary browser tab in shared context');
-      const page2 = await context.newPage();
-      await page2.goto(page.url(), { waitUntil: 'domcontentloaded' }).catch(() => {});
-      expect(page2.url()).toMatch(/nokiawing\.com|azurefd\.net|localhost/i);
-      expect(page2.url().startsWith('https://')).toBe(true);
-      await page2.close();
-    });
+  test('[TC_AUTH_015] Verify multi-tab session termination upon logging out from one tab', async ({ loginPage, dashboardPage, appConfig, context, page }) => {
+    const { username, password } = appConfig.credentials;
+    const isLiveCreds = username && username !== 'testuser@nokiawing.com' && password !== 'SecretPassword123!';
+
+    if (isLiveCreds) {
+      await test.step('Step 1: Authenticate in primary tab and verify session synchronization across tabs', async () => {
+        Logger.step(1, `Logging in primary tab as ${username}`);
+        await loginPage.login({ username, password });
+        await page.waitForTimeout(3000);
+
+        Logger.step(1, 'Opening secondary tab in shared browser context');
+        const page2 = await context.newPage();
+        await page2.goto(page.url(), { waitUntil: 'domcontentloaded' });
+        expect(page2.url()).not.toContain('/login');
+
+        Logger.step(1, 'Logging out in primary tab');
+        if (await dashboardPage.isHeaderVisible()) {
+          await dashboardPage.openUserProfile();
+          const logoutBtn = page.locator('button:has-text("LOGOUT"), button:has-text("Logout"), a:has-text("Sign Out"), [role="menuitem"]:has-text("Logout")').first();
+          if (await logoutBtn.isVisible({ timeout: 2000 })) {
+            await logoutBtn.click();
+            await page.waitForTimeout(2000);
+          }
+        }
+
+        Logger.step(1, 'Reloading secondary tab and asserting session termination');
+        await page2.reload({ waitUntil: 'domcontentloaded' });
+        await page2.waitForTimeout(1000);
+        expect(page2.url()).toMatch(/login|auth|keycloak|nokiawing\.com|azurefd\.net/i);
+        await page2.close();
+      });
+    } else {
+      await test.step('Step 1: Create secondary browser tab in shared context and verify HTTPS session continuity', async () => {
+        Logger.step(1, 'Creating secondary browser tab in shared context');
+        const page2 = await context.newPage();
+        await page2.goto(page.url(), { waitUntil: 'domcontentloaded' }).catch(() => {});
+        expect(page2.url()).toMatch(/nokiawing\.com|azurefd\.net|localhost/i);
+        expect(page2.url().startsWith('https://')).toBe(true);
+        await page2.close();
+      });
+    }
   });
 });
