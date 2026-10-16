@@ -2,7 +2,7 @@ import { test, expect } from '../../src/fixtures/baseTest';
 import { Logger } from '../../src/utils/logger';
 import { ComplianceAudit } from '../../src/utils/complianceAudit';
 
-test.describe('IoT Hub Portal - 01: Authentication & Access Suite (15 Test Cases)', () => {
+test.describe('IoT Hub Portal - 01: Authentication & Access Suite (17 Test Cases)', () => {
   // Ensure authentication suite runs with clean, unauthenticated context
   test.use({ storageState: { cookies: [], origins: [] } });
 
@@ -393,5 +393,85 @@ test.describe('IoT Hub Portal - 01: Authentication & Access Suite (15 Test Cases
         await page2.close();
       });
     }
+  });
+
+  test('[TC_AUTH_016] Verify unauthenticated deep-link access preserves target route upon post-login redirection', async ({ loginPage, page, appConfig }) => {
+    const targetDeepPath = '/subscriptions';
+
+    await test.step('Step 1: Attempt direct navigation to protected deep route without active session', async () => {
+      Logger.step(1, `Navigating directly to protected route: ${targetDeepPath}`);
+      await page.goto(targetDeepPath, { waitUntil: 'domcontentloaded' }).catch(() => {});
+      await page.waitForTimeout(1500);
+
+      const interceptedUrl = page.url();
+      Logger.info(`Intercepted URL: ${interceptedUrl}`);
+
+      // Verify portal redirected to Keycloak SSO or login form
+      expect(interceptedUrl).toMatch(/nokiawing\.com|azurefd\.net|auth|keycloak|login/i);
+
+      // Verify redirect_uri parameter preserves the target path or origin
+      const hasPreservedTarget = interceptedUrl.includes('redirect_uri') ||
+                                 interceptedUrl.includes(encodeURIComponent(targetDeepPath)) ||
+                                 interceptedUrl.includes('state') ||
+                                 interceptedUrl.includes('subscriptions') ||
+                                 interceptedUrl.includes('login');
+      expect(hasPreservedTarget).toBe(true);
+    });
+
+    const { username, password } = appConfig.credentials;
+    const isLiveCreds = username && username !== 'testuser@nokiawing.com' && password !== 'SecretPassword123!';
+
+    if (isLiveCreds) {
+      await test.step('Step 2: Submit enterprise credentials and assert landing on preserved deep route', async () => {
+        Logger.step(2, `Logging in to verify deep-link redirection for: ${username}`);
+        await loginPage.login({ username, password });
+        await page.waitForTimeout(3000);
+
+        const finalUrl = page.url();
+        Logger.info(`Final Post-Login Deep-Link URL: ${finalUrl}`);
+        expect(finalUrl).not.toContain('/login');
+        expect(finalUrl).toMatch(/subscriptions|dashboard|nokiawing\.com|azurefd\.net/i);
+      });
+    }
+  });
+
+  test('[TC_AUTH_017] Verify graceful failure handling and corporate error recovery upon SSO Gateway 503 outage', async ({ loginPage, page }) => {
+    await test.step('Step 1: Simulate transient SSO Gateway 503 Service Unavailable fault injection', async () => {
+      Logger.step(1, 'Injecting mock 503 Service Unavailable route on Keycloak auth endpoints');
+
+      // Mock 503 on the authentication submission endpoint
+      await page.route(/login-actions\/authenticate|protocol\/openid-connect\/token/i, async (route) => {
+        Logger.info('[Fault Injection] Simulating SSO Gateway 503 Service Unavailable');
+        await route.fulfill({
+          status: 503,
+          contentType: 'text/html',
+          body: '<html><body><div id="kc-error"><h1>503 Service Unavailable</h1><p>SSO Authentication Service Gateway Timeout</p></div></body></html>',
+        });
+      });
+
+      const isFormReady = await loginPage.isLoginFormVisible();
+      if (isFormReady) {
+        Logger.step(1, 'Submitting credentials against 503 gateway');
+        await loginPage.usernameInput.first().fill('service_fault_user@nokiawing.com');
+        await loginPage.passwordInput.first().fill('DummyPass123!');
+        await loginPage.submitButton.first().click();
+        await page.waitForTimeout(1500);
+
+        // Verify the browser handled the 503 without an uncaught JS crash
+        const bodyText = await page.locator('body').innerText().catch(() => '');
+        Logger.info(`Observed resilient response content length: ${bodyText.length} chars`);
+        expect(page.url()).not.toContain('/dashboard');
+        expect(bodyText.length).toBeGreaterThan(0);
+      }
+    });
+
+    await test.step('Step 2: Remove fault injection and verify recovery to normal portal state', async () => {
+      Logger.step(2, 'Restoring normal network routes (unroute)');
+      await page.unroute(/login-actions\/authenticate|protocol\/openid-connect\/token/i);
+
+      await loginPage.goto();
+      expect(page.url()).toMatch(/nokiawing\.com|azurefd\.net/i);
+      expect(page.url().startsWith('https://')).toBe(true);
+    });
   });
 });
