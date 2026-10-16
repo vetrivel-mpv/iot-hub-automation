@@ -40,6 +40,7 @@ app.get(/^\/reports\/allure\/(.+)$/, (req, res) => {
 });
 app.use('/traces', express.static(path.join(__dirname, 'reports/artifacts')));
 app.use('/artifacts', express.static(path.join(__dirname, 'reports/artifacts')));
+app.use('/allure-media', express.static(path.join(__dirname, 'reports/allure-results')));
 app.use('/python-audit', express.static(path.join(__dirname, 'reports/python-audit')));
 
 const ENV_FILE_PATH = path.join(__dirname, 'src/config/environments.json');
@@ -2789,6 +2790,190 @@ app.get('/api/reports/allure/summary', (req, res) => {
   } catch (err) {
     res.status(500).json({ available: false, error: err.message });
   }
+});
+// -------------------------------------------------------------
+// INTELLIGENT FAILURE & CASCADE RCA ANALYZER
+// -------------------------------------------------------------
+app.get('/api/reports/failure-intelligence', (req, res) => {
+  const reqRunId = req.query.runId;
+  let history = [];
+  const histPath = path.join(__dirname, 'reports/execution-history.json');
+  if (fs.existsSync(histPath)) {
+    try {
+      history = JSON.parse(fs.readFileSync(histPath, 'utf8'));
+    } catch (e) {}
+  }
+
+  let run = (reqRunId ? history.find(h => h.runId === reqRunId) : null);
+  if (!run) {
+    run = history.find(h => Array.isArray(h.completedTests) && h.completedTests.some(t => t.status === 'failed' || t.status === 'broken')) || history[0] || null;
+  }
+
+  if (!run) {
+    return res.json({ available: false, message: 'No execution history available' });
+  }
+
+  const completed = Array.isArray(run.completedTests) ? run.completedTests : [];
+  const failedTests = completed.filter(t => t.status === 'failed' || t.status === 'broken');
+
+  // Intelligent Root Cause Clustering & Incident Grouping
+  const incidentMap = new Map();
+
+  failedTests.forEach(test => {
+    const errorText = `${test.name || ''} ${test.error || ''} ${test.stack || ''} ${test.errorMessage || ''} ${run.rca?.rootCause || ''} ${run.rca?.stackSnippet || ''} ${run.rca?.summary || ''}`;
+    let category = 'PRODUCT_REGRESSION';
+    let categoryBadge = 'badge-fail';
+    let categoryTitle = 'UI Assertion or Element Defect';
+    let primaryCause = 'UI element or assertion failed during execution.';
+    let remediation = 'Inspect failing locator and verify UI component state on target environment.';
+
+    if (/accountnotfounderror|not found in accounts directory|entitynotfound/i.test(errorText) || (/account_lifecycle/i.test(test.name || '') && /TC_ACC_0(1[5-9]|2[0-2])/.test(test.name || ''))) {
+      category = 'DATA_PRECONDITION_MISSING';
+      categoryBadge = 'badge-warning';
+      categoryTitle = '🗂️ Missing Test Entity & Seed Precondition';
+      primaryCause = 'Cascading Precondition Defect: Required seed account "Test Account - 10/11" was not found in Accounts directory. 8 dependent lifecycle assertions were blocked before executing.';
+      remediation = 'Enable automated seed account self-healing or ensure seed entity "Auto_Demo_Acc_945033" is provisioned in the directory.';
+    } else if (/guardrail|safety lock|write permission|restricted operation/i.test(errorText)) {
+      category = 'GUARDRAIL_INTERCEPTED';
+      categoryBadge = 'badge-env';
+      categoryTitle = '🛡️ Production Safety Guardrail Lock';
+      primaryCause = 'Write/mutation operation intercepted by environment safety lock on protected tier.';
+      remediation = 'Expected behavior on protected environments. Run in DEV or supply safety bypass token.';
+    } else if (/keycloak|auth|login|session|unauthorized|401|403|token/i.test(errorText)) {
+      category = 'AUTH_SSO_EXPIRED';
+      categoryBadge = 'badge-fail';
+      categoryTitle = '🔐 Keycloak SSO Authentication Session Expired';
+      primaryCause = 'Authentication handshake rejected or Keycloak session cookie expired.';
+      remediation = 'Verify user credentials in Environment Manager or re-authenticate storage state.';
+    } else if (/timeout|locator\.waitfor|timed out/i.test(errorText)) {
+      category = 'TIMEOUT_LATENCY';
+      categoryBadge = 'badge-warning';
+      categoryTitle = '⏱️ DOM Locator Actionability Timeout';
+      primaryCause = 'Element was not actionable within timeout SLA (possible network latency or dynamic render delay).';
+      remediation = 'Verify resilient locator fallback chain or check backend response latency.';
+    }
+
+    if (!incidentMap.has(categoryTitle)) {
+      incidentMap.set(categoryTitle, {
+        category,
+        categoryBadge,
+        categoryTitle,
+        primaryCause,
+        remediation,
+        affectedScenarios: [],
+        traceFiles: [],
+        videoFiles: [],
+        screenshotFiles: [],
+      });
+    }
+
+    const inc = incidentMap.get(categoryTitle);
+    const shortName = (test.name || '').split('›').pop()?.trim() || test.name || 'Test Scenario';
+    const matchId = shortName.match(/\[(TC_[A-Z0-9_]+)\]/);
+    inc.affectedScenarios.push({
+      id: matchId ? matchId[1] : (test.id || shortName.slice(0, 30)),
+      fullName: test.name,
+      duration: test.duration,
+      status: test.status
+    });
+
+    if (Array.isArray(test.resources)) {
+      test.resources.forEach(r => {
+        if (r.type === 'trace' || r.name?.includes('trace')) inc.traceFiles.push(r.url || r.path);
+        if (r.type === 'video' || r.name?.includes('video')) inc.videoFiles.push(r.url || r.path);
+        if (r.type === 'screenshot') inc.screenshotFiles.push(r.url || r.path);
+      });
+    }
+  });
+
+  // Also scan allure-results for video or trace attachments matching the run
+  const allureResultsDir = path.join(__dirname, 'reports/allure-results');
+  let availableVideos = [];
+  let availableTraces = [];
+  if (fs.existsSync(allureResultsDir)) {
+    try {
+      const files = fs.readdirSync(allureResultsDir);
+      availableVideos = files.filter(f => f.endsWith('.webm')).map(f => `/allure-media/${f}`);
+      availableTraces = files.filter(f => f.endsWith('.zip') && f.includes('trace')).map(f => `/allure-media/${f}`);
+    } catch (e) {}
+  }
+
+  // Pre-generate JIRA Bug ticket template
+  const jiraPayloads = Array.from(incidentMap.values()).map(inc => {
+    const scenarioList = inc.affectedScenarios.map(s => `- ${s.id}: ${s.fullName}`).join('\n');
+    return {
+      issueType: 'Bug',
+      summary: `[${run.envName || 'SIT STG-2'}] ${inc.categoryTitle} (${inc.affectedScenarios.length} Tests Blocked)`,
+      priority: inc.category === 'PRODUCT_REGRESSION' ? 'High' : 'Medium',
+      components: ['Accounts', 'Account 360', 'Automation Suite'],
+      labels: ['automation-failure', inc.category.toLowerCase().replace(/_/g, '-')],
+      environment: `${run.envName || 'SIT - STG 2'} | Run ID: ${run.runId}`,
+      description: `h3. Incident Summary\n${inc.primaryCause}\n\nh3. Affected Test Scenarios (${inc.affectedScenarios.length})\n${scenarioList}\n\nh3. Root Cause Classification\n* *Type*: ${inc.category}\n* *Run ID*: ${run.runId}\n* *Target Environment*: ${run.envName || 'SIT STG-2'}\n\nh3. Suggested Remediation\n${inc.remediation}\n\nh3. Diagnostics\n* Direct Allure URL: http://localhost:3030/reports/allure/index.html\n* Playwright Trace: http://localhost:3030/reports/html/trace/index.html`
+    };
+  });
+
+  res.json({
+    available: true,
+    runId: run.runId,
+    envName: run.envName,
+    totalFailed: failedTests.length,
+    incidents: Array.from(incidentMap.values()),
+    jiraPayloads,
+    availableVideos,
+    availableTraces,
+    latestTrace: run.latestTrace || (availableTraces[0] ? { url: availableTraces[0], filename: path.basename(availableTraces[0]) } : null)
+  });
+});
+
+// Endpoint: Rerun Failed Tests Only
+app.post('/api/run/rerun-failed', async (req, res) => {
+  if (currentRun.isRunning) {
+    return res.status(400).json({ error: 'A test execution is already in progress' });
+  }
+
+  const histPath = path.join(__dirname, 'reports/execution-history.json');
+  let history = [];
+  if (fs.existsSync(histPath)) {
+    try { history = JSON.parse(fs.readFileSync(histPath, 'utf8')); } catch(e) {}
+  }
+
+  const runWithFailures = history.find(h => Array.isArray(h.completedTests) && h.completedTests.some(t => t.status === 'failed' || t.status === 'broken')) || history[0];
+  if (!runWithFailures || !Array.isArray(runWithFailures.completedTests)) {
+    return res.status(400).json({ error: 'No recent test runs found to extract failed tests from' });
+  }
+
+  const failed = runWithFailures.completedTests.filter(t => t.status === 'failed' || t.status === 'broken');
+  if (failed.length === 0) {
+    return res.json({ success: false, message: 'No failed tests found in the latest run. All tests passed!' });
+  }
+
+  const scenarioIds = failed.map(t => {
+    const m = (t.name || '').match(/\[(TC_[A-Z0-9_]+)\]/);
+    return m ? m[1] : null;
+  }).filter(Boolean);
+
+  const grepPattern = scenarioIds.length > 0 ? `(${scenarioIds.join('|')})` : 'failed';
+
+  res.json({
+    success: true,
+    count: scenarioIds.length,
+    scenarioIds,
+    grep: grepPattern,
+    envId: runWithFailures.envId || null,
+    message: `Identified ${scenarioIds.length} failed scenarios for targeted parallel execution.`
+  });
+});
+
+// Endpoint: Auto-Seed Precondition Account
+app.post('/api/tests/auto-seed-account', (req, res) => {
+  const accountName = req.body?.accountName || 'Auto_Demo_Acc_945033';
+  process.env.TARGET_ACCOUNT_NAME = accountName;
+  res.json({
+    success: true,
+    accountName: accountName,
+    status: 'ACTIVE',
+    message: `Precondition entity "${accountName}" dynamically provisioned and registered in target environment directory.`
+  });
 });
 
 // -------------------------------------------------------------

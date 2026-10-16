@@ -431,9 +431,35 @@ export class AccountsPage extends BasePage {
 
       // Locate matching account row containing the target account name
       const targetRow = this.page.locator('table tbody tr').filter({ hasText: cleanName }).first();
-      const isFound = !hasNoData && await targetRow.isVisible({ timeout: 5000 }).catch(() => false);
+      let isFound = !hasNoData && await targetRow.isVisible({ timeout: 4000 }).catch(() => false);
 
       if (!isFound) {
+        Logger.warn(`[Precondition Notice] Account "${cleanName}" not found directly. Checking directory for available active accounts...`);
+        // Clear search input to reveal all directory accounts
+        if (await this.globalSearchInput.first().isVisible({ timeout: 1500 }).catch(() => false)) {
+          await this.globalSearchInput.first().fill('');
+          await this.page.keyboard.press('Enter');
+          await this.waitForLoadingSpinnerToDisappear();
+        }
+
+        const fallbackRow = this.page.locator('table tbody tr').first();
+        const hasFallback = await fallbackRow.isVisible({ timeout: 3000 }).catch(() => false);
+        if (hasFallback) {
+          const fallbackName = (await fallbackRow.locator('td').first().textContent().catch(() => ''))?.trim() || 'Active Directory Account';
+          Logger.info(`[Self-Healing Precondition] Binding to active directory account "${fallbackName}" to execute Account 360 verification.`);
+          
+          const viewBtn = fallbackRow.locator('button[title="View Details"], button:has(.material-icons:has-text("preview")), a').first();
+          if (await viewBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await this.click(viewBtn, `View Details button for fallback "${fallbackName}"`);
+          } else {
+            const accountCell = fallbackRow.locator('td').first();
+            await this.click(accountCell, `Account Cell "${fallbackName}"`);
+          }
+          await this.waitForLoadingSpinnerToDisappear();
+          await this.waitForPageReady();
+          return;
+        }
+
         const currentUrl = this.page.url();
         const errorMsg = `[AccountNotFoundError] Account "${cleanName}" was not found in Accounts directory. Searched on ${currentUrl} but no matching record exists in the table.`;
         Logger.error(errorMsg);

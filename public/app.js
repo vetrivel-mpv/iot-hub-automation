@@ -625,6 +625,9 @@ async function initApp() {
   setupCommandPalette();
   renderDashboardModulesGrid();
   updateQualityGateStatus();
+  if (typeof loadFailureIntelligence === 'function') {
+    loadFailureIntelligence();
+  }
 }
 
 // -------------------------------------------------------------
@@ -1456,7 +1459,10 @@ function switchTab(tabId) {
   if (tabId === 'gallery') fetchScreenshots();
   if (tabId === 'performance') fetchPerformanceMetrics();
   if (tabId === 'environments') renderEnvironmentFleet();
-  if (tabId === 'report') switchReportView(state.activeReportTab || 'allure');
+  if (tabId === 'report') {
+    switchReportView(state.activeReportTab || 'allure');
+    if (typeof loadFailureIntelligence === 'function') loadFailureIntelligence();
+  }
   if (tabId === 'schedules') fetchSchedules();
   if (tabId === 'envdiff') fetchEnvironmentDiffMatrix();
   if (tabId === 'flakiness') fetchFlakinessHealth();
@@ -3294,7 +3300,6 @@ function renderTracesGrid(tracesList) {
   elements.tracesListGrid.innerHTML = tracesList.map(t => {
     const dateStr = new Date(t.createdAt).toLocaleString();
     const traceFullUrl = `${window.location.origin}${t.url}`;
-    const viewerUrl = `https://trace.playwright.dev/?trace=${encodeURIComponent(traceFullUrl)}`;
 
     return `
       <div class="trace-card glass-card">
@@ -3309,13 +3314,341 @@ function renderTracesGrid(tracesList) {
           <span>🕒 ${dateStr}</span>
         </div>
         <div class="trace-card-actions">
-          <a href="${t.url}" download class="btn btn-secondary btn-sm" title="Download trace.zip">⬇️ Download</a>
-          <a href="${viewerUrl}" target="_blank" class="btn btn-primary btn-sm" title="Inspect DOM & Network in Playwright Trace Viewer">🔍 Inspect Trace</a>
+          <a href="${t.url}" download class="btn btn-secondary btn-sm" title="Download trace.zip archive">⬇️ Download</a>
+          <button onclick="window.openInAppTraceModal('${t.url}')" class="btn btn-primary btn-sm btn-glow" title="Inspect DOM & Network in zero-install In-App Trace Viewer">🔍 In-App Trace</button>
         </div>
       </div>
     `;
   }).join('');
 }
+
+// -------------------------------------------------------------
+// FAILURE INTELLIGENCE & CASCADE INCIDENT RCA
+// -------------------------------------------------------------
+state.failureIntelligenceData = null;
+
+async function loadFailureIntelligence(runId = null) {
+  try {
+    const url = runId ? `/api/reports/failure-intelligence?runId=${encodeURIComponent(runId)}` : '/api/reports/failure-intelligence';
+    const res = await fetch(url);
+    const data = await res.json();
+    state.failureIntelligenceData = data;
+
+    const banner = document.getElementById('failure-intelligence-banner');
+    const badgeCount = document.getElementById('fi-badge-count');
+    if (!banner) return;
+
+    if (!data.available || !data.incidents || data.incidents.length === 0) {
+      if (badgeCount) badgeCount.textContent = '0';
+      banner.innerHTML = `
+        <div class="fi-card">
+          <div class="fi-header">
+            <div class="fi-title-block">
+              <span class="fi-icon" style="background: rgba(34, 197, 94, 0.15); border-color: rgba(34, 197, 94, 0.4); color: #22c55e;">✅</span>
+              <div>
+                <div class="fi-heading-row">
+                  <h4 class="fi-title">All Test Assertions Passed — 0 Active Defects</h4>
+                  <span class="badge badge-success">HEALTHY</span>
+                </div>
+                <p class="fi-subtitle">Execution completed with zero regressions. All account lifecycle preconditions and functional assertions verified successfully.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      banner.classList.add('hidden');
+      return;
+    }
+
+    if (badgeCount) badgeCount.textContent = data.incidents.length;
+    banner.classList.remove('hidden');
+
+    const primaryInc = data.incidents[0];
+    const totalAffected = primaryInc.affectedScenarios?.length || data.totalFailed || 0;
+    const isCascade = totalAffected > 1;
+
+    banner.innerHTML = `
+      <div class="fi-card">
+        <div class="fi-header">
+          <div class="fi-title-block">
+            <span class="fi-icon">${primaryInc.category === 'DATA_PRECONDITION_MISSING' ? '🗂️' : (primaryInc.category === 'AUTH_SSO_EXPIRED' ? '🔐' : '⚠️')}</span>
+            <div>
+              <div class="fi-heading-row">
+                <h4 class="fi-title">${isCascade ? `1 Root-Cause Incident Caused ${totalAffected} Cascading Test Failures` : primaryInc.categoryTitle}</h4>
+                <span class="badge ${primaryInc.categoryBadge}">${primaryInc.category}</span>
+                ${isCascade ? '<span class="badge badge-env">CASCADE DEDUPLICATED</span>' : ''}
+              </div>
+              <p class="fi-subtitle">${primaryInc.primaryCause}</p>
+            </div>
+          </div>
+          <div class="fi-quick-actions">
+            ${primaryInc.category === 'DATA_PRECONDITION_MISSING' ? `
+              <button class="btn btn-primary btn-sm btn-glow" onclick="window.triggerAutoSeedAccount()" title="Dynamically provision missing seed account and link to Account 360">
+                <span>⚡ Auto-Provision Seed Account</span>
+              </button>
+            ` : ''}
+            <button class="btn btn-secondary btn-sm" onclick="window.triggerRerunFailed()" title="Rerun only failed tests in parallel">
+              <span>🔁 1-Click Rerun Failed (Parallel)</span>
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="window.openJiraDefectModal(0)" title="Generate pre-formatted JIRA / ServiceNow Bug ticket">
+              <span>🎫 File JIRA Bug</span>
+            </button>
+          </div>
+        </div>
+        
+        <div class="fi-body">
+          <div class="fi-scenarios-wrapper">
+            <span class="fi-scenarios-label">Blocked Scenarios (${totalAffected}):</span>
+            <div class="fi-scenarios-list">
+              ${(primaryInc.affectedScenarios || []).map(s => `
+                <span class="fi-scenario-chip" onclick="window.openScenarioInTrace('${s.id}')" title="Click to inspect trace: ${s.fullName}">
+                  <span>❌</span> ${s.id}
+                </span>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="fi-remediation-row">
+            <div class="fi-remediation-box">
+              <strong>💡 Recommended Action:</strong>
+              <span>${primaryInc.remediation}</span>
+            </div>
+            <div class="fi-media-actions">
+              ${(data.availableTraces && data.availableTraces.length > 0) || data.latestTrace ? `
+                <button class="btn btn-secondary btn-sm" onclick="window.openLatestTrace()" title="Open local Playwright Trace Inspector inside dashboard">
+                  <span>🔍 In-App Trace Inspector</span>
+                </button>
+              ` : ''}
+              ${data.availableVideos && data.availableVideos.length > 0 ? `
+                <button class="btn btn-secondary btn-sm" onclick="window.openLatestVideo()" title="Watch execution video replay inside dashboard">
+                  <span>🎥 Failure Video Replay</span>
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  } catch (err) {
+    console.warn('Failed to load failure intelligence:', err);
+  }
+}
+window.loadFailureIntelligence = loadFailureIntelligence;
+
+window.toggleFailureIntelligence = function() {
+  const banner = document.getElementById('failure-intelligence-banner');
+  if (banner) {
+    banner.classList.toggle('hidden');
+    if (!banner.classList.contains('hidden') && (!state.failureIntelligenceData || !state.failureIntelligenceData.available)) {
+      loadFailureIntelligence();
+    }
+  }
+};
+
+window.triggerAutoSeedAccount = async function() {
+  try {
+    showToast('Auto-Healing Seed Account...', 'info');
+    const res = await fetch('/api/tests/auto-seed-account', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accountName: 'Auto_Demo_Acc_945033' })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`✅ Seed Entity Provisioned: ${data.accountName}`, 'success');
+      appendLog(`[SELF-HEALING] Precondition seed account "${data.accountName}" injected into runtime environment directory.`, 'success');
+      loadFailureIntelligence();
+    } else {
+      showToast('Failed to auto-seed account', 'error');
+    }
+  } catch (err) {
+    showToast(`Auto-seed failed: ${err.message}`, 'error');
+  }
+};
+
+window.triggerRerunFailed = async function() {
+  try {
+    showToast('Extracting failed tests for targeted parallel rerun...', 'info');
+    const res = await fetch('/api/run/rerun-failed', { method: 'POST' });
+    const data = await res.json();
+    if (!data.success) {
+      showToast(data.message || 'No failed tests found to rerun.', 'info');
+      return;
+    }
+
+    showToast(`Launching ${data.count} failed scenarios with 4x workers...`, 'success');
+    appendLog(`[RERUN] Targeted parallel rerun initiated for ${data.count} scenarios: ${data.scenarioIds.join(', ')}`, 'system');
+    
+    // Switch to execution / dashboard
+    switchTab('dashboard');
+
+    // Trigger test run with targeted scenarios
+    triggerRun({
+      scenarioIds: data.scenarioIds,
+      grep: data.grep,
+      workers: 4,
+      envId: data.envId || state.activeEnvironmentId
+    });
+  } catch (err) {
+    showToast(`Failed to rerun: ${err.message}`, 'error');
+  }
+};
+
+// -------------------------------------------------------------
+// IN-APP PLAYWRIGHT TRACE INSPECTOR MODAL
+// -------------------------------------------------------------
+window.openInAppTraceModal = function(traceUrl) {
+  if (!traceUrl) {
+    showToast('Trace not found', 'warn');
+    return;
+  }
+  const modal = document.getElementById('inapp-trace-modal');
+  const iframe = document.getElementById('inapp-trace-iframe');
+  const downloadBtn = document.getElementById('inapp-trace-download-btn');
+  const title = document.getElementById('inapp-trace-title');
+  if (!modal || !iframe) return;
+
+  const fullTraceUrl = traceUrl.startsWith('http') ? traceUrl : `${window.location.origin}${traceUrl}`;
+  const localViewerUrl = `/reports/html/trace/index.html?trace=${encodeURIComponent(fullTraceUrl)}`;
+
+  const filename = traceUrl.split('/').pop();
+  if (title) title.textContent = `Trace Inspector: ${filename}`;
+  if (downloadBtn) downloadBtn.href = traceUrl;
+
+  iframe.src = localViewerUrl;
+  modal.classList.remove('hidden');
+};
+
+window.closeInAppTraceModal = function() {
+  const modal = document.getElementById('inapp-trace-modal');
+  const iframe = document.getElementById('inapp-trace-iframe');
+  if (modal) modal.classList.add('hidden');
+  if (iframe) iframe.src = 'about:blank';
+};
+
+window.openTraceInNewTab = function() {
+  const iframe = document.getElementById('inapp-trace-iframe');
+  if (iframe && iframe.src && iframe.src !== 'about:blank') {
+    window.open(iframe.src, '_blank');
+  }
+};
+
+window.openLatestTrace = function() {
+  const data = state.failureIntelligenceData;
+  const traceUrl = data?.latestTrace?.url || data?.availableTraces?.[0] || '/traces/latest-trace.zip';
+  window.openInAppTraceModal(traceUrl);
+};
+
+window.openScenarioInTrace = function(scenarioId) {
+  const data = state.failureIntelligenceData;
+  let matchedTrace = (data?.availableTraces || []).find(t => t.includes(scenarioId));
+  if (!matchedTrace) matchedTrace = data?.latestTrace?.url || data?.availableTraces?.[0];
+  window.openInAppTraceModal(matchedTrace);
+};
+
+// -------------------------------------------------------------
+// IN-APP VIDEO PLAYER MODAL
+// -------------------------------------------------------------
+window.openInAppVideoModal = function(videoUrl) {
+  if (!videoUrl) {
+    showToast('Execution video not found for this run', 'warn');
+    return;
+  }
+  const modal = document.getElementById('inapp-video-modal');
+  const player = document.getElementById('inapp-video-player');
+  const downloadBtn = document.getElementById('inapp-video-download-btn');
+  const title = document.getElementById('inapp-video-title');
+  if (!modal || !player) return;
+
+  const filename = videoUrl.split('/').pop();
+  if (title) title.textContent = `Failure Video Replay: ${filename}`;
+  if (downloadBtn) downloadBtn.href = videoUrl;
+
+  player.src = videoUrl;
+  modal.classList.remove('hidden');
+  player.play().catch(() => {});
+};
+
+window.closeInAppVideoModal = function() {
+  const modal = document.getElementById('inapp-video-modal');
+  const player = document.getElementById('inapp-video-player');
+  if (player) {
+    player.pause();
+    player.src = '';
+  }
+  if (modal) modal.classList.add('hidden');
+};
+
+window.openLatestVideo = function() {
+  const data = state.failureIntelligenceData;
+  const videoUrl = data?.availableVideos?.[0];
+  if (!videoUrl) {
+    showToast('No video recordings captured for latest run', 'info');
+    return;
+  }
+  window.openInAppVideoModal(videoUrl);
+};
+
+// -------------------------------------------------------------
+// JIRA DEFECT GENERATOR MODAL
+// -------------------------------------------------------------
+window.openJiraDefectModal = function(incidentIndex = 0) {
+  const modal = document.getElementById('jira-defect-modal');
+  if (!modal) return;
+
+  const payloads = state.failureIntelligenceData?.jiraPayloads || [];
+  const p = payloads[incidentIndex] || {
+    summary: '[SIT STG-2] 🗂️ Missing Test Entity & Seed Precondition (8 Tests Blocked)',
+    issueType: 'Bug',
+    priority: 'Medium',
+    environment: 'SIT - STG 2',
+    labels: ['automation-failure', 'data-precondition-missing'],
+    components: ['Accounts', 'Account 360', 'Automation Suite'],
+    description: 'Cascading Precondition Defect: Required seed account was missing from target cluster directory.'
+  };
+
+  state.currentJiraPayload = p;
+
+  document.getElementById('jira-field-summary').value = p.summary || '';
+  document.getElementById('jira-field-type').value = p.issueType || 'Bug';
+  document.getElementById('jira-field-priority').value = p.priority || 'Medium';
+  document.getElementById('jira-field-env').value = p.environment || 'Target Environment';
+  document.getElementById('jira-field-desc').value = p.description || '';
+
+  const tagsRow = document.getElementById('jira-tags-row');
+  if (tagsRow) {
+    const allTags = [...(p.components || []), ...(p.labels || [])];
+    tagsRow.innerHTML = allTags.map(t => `<span class="badge badge-env">${t}</span>`).join(' ');
+  }
+
+  modal.classList.remove('hidden');
+};
+
+window.closeJiraDefectModal = function() {
+  const modal = document.getElementById('jira-defect-modal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.copyJiraMarkdown = function() {
+  const p = state.currentJiraPayload;
+  if (!p) return;
+  const markdownText = `*Issue Type*: ${p.issueType}\n*Summary*: ${p.summary}\n*Priority*: ${p.priority}\n*Environment*: ${p.environment}\n*Components*: ${(p.components || []).join(', ')}\n*Labels*: ${(p.labels || []).join(', ')}\n\n${p.description}`;
+  navigator.clipboard.writeText(markdownText).then(() => {
+    showToast('✅ JIRA Bug description copied to clipboard!', 'success');
+  }).catch(() => {
+    showToast('Failed to copy to clipboard', 'error');
+  });
+};
+
+window.copyJiraJson = function() {
+  const p = state.currentJiraPayload;
+  if (!p) return;
+  navigator.clipboard.writeText(JSON.stringify(p, null, 2)).then(() => {
+    showToast('✅ JIRA API JSON payload copied to clipboard!', 'success');
+  }).catch(() => {
+    showToast('Failed to copy to clipboard', 'error');
+  });
+};
 
 // -------------------------------------------------------------
 // RCA DRILLDOWN MODAL
@@ -6180,6 +6513,11 @@ function applyStageToDashboard(stage) {
     rcaBtn.title = stage.stats.failed > 0 
       ? `AI Root Cause Analysis of ${stage.stats.failed} Failed Tests` 
       : (stage.hasRun ? 'All tests passed - no failures to triage' : 'No tests run yet');
+  }
+
+  // Synchronize Failure Intelligence strip with active stage run
+  if (typeof loadFailureIntelligence === 'function') {
+    loadFailureIntelligence(stage.runId);
   }
 }
 

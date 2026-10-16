@@ -1793,6 +1793,11 @@
     <!-- TAB 8: ADVANCED MULTI-REPORT SUITE & DISPATCH -->
     <div id="tab-content-report" class="tab-content">
       <div class="report-frame-container glass-card">
+        <!-- FAILURE INTELLIGENCE & CASCADE INCIDENT DEDUPLICATION STRIP -->
+        <div id="failure-intelligence-banner" class="failure-intelligence-banner hidden">
+          <!-- Populated dynamically via JS -->
+        </div>
+
         <div class="report-frame-header">
           <div class="report-tabs-selector">
             <button class="report-sub-tab active" data-report="allure">📊 Allure Executive Report</button>
@@ -1800,6 +1805,9 @@
             <button class="report-sub-tab" data-report="traces">🔍 Deep Traces Archive</button>
           </div>
           <div class="report-header-actions">
+            <button id="toggle-failure-intel-btn" class="btn btn-secondary btn-sm" onclick="window.toggleFailureIntelligence()" title="Toggle Intelligent Failure & Root Cause Incident Triage">
+              <span>🧠 Triage Incidents (<span id="fi-badge-count">0</span>)</span>
+            </button>
             <button id="regenerate-allure-btn" class="btn btn-secondary btn-sm" onclick="window.regenerateAllureReport()" title="Recompile latest Allure results into fresh HTML report">
               <span>⚡ Regenerate Allure</span>
             </button>
@@ -3148,6 +3156,96 @@
         <div class="app-dialog-footer">
           <button type="button" class="btn btn-secondary btn-sm" id="app-dialog-cancel-btn">Cancel</button>
           <button type="button" class="btn btn-primary btn-sm" id="app-dialog-confirm-btn">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: IN-APP ZERO-INSTALL PLAYWRIGHT TRACE INSPECTOR -->
+    <div id="inapp-trace-modal" class="modal-overlay hidden" tabindex="-1" role="dialog" aria-modal="true">
+      <div class="modal-card glass-card trace-modal-card">
+        <div class="modal-header">
+          <div class="trace-modal-title-group">
+            <span class="trace-modal-badge badge badge-env">🔍 PLAYWRIGHT TRACE</span>
+            <h3 class="modal-title" id="inapp-trace-title">Interactive Trace Inspector</h3>
+            <span class="badge badge-success">🛡️ Offline / Corporate Safe</span>
+          </div>
+          <div class="trace-modal-header-actions">
+            <a id="inapp-trace-download-btn" href="#" download class="btn btn-secondary btn-sm" title="Download .zip">⬇️ Download Trace</a>
+            <button id="inapp-trace-newtab-btn" class="btn btn-secondary btn-sm" onclick="window.openTraceInNewTab()" title="Open trace in separate browser tab">↗ New Tab</button>
+            <button class="modal-close-btn" onclick="window.closeInAppTraceModal()" title="Close trace inspector">✕</button>
+          </div>
+        </div>
+        <div class="modal-body trace-modal-body">
+          <iframe id="inapp-trace-iframe" class="inapp-trace-iframe" src="about:blank"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: IN-APP TEST EXECUTION VIDEO PLAYER -->
+    <div id="inapp-video-modal" class="modal-overlay hidden" tabindex="-1" role="dialog" aria-modal="true">
+      <div class="modal-card glass-card video-modal-card">
+        <div class="modal-header">
+          <div class="video-modal-title-group">
+            <span class="badge badge-fail">🎥 FAILURE REPLAY</span>
+            <h3 class="modal-title" id="inapp-video-title">Execution Replay Video (.webm)</h3>
+          </div>
+          <div class="video-modal-header-actions">
+            <a id="inapp-video-download-btn" href="#" download class="btn btn-secondary btn-sm" title="Download video stream">⬇️ Download Video</a>
+            <button class="modal-close-btn" onclick="window.closeInAppVideoModal()" title="Close video player">✕</button>
+          </div>
+        </div>
+        <div class="modal-body video-modal-body">
+          <div class="inapp-video-wrapper">
+            <video id="inapp-video-player" class="inapp-video-player" controls autoplay playsinline></video>
+          </div>
+          <p class="video-modal-sub">Captured with high-fidelity Playwright headless browser recorder. Shows exact UI state and user interactions leading up to the assertion failure.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: 1-CLICK JIRA DEFECT TICKET GENERATOR -->
+    <div id="jira-defect-modal" class="modal-overlay hidden" tabindex="-1" role="dialog" aria-modal="true">
+      <div class="modal-card glass-card jira-modal-card">
+        <div class="modal-header">
+          <div class="jira-modal-title-group">
+            <span class="badge badge-warning">🎫 DEFECT DISPATCH</span>
+            <h3 class="modal-title">Pre-Formatted JIRA / ServiceNow Bug Ticket</h3>
+          </div>
+          <button class="modal-close-btn" onclick="window.closeJiraDefectModal()" title="Close modal">✕</button>
+        </div>
+        <div class="modal-body jira-modal-body">
+          <div class="jira-form-grid">
+            <div class="form-group">
+              <label class="form-label">Issue Summary</label>
+              <input type="text" id="jira-field-summary" class="form-input" readonly />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Issue Type</label>
+                <input type="text" id="jira-field-type" class="form-input" value="Bug" readonly />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Priority</label>
+                <input type="text" id="jira-field-priority" class="form-input" readonly />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Target Environment</label>
+                <input type="text" id="jira-field-env" class="form-input" readonly />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Labels & Components</label>
+              <div class="jira-tags-row" id="jira-tags-row"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Reproduction Description (Markdown / Jira Wiki)</label>
+              <textarea id="jira-field-desc" class="form-textarea" rows="10" readonly></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer jira-modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="window.copyJiraJson()">📋 Copy JSON Payload</button>
+          <button type="button" class="btn btn-primary btn-sm btn-glow" onclick="window.copyJiraMarkdown()">📋 Copy JIRA Markdown</button>
         </div>
       </div>
     </div>

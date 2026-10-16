@@ -8658,3 +8658,310 @@ body:not(.theme-light) .stage-nav-pill {
   color: #ffffff !important;
   box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
 }
+
+/* ==========================================================================
+   FAILURE INTELLIGENCE & CASCADE INCIDENT DEDUPLICATION STRIP
+   ========================================================================== */
+.failure-intelligence-banner {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(15, 23, 42, 0.95) 100%);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.25);
+  animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.theme-light .failure-intelligence-banner {
+  background: linear-gradient(135deg, rgba(254, 242, 242, 0.95) 0%, #ffffff 100%);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.fi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.fi-title-block {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex: 1;
+}
+
+.fi-icon {
+  font-size: 1.8rem;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 6px 10px;
+  border-radius: 10px;
+  line-height: 1;
+}
+
+body.theme-light .fi-icon {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+.fi-heading-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.fi-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.fi-subtitle {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  line-height: 1.45;
+}
+
+.fi-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fi-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body.theme-light .fi-body {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+.fi-scenarios-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fi-scenarios-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fi-scenarios-list {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.fi-scenario-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-family: var(--font-mono, monospace);
+  font-weight: 600;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+body.theme-light .fi-scenario-chip {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.fi-scenario-chip:hover {
+  background: rgba(239, 68, 68, 0.22);
+  transform: translateY(-1px);
+}
+
+.fi-remediation-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+body.theme-light .fi-remediation-row {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.fi-remediation-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-main);
+  flex: 1;
+}
+
+.fi-media-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ==========================================================================
+   IN-APP ZERO-INSTALL PLAYWRIGHT TRACE INSPECTOR MODAL
+   ========================================================================== */
+.trace-modal-card {
+  width: 95vw !important;
+  max-width: 1480px !important;
+  height: 90vh !important;
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.trace-modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.trace-modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trace-modal-body {
+  flex: 1;
+  padding: 0 !important;
+  overflow: hidden;
+  position: relative;
+  background: #1e1e1e;
+}
+
+.inapp-trace-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+/* ==========================================================================
+   IN-APP EXECUTION VIDEO PLAYER MODAL
+   ========================================================================== */
+.video-modal-card {
+  width: 85vw !important;
+  max-width: 1000px !important;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.video-modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.video-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.inapp-video-wrapper {
+  width: 100%;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+}
+
+.inapp-video-player {
+  width: 100%;
+  max-height: 65vh;
+  outline: none;
+}
+
+.video-modal-sub {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  text-align: center;
+  margin: 0;
+}
+
+/* ==========================================================================
+   1-CLICK JIRA DEFECT TICKET GENERATOR MODAL
+   ========================================================================== */
+.jira-modal-card {
+  width: 85vw !important;
+  max-width: 920px !important;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.jira-modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.jira-modal-body {
+  overflow-y: auto;
+  max-height: calc(85vh - 140px);
+}
+
+.jira-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.jira-tags-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.jira-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body.theme-light .jira-modal-footer {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
