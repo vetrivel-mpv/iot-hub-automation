@@ -375,6 +375,9 @@
             <button class="btn btn-secondary btn-xs" onclick="window.openEmailPreviewModal()" title="Preview or Send Executive HTML Summary Card">
               <span>✉️ Digest</span>
             </button>
+            <button class="btn btn-warning btn-xs" id="cab-signoff-trigger-btn" onclick="window.openCabSignOffModal()" title="Change Advisory Board Release Sign-Off">
+              <span>👑 CAB Sign-Off</span>
+            </button>
           </div>
         </div>
       </section>
@@ -431,12 +434,16 @@
 
             <!-- Integrated Executive Governance Release Gate Status -->
             <div class="hero-governance-strip">
-              <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center justify-between gap-2 flex-wrap">
                 <div class="flex items-center gap-2">
                   <span class="gov-mini-icon">👑</span>
                   <span class="badge badge-health-online text-[10px]" id="executive-gate-badge">PRODUCTION GATE: GO</span>
+                  <span class="badge badge-env text-[9px] cursor-pointer" id="cab-signoff-pill" onclick="window.openCabSignOffModal()" title="View or manage CAB Sign-Off">CAB: VERIFIED (CR-8921)</span>
                 </div>
-                <span class="text-[10px] text-muted font-mono" id="allure-dash-sla-status">Needs 4 Fixes for Release</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] text-muted font-mono" id="allure-dash-sla-status">Needs 4 Fixes for Release</span>
+                  <a href="/api/governance/audit-certificate" target="_blank" class="text-[10px] text-blue-500 hover:underline font-semibold" title="View Tamper-Evident Release Certificate">📜 Audit Certificate ↗</a>
+                </div>
               </div>
               <p class="text-[11px] text-muted line-clamp-1 mt-1" id="executive-gate-desc">1-Click client-friendly verification presets with instant executive HTML email digest generation</p>
             </div>
@@ -497,16 +504,26 @@
               <!-- Defect Categories Triage -->
               <div class="hero-subcard">
                 <div class="flex items-center justify-between mb-2">
-                  <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Defect Clusters (Triage)</span>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Defect Clusters</span>
+                    <button class="badge badge-health-degraded text-[9px] hover:opacity-80 transition cursor-pointer" id="quarantine-matrix-pill" onclick="window.openQuarantineModal()" title="Open Flakiness & Test Quarantine Matrix">
+                      🛡️ 1 Quarantined
+                    </button>
+                  </div>
                   <span class="text-[10px] font-mono text-muted" id="allure-dash-cat-count">2 Categories Active</span>
                 </div>
                 <div id="allure-dash-categories-list" class="space-y-1.5 flex-1">
                   <div class="text-xs text-muted">Loading categories...</div>
                 </div>
-                <div class="mt-2.5 pt-2 border-t border-slate-200 dark:border-slate-700/50 flex justify-between items-center">
-                  <button class="btn btn-secondary btn-xs" id="allure-dash-rca-btn" onclick="window.openRcaModal && window.openRcaModal(document.getElementById('allure-dash-run-id')?.textContent || 'RUN-176189')" title="AI Root Cause Analysis">
-                    <span>🤖 AI RCA Triage</span>
-                  </button>
+                <div class="mt-2.5 pt-2 border-t border-slate-200 dark:border-slate-700/50 flex justify-between items-center gap-1 flex-wrap">
+                  <div class="flex items-center gap-1">
+                    <button class="btn btn-secondary btn-xs" id="allure-dash-rca-btn" onclick="window.openRcaModal && window.openRcaModal(document.getElementById('allure-dash-run-id')?.textContent || 'RUN-176189')" title="AI Root Cause Analysis">
+                      <span>🤖 AI RCA</span>
+                    </button>
+                    <button class="btn btn-secondary btn-xs" onclick="window.openQuarantineModal()" title="Manage Test Quarantine Matrix & Flakiness">
+                      <span>🛡️ Quarantine</span>
+                    </button>
+                  </div>
                   <button class="btn btn-secondary btn-xs" onclick="switchTab('report')" title="Refresh Report">
                     <span>🔄 Refresh</span>
                   </button>
@@ -3599,6 +3616,208 @@
         <div class="modal-footer jira-modal-footer">
           <button type="button" class="btn btn-secondary btn-sm" onclick="window.copyJiraJson()">📋 Copy JSON Payload</button>
           <button type="button" class="btn btn-primary btn-sm btn-glow" onclick="window.copyJiraMarkdown()">📋 Copy JIRA Markdown</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: CHANGE ADVISORY BOARD (CAB) RELEASE SIGN-OFF & AUDIT CERTIFICATE -->
+    <div id="cab-signoff-modal" class="modal-overlay hidden" tabindex="-1" role="dialog" aria-modal="true">
+      <div class="modal-card glass-card" style="max-width: 820px; width: 95%;">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">👑</span>
+            <div>
+              <h3 class="modal-title font-bold text-base">CAB Release Sign-Off & Governance Audit</h3>
+              <span class="text-xs text-muted">Change Advisory Board • Digital Compliance Signature • Tamper-Evident SHA-256 Certificate</span>
+            </div>
+          </div>
+          <button class="modal-close-btn" onclick="window.closeCabSignOffModal()" title="Close modal">✕</button>
+        </div>
+        <div class="modal-body p-4 space-y-4" style="max-height: 540px; overflow-y: auto;">
+          <!-- Pre-Flight Release Checklist Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            <div class="p-2.5 rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50">
+              <span class="text-muted block text-[10px] uppercase font-bold">Target Cluster</span>
+              <span class="font-bold text-slate-800 dark:text-slate-100 truncate block mt-0.5" id="cab-preflight-env">Azure FrontDoor</span>
+            </div>
+            <div class="p-2.5 rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50">
+              <span class="text-muted block text-[10px] uppercase font-bold">Pass Rate</span>
+              <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono block mt-0.5" id="cab-preflight-passrate">98.4% (GO)</span>
+            </div>
+            <div class="p-2.5 rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50">
+              <span class="text-muted block text-[10px] uppercase font-bold">A11y & Security</span>
+              <span class="font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">WCAG 2.1 AA (0 Def)</span>
+            </div>
+            <div class="p-2.5 rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50">
+              <span class="text-muted block text-[10px] uppercase font-bold">Git Commit SHA</span>
+              <span class="font-bold text-blue-600 dark:text-blue-400 font-mono block mt-0.5" id="cab-preflight-git">3cc8ec7</span>
+            </div>
+          </div>
+
+          <!-- Active Sign-Off Status Banner -->
+          <div id="cab-active-status-banner" class="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2.5">
+              <span class="text-xl">✅</span>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-xs text-emerald-800 dark:text-emerald-200" id="cab-banner-status">APPROVED FOR PRODUCTION DEPLOYMENT</span>
+                  <span class="badge badge-pass text-[9px]" id="cab-banner-crid">CR-8921-IOT-PROD</span>
+                </div>
+                <p class="text-[11px] text-emerald-700 dark:text-emerald-300 mt-0.5" id="cab-banner-details">Signed off by Vetrivel (Lead QA Architect) • Allure Gate 98.4% Passed</p>
+              </div>
+            </div>
+            <a href="/api/governance/audit-certificate" target="_blank" class="btn btn-secondary btn-xs text-[11px] font-semibold">
+              📜 View Official Certificate ↗
+            </a>
+          </div>
+
+          <!-- Sign-Off Form -->
+          <form id="cab-signoff-form" onsubmit="window.handleCabSignOffSubmit(event)" class="space-y-3 pt-2">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Authorize New Release Sign-Off</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div class="form-group">
+                <label class="form-label font-semibold text-muted">Change Request ID (ITSM / Jira)</label>
+                <input type="text" id="cab-input-crid" class="form-input text-xs" required value="CR-8921-IOT-PROD" placeholder="e.g. CR-8921-IOT-PROD" />
+              </div>
+              <div class="form-group">
+                <label class="form-label font-semibold text-muted">Sign-Off Decision</label>
+                <select id="cab-input-decision" class="form-input text-xs font-bold">
+                  <option value="APPROVED (GO)" selected>✅ APPROVED (PRODUCTION GATE: GO)</option>
+                  <option value="CONDITIONAL GO">⚠️ CONDITIONAL GO (Minor Warnings Noted)</option>
+                  <option value="REJECTED (NO-GO)">⛔ REJECTED (QUALITY GATE FAILED)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label font-semibold text-muted">Authorizing Officer Name</label>
+                <input type="text" id="cab-input-officer" class="form-input text-xs" required value="Vetrivel (Lead QA Architect)" />
+              </div>
+              <div class="form-group">
+                <label class="form-label font-semibold text-muted">Officer Governance Role</label>
+                <input type="text" id="cab-input-role" class="form-input text-xs" value="Lead QA & Release Governance Architect" />
+              </div>
+            </div>
+            <div class="form-group text-xs">
+              <label class="form-label font-semibold text-muted">QA Governance Notes & Risk Assessment</label>
+              <textarea id="cab-input-notes" class="form-textarea text-xs" rows="3" placeholder="Document testing scope, regression verification, non-blocking quarantined tests, and risks...">Full regression and critical path smoke audits completed with 0 blocking defects. Safety guardrails intact.</textarea>
+            </div>
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-700/50">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.closeCabSignOffModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary btn-sm btn-glow">👑 Sign & Authorize Release</button>
+            </div>
+          </form>
+
+          <!-- Historical Sign-Offs Timeline -->
+          <div class="pt-3 border-t border-slate-200 dark:border-slate-700/50">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block mb-2">Audit Trail History</span>
+            <div id="cab-history-list" class="space-y-1.5 max-h-36 overflow-y-auto text-xs">
+              <div class="text-muted">Loading audit history...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: FLAKINESS DETECTION & TEST QUARANTINE MATRIX -->
+    <div id="quarantine-matrix-modal" class="modal-overlay hidden" tabindex="-1" role="dialog" aria-modal="true">
+      <div class="modal-card glass-card" style="max-width: 860px; width: 95%;">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🛡️</span>
+            <div>
+              <h3 class="modal-title font-bold text-base">Flakiness Detection & Test Quarantine Matrix</h3>
+              <span class="text-xs text-muted">Isolate unstable or external-dependent tests to prevent false production gate blocks</span>
+            </div>
+          </div>
+          <button class="modal-close-btn" onclick="window.closeQuarantineModal()" title="Close modal">✕</button>
+        </div>
+        <div class="modal-body p-4 space-y-4" style="max-height: 540px; overflow-y: auto;">
+          
+          <!-- Quarantine Stats Banner -->
+          <div class="grid grid-cols-3 gap-2.5 text-xs">
+            <div class="p-3 rounded-lg bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-center">
+              <span class="text-amber-600 dark:text-amber-400 font-bold block text-lg font-mono" id="qm-quarantined-count">1</span>
+              <span class="text-[10px] text-muted uppercase font-bold">Quarantined Tests</span>
+            </div>
+            <div class="p-3 rounded-lg bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 text-center">
+              <span class="text-emerald-600 dark:text-emerald-400 font-bold block text-lg font-mono">94.8%</span>
+              <span class="text-[10px] text-muted uppercase font-bold">Flake-Free Score</span>
+            </div>
+            <div class="p-3 rounded-lg bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 text-center">
+              <span class="text-blue-600 dark:text-blue-400 font-bold block text-lg font-mono" id="qm-adjusted-pct">85.7%</span>
+              <span class="text-[10px] text-muted uppercase font-bold">Adjusted Gate Rate</span>
+            </div>
+          </div>
+
+          <!-- Quarantine Tabs -->
+          <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-700/60 pb-2" id="quarantine-tabs">
+            <button class="btn btn-xs btn-primary active-subtab" id="qtab-btn-active" onclick="window.switchQuarantineTab('active')">🛡️ Active Quarantined Tests (<span id="qm-tab-badge">1</span>)</button>
+            <button class="btn btn-xs btn-secondary" id="qtab-btn-flaky" onclick="window.switchQuarantineTab('flaky')">⚡ Flakiness Analytics & Detection</button>
+            <button class="btn btn-xs btn-secondary" id="qtab-btn-add" onclick="window.switchQuarantineTab('add')">➕ Quarantine a Test</button>
+          </div>
+
+          <!-- TAB 1: ACTIVE QUARANTINED TESTS -->
+          <div id="qtab-content-active" class="qtab-content space-y-2">
+            <div id="qm-active-list" class="space-y-2 text-xs">
+              <!-- Dynamically populated quarantined test cards -->
+            </div>
+          </div>
+
+          <!-- TAB 2: FLAKINESS ANALYTICS & CANDIDATE TESTS -->
+          <div id="qtab-content-flaky" class="qtab-content space-y-2 hidden">
+            <p class="text-xs text-muted mb-2">Automated flakiness detection engine tracks suites across historical execution runs. Sporadic pass/fail rates indicate environment latency or seed data collisions.</p>
+            <div id="qm-flaky-list" class="space-y-2 text-xs">
+              <!-- Dynamically populated flaky candidates -->
+            </div>
+          </div>
+
+          <!-- TAB 3: QUARANTINE A TEST FORM -->
+          <div id="qtab-content-add" class="qtab-content hidden">
+            <form id="quarantine-add-form" onsubmit="window.handleQuarantineAddSubmit(event)" class="space-y-3 text-xs">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="form-group">
+                  <label class="form-label font-semibold text-muted">Test Case ID</label>
+                  <input type="text" id="qm-add-testid" class="form-input text-xs" required placeholder="e.g. TC_AUTH_017" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label font-semibold text-muted">Module / Suite ID</label>
+                  <select id="qm-add-suite" class="form-input text-xs">
+                    <option value="auth">Authentication & Access</option>
+                    <option value="accounts">Account Management</option>
+                    <option value="subscriptions">Subscriptions</option>
+                    <option value="resources">Resources</option>
+                    <option value="rating">Rating & Billing</option>
+                    <option value="reports">Reports & Analytics</option>
+                    <option value="admin">Administration</option>
+                    <option value="rules">Automation Rules</option>
+                    <option value="general">Other / E2E</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label font-semibold text-muted">Test Case Title / Scenario</label>
+                  <input type="text" id="qm-add-title" class="form-input text-xs" required placeholder="e.g. Handle 503 SSO Intermittent Failure" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label font-semibold text-muted">Tracking Defect Ticket (JIRA / ServiceNow)</label>
+                  <input type="text" id="qm-add-ticket" class="form-input text-xs" required placeholder="e.g. JIRA-4819" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label font-semibold text-muted">Reason for Quarantine</label>
+                <select id="qm-add-reason" class="form-input text-xs">
+                  <option value="External IdP / 3rd Party Gateway Timeout on Staging">External IdP / 3rd Party Gateway Timeout on Staging</option>
+                  <option value="Target host is Private Network (Requires AT&T VPN)">Target host is Private Network (Requires AT&T VPN)</option>
+                  <option value="Staging Test Data Seed Collision or Cleanup Delay">Staging Test Data Seed Collision or Cleanup Delay</option>
+                  <option value="Async UI Animation / Layout Render Flake (>3s)">Async UI Animation / Layout Render Flake (>3s)</option>
+                  <option value="Other Non-Blocking Environment Instability">Other Non-Blocking Environment Instability</option>
+                </select>
+              </div>
+              <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-700/50">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.switchQuarantineTab('active')">Cancel</button>
+                <button type="submit" class="btn btn-warning btn-sm">🛡️ Move to Quarantine</button>
+              </div>
+            </form>
+          </div>
+
         </div>
       </div>
     </div>

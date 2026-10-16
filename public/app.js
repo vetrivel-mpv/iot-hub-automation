@@ -9172,4 +9172,320 @@ function generateSampleTestData(workerIdx = 0) {
   }
 }
 
+// ==========================================================================
+// 17. ENTERPRISE CAB RELEASE SIGN-OFF & FLAKINESS QUARANTINE MATRIX
+// ==========================================================================
+
+let currentCabSignOff = null;
+let currentQuarantineData = null;
+
+// --- CAB Sign-Off Modal Logic ---
+async function openCabSignOffModal() {
+  const modal = document.getElementById('cab-signoff-modal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+
+  // Pre-fill live metrics
+  const envName = document.getElementById('telemetry-env-name')?.textContent || 'Azure FrontDoor (CMPaaS)';
+  const passPct = document.getElementById('allure-dash-pass-pct')?.textContent || '98.4%';
+  const envPre = document.getElementById('cab-preflight-env');
+  const passPre = document.getElementById('cab-preflight-passrate');
+  if (envPre) envPre.textContent = envName;
+  if (passPre) passPre.textContent = `${passPct} (GO)`;
+
+  await loadCabSignOffData();
+}
+window.openCabSignOffModal = openCabSignOffModal;
+
+function closeCabSignOffModal() {
+  const modal = document.getElementById('cab-signoff-modal');
+  if (modal) modal.classList.add('hidden');
+}
+window.closeCabSignOffModal = closeCabSignOffModal;
+
+async function loadCabSignOffData() {
+  try {
+    const res = await fetch('/api/governance/sign-off');
+    if (!res.ok) return;
+    const data = await res.json();
+    currentCabSignOff = data.latest;
+
+    // Update Banner
+    const bannerStatus = document.getElementById('cab-banner-status');
+    const bannerCr = document.getElementById('cab-banner-crid');
+    const bannerDetails = document.getElementById('cab-banner-details');
+    const pill = document.getElementById('cab-signoff-pill');
+
+    if (data.latest) {
+      if (bannerStatus) bannerStatus.textContent = data.latest.decision.toUpperCase();
+      if (bannerCr) bannerCr.textContent = data.latest.changeRequestId;
+      if (bannerDetails) {
+        bannerDetails.textContent = `Signed off by ${data.latest.signOffOfficer} • Git ${data.latest.gitCommit} • Pass Rate ${data.latest.passRate}`;
+      }
+      if (pill) {
+        pill.textContent = `CAB: ${data.latest.changeRequestId} (${data.latest.decision.split(' ')[0]})`;
+        pill.className = data.latest.decision.includes('APPROVED') ? 'badge badge-health-online text-[9px] cursor-pointer' : 'badge badge-health-offline text-[9px] cursor-pointer';
+      }
+    } else {
+      if (pill) {
+        pill.textContent = 'CAB: PENDING SIGN-OFF';
+        pill.className = 'badge badge-env text-[9px] cursor-pointer';
+      }
+    }
+
+    // Render History
+    const historyList = document.getElementById('cab-history-list');
+    if (historyList) {
+      if (!data.history || data.history.length === 0) {
+        historyList.innerHTML = '<div class="text-muted p-2">No previous sign-offs recorded. Authorize your first release above.</div>';
+      } else {
+        historyList.innerHTML = data.history.map(item => {
+          const isAppr = item.decision.includes('APPROVED') || item.decision.includes('GO');
+          const badgeCls = isAppr ? 'badge-pass' : 'badge-fail';
+          const dt = new Date(item.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+          return `
+            <div class="p-2 rounded bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="badge ${badgeCls} text-[9px]">${escapeHtml(item.decision)}</span>
+                <strong class="font-mono text-slate-800 dark:text-slate-200">${escapeHtml(item.changeRequestId)}</strong>
+                <span class="text-muted truncate max-w-[200px]">• ${escapeHtml(item.signOffOfficer)}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-muted font-mono text-[10px]">${dt}</span>
+                <a href="/api/governance/audit-certificate?id=${item.id}" target="_blank" class="text-blue-500 hover:underline text-[10px]">Certificate ↗</a>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+  } catch (err) {
+    console.warn('[Governance] Could not load sign-off data:', err);
+  }
+}
+window.loadCabSignOffData = loadCabSignOffData;
+
+async function handleCabSignOffSubmit(event) {
+  event.preventDefault();
+  const crId = document.getElementById('cab-input-crid')?.value || 'CR-8921-IOT-PROD';
+  const decision = document.getElementById('cab-input-decision')?.value || 'APPROVED (GO)';
+  const officer = document.getElementById('cab-input-officer')?.value || 'Vetrivel (Lead QA Architect)';
+  const role = document.getElementById('cab-input-role')?.value || 'Lead QA & Release Governance Architect';
+  const notes = document.getElementById('cab-input-notes')?.value || '';
+
+  const targetEnv = document.getElementById('telemetry-env-name')?.textContent || 'Azure FrontDoor (CMPaaS)';
+  const passRate = document.getElementById('allure-dash-pass-pct')?.textContent || '98.4%';
+  const runId = document.getElementById('allure-dash-run-id')?.textContent || 'RUN-176189';
+
+  try {
+    const res = await fetch('/api/governance/sign-off', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        changeRequestId: crId,
+        decision,
+        signOffOfficer: officer,
+        officerRole: role,
+        notes,
+        targetEnv,
+        passRate,
+        runId
+      })
+    });
+
+    if (res.ok) {
+      if (typeof showToast === 'function') {
+        showToast(`👑 CAB Release Sign-Off Recorded: ${crId} (${decision})`, 'success');
+      }
+      await loadCabSignOffData();
+      appendLog(`[CAB-GOVERNANCE] Authorized release sign-off: ${crId} by ${officer} (${decision})`, 'pass');
+    }
+  } catch (err) {
+    console.error('[Governance] Failed to record sign-off:', err);
+  }
+}
+window.handleCabSignOffSubmit = handleCabSignOffSubmit;
+
+// --- Quarantine Matrix Modal Logic ---
+async function openQuarantineModal() {
+  const modal = document.getElementById('quarantine-matrix-modal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  await loadQuarantineData();
+}
+window.openQuarantineModal = openQuarantineModal;
+
+function closeQuarantineModal() {
+  const modal = document.getElementById('quarantine-matrix-modal');
+  if (modal) modal.classList.add('hidden');
+}
+window.closeQuarantineModal = closeQuarantineModal;
+
+function switchQuarantineTab(tabName) {
+  ['active', 'flaky', 'add'].forEach(t => {
+    const btn = document.getElementById(`qtab-btn-${t}`);
+    const content = document.getElementById(`qtab-content-${t}`);
+    if (btn) {
+      btn.className = t === tabName ? 'btn btn-xs btn-primary active-subtab' : 'btn btn-xs btn-secondary';
+    }
+    if (content) {
+      content.classList.toggle('hidden', t !== tabName);
+    }
+  });
+}
+window.switchQuarantineTab = switchQuarantineTab;
+
+async function loadQuarantineData() {
+  try {
+    const res = await fetch('/api/governance/quarantine');
+    if (!res.ok) return;
+    const data = await res.json();
+    currentQuarantineData = data;
+
+    // Badges & Counters
+    const qCount = data.totalQuarantined || 0;
+    const pill = document.getElementById('quarantine-matrix-pill');
+    const qmCount = document.getElementById('qm-quarantined-count');
+    const tabBadge = document.getElementById('qm-tab-badge');
+
+    if (pill) pill.textContent = `🛡️ ${qCount} Quarantined`;
+    if (qmCount) qmCount.textContent = qCount;
+    if (tabBadge) tabBadge.textContent = qCount;
+
+    // Active Quarantined List
+    const activeList = document.getElementById('qm-active-list');
+    if (activeList) {
+      if (!data.quarantinedTests || data.quarantinedTests.length === 0) {
+        activeList.innerHTML = `
+          <div class="p-6 text-center text-muted">
+            <span class="text-3xl block mb-2">🎉</span>
+            <strong>Zero Active Quarantined Tests</strong>
+            <p class="text-xs text-muted mt-1">All suites are running with standard release gate blocking enforcement.</p>
+          </div>
+        `;
+      } else {
+        activeList.innerHTML = data.quarantinedTests.map(test => `
+          <div class="p-3 rounded-xl bg-slate-100/80 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 flex items-start justify-between gap-3">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="badge badge-warning text-[9px] font-mono">${escapeHtml(test.testId)}</span>
+                <span class="font-bold text-slate-900 dark:text-slate-100">${escapeHtml(test.title)}</span>
+                <span class="badge badge-env text-[9px] uppercase font-mono">${escapeHtml(test.suiteId)}</span>
+              </div>
+              <p class="text-[11px] text-muted"><strong class="text-slate-700 dark:text-slate-300">Quarantine Reason:</strong> ${escapeHtml(test.reason)}</p>
+              <div class="flex items-center gap-3 text-[10px] text-muted font-mono pt-1">
+                <span>🎫 JIRA: <strong class="text-blue-600 dark:text-blue-400 font-semibold">${escapeHtml(test.ticketId || 'JIRA-4819')}</strong></span>
+                <span>👤 Quarantined By: ${escapeHtml(test.quarantinedBy)}</span>
+                <span>⚡ Flake Score: ${test.flakeScore || 25}%</span>
+              </div>
+            </div>
+            <button class="btn btn-secondary btn-xs text-[10px] shrink-0 hover:bg-emerald-600 hover:text-white transition" onclick="window.unquarantineTest('${test.testId}')" title="Restore to active blocking tests">
+              ✓ Restore Test
+            </button>
+          </div>
+        `).join('');
+      }
+    }
+
+    // Flaky Candidates List
+    const flakyList = document.getElementById('qm-flaky-list');
+    if (flakyList && Array.isArray(data.flakinessReport)) {
+      flakyList.innerHTML = data.flakinessReport.map(item => `
+        <div class="p-2.5 rounded-lg bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-slate-800 dark:text-slate-200 font-mono">${escapeHtml(item.name)}</span>
+              <span class="badge ${item.isFlaky ? 'badge-warning' : 'badge-pass'} text-[9px]">${escapeHtml(item.category)}</span>
+            </div>
+            <span class="text-[10px] text-muted">Runs: ${item.runs} | Failures: ${item.failedRuns} | Flake Index: ${item.flakeScore}%</span>
+          </div>
+          <button class="btn btn-secondary btn-xs text-[10px]" onclick="window.quarantineSpecificTest('${item.name}', 'Suite Stabilization Quarantine', '${item.name}')">
+            🛡️ Quarantine Suite
+          </button>
+        </div>
+      `).join('');
+    }
+  } catch (err) {
+    console.warn('[Quarantine] Failed to load data:', err);
+  }
+}
+window.loadQuarantineData = loadQuarantineData;
+
+async function unquarantineTest(testId) {
+  try {
+    const res = await fetch(`/api/governance/quarantine/${encodeURIComponent(testId)}`, { method: 'DELETE' });
+    if (res.ok) {
+      if (typeof showToast === 'function') {
+        showToast(`✓ Restored test ${testId} to standard blocking enforcement`, 'success');
+      }
+      await loadQuarantineData();
+      if (typeof updateQualityGateStatus === 'function') updateQualityGateStatus();
+      appendLog(`[QUARANTINE] Restored test ${testId} to release gate blocking status`, 'pass');
+    }
+  } catch (err) {
+    console.error('[Quarantine] Failed to unquarantine test:', err);
+  }
+}
+window.unquarantineTest = unquarantineTest;
+
+async function handleQuarantineAddSubmit(event) {
+  event.preventDefault();
+  const testId = document.getElementById('qm-add-testid')?.value.trim();
+  const title = document.getElementById('qm-add-title')?.value.trim();
+  const suiteId = document.getElementById('qm-add-suite')?.value;
+  const ticketId = document.getElementById('qm-add-ticket')?.value.trim();
+  const reason = document.getElementById('qm-add-reason')?.value;
+
+  if (!testId || !title) return;
+
+  try {
+    const res = await fetch('/api/governance/quarantine', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        testId,
+        title,
+        suiteId,
+        ticketId,
+        reason,
+        quarantinedBy: 'QA Architect'
+      })
+    });
+
+    if (res.ok) {
+      if (typeof showToast === 'function') {
+        showToast(`🛡️ Test ${testId} moved to Quarantine Matrix (${ticketId})`, 'warning');
+      }
+      document.getElementById('quarantine-add-form')?.reset();
+      switchQuarantineTab('active');
+      await loadQuarantineData();
+      if (typeof updateQualityGateStatus === 'function') updateQualityGateStatus();
+      appendLog(`[QUARANTINE] Test ${testId} quarantined: non-blocking for release gate (${ticketId})`, 'warn');
+    }
+  } catch (err) {
+    console.error('[Quarantine] Failed to quarantine test:', err);
+  }
+}
+window.handleQuarantineAddSubmit = handleQuarantineAddSubmit;
+
+window.quarantineSpecificTest = function(testId, title, suiteId) {
+  const modal = document.getElementById('quarantine-matrix-modal');
+  if (modal) modal.classList.remove('hidden');
+  switchQuarantineTab('add');
+
+  const idInp = document.getElementById('qm-add-testid');
+  const titleInp = document.getElementById('qm-add-title');
+  const suiteInp = document.getElementById('qm-add-suite');
+  if (idInp) idInp.value = testId;
+  if (titleInp) titleInp.value = title || testId;
+  if (suiteInp && suiteId) suiteInp.value = suiteId;
+};
+
+// Initial governance hook on startup
+setTimeout(() => {
+  loadCabSignOffData();
+  loadQuarantineData();
+}, 600);
+
+
 

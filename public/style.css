@@ -9513,4 +9513,41 @@ body.theme-light .compact-stat-cell {
   border-radius: 9999px;
 }
 
+/* ==========================================================================
+   CAB RELEASE SIGN-OFF & FLAKINESS QUARANTINE MODALS
+   ========================================================================== */
+#cab-signoff-modal .form-input,
+#cab-signoff-modal .form-textarea,
+#quarantine-matrix-modal .form-input,
+#quarantine-matrix-modal .form-textarea {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+  border-radius: 8px;
+  padding: 8px 12px;
+  width: 100%;
+}
+
+body.theme-light #cab-signoff-modal .form-input,
+body.theme-light #cab-signoff-modal .form-textarea,
+body.theme-light #quarantine-matrix-modal .form-input,
+body.theme-light #quarantine-matrix-modal .form-textarea {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.active-subtab {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+}
+
+#cab-signoff-pill:hover,
+#quarantine-matrix-pill:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+
+
 

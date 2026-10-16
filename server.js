@@ -10,6 +10,7 @@ const dotenv = require('dotenv');
 const nodemailer = require('nodemailer');
 const { analyzeFailure } = require('./src/utils/aiRcaAnalyzer');
 const { generateExecutiveEmailHtml } = require('./src/utils/emailReportGenerator');
+const governanceManager = require('./src/utils/governanceManager');
 
 dotenv.config();
 
@@ -3722,6 +3723,84 @@ app.get('/api/reports/allure/download-standalone', (req, res) => {
     try { fs.rmSync(tempOutputDir, { recursive: true, force: true }); } catch(e) {}
     res.status(500).json({ success: false, error: setupErr.message });
   }
+});
+
+// -------------------------------------------------------------
+// 6B. CHANGE ADVISORY BOARD (CAB) RELEASE SIGN-OFF & AUDIT CERTIFICATE
+// -------------------------------------------------------------
+app.get('/api/governance/sign-off', (req, res) => {
+  const data = governanceManager.loadSignOffs();
+  const quarantine = governanceManager.loadQuarantine();
+  res.json({
+    latest: data.latest,
+    history: data.history,
+    quarantinedCount: quarantine.quarantinedTests.length
+  });
+});
+
+app.post('/api/governance/sign-off', (req, res) => {
+  try {
+    const record = governanceManager.saveSignOff(req.body);
+    res.json({ success: true, record });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/governance/audit-certificate', (req, res) => {
+  const signOffId = req.query.id;
+  if (req.query.format === 'json') {
+    const data = governanceManager.loadSignOffs();
+    const record = (signOffId && data.history.find(h => h.id === signOffId)) || data.latest;
+    return res.json({ success: true, record });
+  }
+  const html = governanceManager.generateAuditCertificateHtml(signOffId);
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(html);
+});
+
+// -------------------------------------------------------------
+// 6C. TEST FLAKINESS DETECTION & QUARANTINE MATRIX ENGINE
+// -------------------------------------------------------------
+app.get('/api/governance/quarantine', (req, res) => {
+  const data = governanceManager.loadQuarantine();
+  const history = loadExecutionHistory();
+  const flakinessReport = governanceManager.analyzeFlakiness(history);
+  res.json({
+    quarantinedTests: data.quarantinedTests,
+    flakinessReport,
+    totalQuarantined: data.quarantinedTests.length,
+    updatedAt: data.updatedAt
+  });
+});
+
+app.post('/api/governance/quarantine', (req, res) => {
+  try {
+    const entry = governanceManager.quarantineTest(req.body);
+    res.json({ success: true, entry });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/governance/quarantine/:testId', (req, res) => {
+  try {
+    const removed = governanceManager.removeQuarantine(req.params.testId);
+    res.json({ success: true, removed });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/governance/adjusted-gate', (req, res) => {
+  const quarantine = governanceManager.loadQuarantine();
+  const history = loadExecutionHistory();
+  const latest = history[0] || {};
+  const p = latest.stats?.passed || 33;
+  const f = latest.stats?.failed || 0;
+  const executed = p + f;
+  const result = governanceManager.calculateAdjustedQualityGate(executed, p, f, quarantine.quarantinedTests.length);
+  res.json(result);
 });
 
 // 7. AI Root-Cause Analysis (RCA) APIs
