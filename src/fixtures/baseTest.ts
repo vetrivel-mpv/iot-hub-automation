@@ -362,7 +362,7 @@ export const test = baseTest.extend<PageFixtures>({
         const traceAttachment = testInfo.attachments.find(a => a.name === 'trace' && a.path);
         if (traceAttachment && traceAttachment.path) {
           const traceFileName = path.basename(traceAttachment.path);
-          const viewerUrl = `https://trace.playwright.dev/?trace=${encodeURIComponent(`http://localhost:3030/traces/${traceFileName}`)}`;
+          const viewerUrl = `http://localhost:3030/reports/html/trace/index.html?trace=${encodeURIComponent(`http://localhost:3030/traces/${traceFileName}`)}`;
           const traceEmbedHtml = `
             <!DOCTYPE html>
             <html>

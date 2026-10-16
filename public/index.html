@@ -1848,7 +1848,13 @@
               </h3>
               <p class="text-xs text-muted mt-1">Enterprise quality governance & decision observatory combining Playwright trace snapshots with multi-run SLA trends.</p>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
+              <div class="flex items-center gap-1.5" style="background: rgba(15, 23, 42, 0.6); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                <label for="exec-run-filter-select" class="text-xs font-semibold" style="font-size: 0.72rem; color: var(--text-muted); white-space: nowrap;">🏷️ Test Run ID:</label>
+                <select id="exec-run-filter-select" class="form-select text-xs font-mono" style="padding: 3px 8px; font-size: 0.72rem; border-radius: 4px; background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border-color); outline: none; cursor: pointer;">
+                  <option value="latest">Latest Active Run (Auto)</option>
+                </select>
+              </div>
               <button class="btn btn-secondary btn-sm" onclick="window.refreshExecutiveTelemetry && window.refreshExecutiveTelemetry()">🔄 Refresh Metrics</button>
               <button class="btn btn-secondary btn-sm" onclick="window.copyReleaseGateToken && window.copyReleaseGateToken()" title="Copy Cryptographic CI/CD Quality Gate Token">📋 Copy Gate Token</button>
               <button class="btn btn-primary btn-sm" onclick="window.openEmailPreviewModal && window.openEmailPreviewModal()">📧 Email Digest</button>

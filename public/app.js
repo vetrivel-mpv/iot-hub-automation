@@ -3248,9 +3248,7 @@ function openLatestTrace() {
     showToast('Trace Viewer', 'No trace available yet. Execute a test to record time-travel trace data.', 'info');
     return;
   }
-  const traceFullUrl = `${window.location.origin}${state.latestTrace.url}`;
-  const viewerUrl = `https://trace.playwright.dev/?trace=${encodeURIComponent(traceFullUrl)}`;
-  window.open(viewerUrl, '_blank');
+  window.openInAppTraceModal(state.latestTrace.url);
 }
 
 function downloadLatestTrace() {
@@ -3293,7 +3291,8 @@ function switchReportView(reportType) {
     elements.reportIframe?.classList.add('hidden');
     elements.tracesArchiveView?.classList.remove('hidden');
     if (execView) execView.classList.add('hidden');
-    elements.openReportTabBtn.href = 'https://trace.playwright.dev/';
+    elements.openReportTabBtn.href = '/reports/html/trace/index.html';
+    elements.openReportTabBtn.target = '_blank';
     elements.openReportTabBtn.textContent = 'Launch Trace Viewer ↗';
     fetchTraces();
   } else if (reportType === 'executive') {
@@ -3303,8 +3302,9 @@ function switchReportView(reportType) {
       execView.classList.remove('hidden');
       loadExecutiveTelemetryReport();
     }
-    elements.openReportTabBtn.href = '#';
-    elements.openReportTabBtn.textContent = 'Executive Telemetry HUD';
+    elements.openReportTabBtn.href = '/reports/html/index.html';
+    elements.openReportTabBtn.target = '_blank';
+    elements.openReportTabBtn.textContent = 'Open HTML Report ↗';
   }
 }
 
@@ -3348,42 +3348,98 @@ window.copyReleaseGateToken = function() {
   });
 };
 
-async function loadExecutiveTelemetryReport() {
+async function loadExecutiveTelemetryReport(targetRunId = 'latest') {
   const grid = document.getElementById('exec-view-metrics-grid');
   const clustersList = document.getElementById('exec-clusters-list');
   const clusterCountEl = document.getElementById('exec-cluster-count');
   const runsList = document.getElementById('exec-runs-list');
   const runsCountEl = document.getElementById('exec-runs-count');
+  const runFilterSelect = document.getElementById('exec-run-filter-select');
 
   try {
-    // 1. Fetch current report summary
+    // 1. Fetch History for Trends, Run ID options, Modules & Deltas
+    let historyRuns = [];
+    try {
+      const histRes = await fetch('/api/history?limit=30');
+      if (histRes.ok) {
+        const histData = await histRes.json();
+        historyRuns = histData.history || [];
+      }
+    } catch (e) {
+      console.warn('Failed to fetch history for executive telemetry:', e);
+    }
+
+    // 2. Fetch current report summary (baseline)
+    let passed = 0, failed = 0, broken = 0, skipped = 0, total = 1, passPct = '100.0';
+    let latestRunId = 'LATEST', totalDuration = 0;
+    let categoriesItems = [];
+
     const res = await fetch('/api/reports/summary');
-    if (!res.ok) return;
-    const data = await res.json();
-    const stat = (data.summary && data.summary.statistic) || {};
-    const passed = stat.passed || 0;
-    const failed = stat.failed || 0;
-    const broken = stat.broken || 0;
-    const skipped = stat.skipped || 0;
-    const executed = passed + failed + broken;
-    const total = stat.total || (executed + skipped) || 1;
-    const passPct = executed > 0 ? ((passed / executed) * 100).toFixed(1) : '100.0';
-    const latestRunId = data.summary?.reportName || 'LATEST';
-    const totalDuration = data.summary?.time?.duration || 0;
+    if (res.ok) {
+      const data = await res.json();
+      const stat = (data.summary && data.summary.statistic) || {};
+      passed = stat.passed || 0;
+      failed = stat.failed || 0;
+      broken = stat.broken || 0;
+      skipped = stat.skipped || 0;
+      const executed = passed + failed + broken;
+      total = stat.total || (executed + skipped) || 1;
+      passPct = executed > 0 ? ((passed / executed) * 100).toFixed(1) : '100.0';
+      latestRunId = data.summary?.reportName || 'LATEST';
+      totalDuration = data.summary?.time?.duration || 0;
+      categoriesItems = (data.categories && data.categories.items) || [];
+    }
+
+    // 3. Populate Test Run ID filter dropdown in the Executive Telemetry header
+    if (runFilterSelect) {
+      const activeFilter = targetRunId || runFilterSelect.value || 'latest';
+      let optionsHtml = `<option value="latest" ${activeFilter === 'latest' ? 'selected' : ''}>⚡ Latest Active Run (${latestRunId})</option>`;
+      historyRuns.forEach(h => {
+        const timeStr = h.startTime ? new Date(h.startTime).toLocaleTimeString() : '';
+        const isSelected = (activeFilter === h.runId) ? 'selected' : '';
+        optionsHtml += `<option value="${h.runId}" ${isSelected}>${h.runId} (${h.envName || 'ENV'} • ${h.passPercentage || 0}% • ${timeStr})</option>`;
+      });
+      runFilterSelect.innerHTML = optionsHtml;
+      runFilterSelect.value = activeFilter;
+
+      if (!runFilterSelect.__hasListener) {
+        runFilterSelect.addEventListener('change', (e) => {
+          loadExecutiveTelemetryReport(e.target.value);
+        });
+        runFilterSelect.__hasListener = true;
+      }
+    }
+
+    // 4. If a specific Historical Run ID is selected, override metrics with that run's data
+    let selectedRun = null;
+    if (targetRunId && targetRunId !== 'latest') {
+      selectedRun = historyRuns.find(h => h.runId === targetRunId);
+      if (selectedRun) {
+        passed = selectedRun.passedCount !== undefined ? selectedRun.passedCount : (selectedRun.exitCode === 0 ? (selectedRun.testsCount || 10) : 0);
+        failed = selectedRun.failedCount !== undefined ? selectedRun.failedCount : (selectedRun.exitCode !== 0 ? 1 : 0);
+        broken = 0;
+        skipped = selectedRun.skippedCount || 0;
+        const executed = passed + failed;
+        passPct = selectedRun.passPercentage !== undefined ? parseFloat(selectedRun.passPercentage).toFixed(1) : (executed > 0 ? ((passed / executed) * 100).toFixed(1) : '100.0');
+        latestRunId = selectedRun.runId;
+        totalDuration = selectedRun.duration || 0;
+      }
+    }
 
     state.latestRunId = latestRunId;
     state.execPassPct = passPct;
 
-    // 2. Automated Release Gate Decision Banner
+    // 5. Automated Release Gate Decision Banner
     renderReleaseGateCard(passPct, failed + broken, totalDuration, latestRunId);
 
-    // 3. Primary KPI Cards
+    // 6. Primary KPI Cards
     if (grid) {
+      const executedCount = passed + failed + broken;
       grid.innerHTML = `
         <div class="exec-metric-card">
           <div class="text-[11px] font-bold uppercase tracking-wider text-muted">Quality SLA Status</div>
           <div class="text-2xl font-black font-mono mt-1 ${parseFloat(passPct) >= 90 ? 'text-emerald-600' : 'text-rose-600'}">${passPct}% Pass</div>
-          <div class="text-xs text-muted mt-1">${passed} passed / ${executed} executed</div>
+          <div class="text-xs text-muted mt-1">${passed} passed / ${executedCount} executed</div>
         </div>
         <div class="exec-metric-card">
           <div class="text-[11px] font-bold uppercase tracking-wider text-muted">Defects & Failures</div>
@@ -3396,29 +3452,17 @@ async function loadExecutiveTelemetryReport() {
           <div class="text-xs text-muted mt-1">Intentionally skipped for safety</div>
         </div>
         <div class="exec-metric-card">
-          <div class="text-[11px] font-bold uppercase tracking-wider text-muted">Latest Run ID</div>
-          <div class="text-xl font-bold font-mono mt-1 text-blue-600 truncate">${latestRunId}</div>
-          <div class="text-xs text-muted mt-1">${data.summary?.time?.stop ? new Date(data.summary.time.stop).toLocaleTimeString() : 'Just now'}</div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-muted">${targetRunId !== 'latest' ? 'Filtered Run ID' : 'Latest Run ID'}</div>
+          <div class="text-xl font-bold font-mono mt-1 text-blue-600 truncate" title="${latestRunId}">${latestRunId}</div>
+          <div class="text-xs text-muted mt-1">${selectedRun?.startTime ? new Date(selectedRun.startTime).toLocaleTimeString() : 'Active Execution'}</div>
         </div>
       `;
     }
 
-    // 4. Fetch History for Trends, Modules & Deltas
-    let historyRuns = [];
-    try {
-      const histRes = await fetch('/api/history?limit=15');
-      if (histRes.ok) {
-        const histData = await histRes.json();
-        historyRuns = histData.history || [];
-      }
-    } catch (e) {
-      console.warn('Failed to fetch history for executive telemetry:', e);
-    }
-
-    // 5. Render Multi-Run Trend Chart (Chart.js)
+    // 7. Render Multi-Run Trend Chart (Chart.js)
     renderExecTrendChart(historyRuns);
 
-    // 6. Fetch Diff & Render Run-to-Run Delta
+    // 8. Fetch Diff & Render Run-to-Run Delta
     try {
       const diffRes = await fetch('/api/history/diff');
       if (diffRes.ok) {
@@ -3429,14 +3473,13 @@ async function loadExecutiveTelemetryReport() {
       console.warn('Failed to fetch history diff:', e);
     }
 
-    // 7. Failure Clusters & Deduplication
+    // 9. Failure Clusters & Deduplication
     if (clustersList && clusterCountEl) {
-      const items = (data.categories && data.categories.items) || [];
-      clusterCountEl.textContent = `${items.length} Defect Clusters`;
-      if (items.length === 0) {
+      clusterCountEl.textContent = `${categoriesItems.length} Defect Clusters`;
+      if (categoriesItems.length === 0) {
         clustersList.innerHTML = `<div class="text-xs text-muted p-4 text-center">No active defect clusters detected. All test scenarios compliant!</div>`;
       } else {
-        clustersList.innerHTML = items.map(cat => {
+        clustersList.innerHTML = categoriesItems.map(cat => {
           const cFailed = (cat.statistic?.failed || 0) + (cat.statistic?.broken || 0);
           return `
             <div class="exec-cluster-item">
@@ -3451,9 +3494,9 @@ async function loadExecutiveTelemetryReport() {
       }
     }
 
-    // 8. Fetch Detailed Scenarios for the Latest Execution
+    // 10. Fetch Detailed Scenarios for the Selected / Target Execution
     try {
-      const targetRun = historyRuns[0];
+      const targetRun = selectedRun || historyRuns[0];
       if (targetRun && targetRun.runId) {
         const detailRes = await fetch(`/api/history/${encodeURIComponent(targetRun.runId)}`);
         if (detailRes.ok) {
@@ -3466,10 +3509,10 @@ async function loadExecutiveTelemetryReport() {
         renderModuleRadar([]);
       }
     } catch (e) {
-      console.warn('Failed to fetch latest run test details:', e);
+      console.warn('Failed to fetch target run test details:', e);
     }
 
-    // 9. Load Historical Snapshots
+    // 11. Load Historical Snapshots
     if (runsList && runsCountEl) {
       try {
         const statusRes = await fetch('/api/reports/status');
@@ -4232,7 +4275,7 @@ function renderTracesGrid(tracesList) {
     const traceFullUrl = `${window.location.origin}${t.url}`;
 
     return `
-      <div class="trace-card glass-card">
+      <div class="trace-card glass-card" style="cursor: pointer;" onclick="window.openInAppTraceModal('${t.url}')">
         <div class="trace-card-top">
           <div>
             <div class="trace-filename">📦 ${t.filename}</div>
@@ -4243,9 +4286,9 @@ function renderTracesGrid(tracesList) {
         <div class="trace-meta-row">
           <span>🕒 ${dateStr}</span>
         </div>
-        <div class="trace-card-actions">
-          <a href="${t.url}" download class="btn btn-secondary btn-sm" title="Download trace.zip archive">⬇️ Download</a>
+        <div class="trace-card-actions" onclick="event.stopPropagation()">
           <button onclick="window.openInAppTraceModal('${t.url}')" class="btn btn-primary btn-sm btn-glow" title="Inspect DOM & Network in zero-install In-App Trace Viewer">🔍 In-App Trace</button>
+          <a href="${t.url}" download class="btn btn-secondary btn-sm" title="Download trace.zip archive">⬇️ Download</a>
         </div>
       </div>
     `;
@@ -4438,15 +4481,22 @@ window.openInAppTraceModal = function(traceUrl) {
   const title = document.getElementById('inapp-trace-title');
   if (!modal || !iframe) return;
 
-  const fullTraceUrl = traceUrl.startsWith('http') ? traceUrl : `${window.location.origin}${traceUrl}`;
+  // Normalize trace URL: ensure it starts with /traces/ if it's just a filename or relative path
+  let cleanUrl = traceUrl;
+  if (!cleanUrl.startsWith('http') && !cleanUrl.startsWith('/')) {
+    cleanUrl = `/traces/${cleanUrl}`;
+  }
+
+  const fullTraceUrl = cleanUrl.startsWith('http') ? cleanUrl : `${window.location.origin}${cleanUrl}`;
   const localViewerUrl = `/reports/html/trace/index.html?trace=${encodeURIComponent(fullTraceUrl)}`;
 
-  const filename = traceUrl.split('/').pop();
+  const filename = cleanUrl.split('/').pop();
   if (title) title.textContent = `Trace Inspector: ${filename}`;
-  if (downloadBtn) downloadBtn.href = traceUrl;
+  if (downloadBtn) downloadBtn.href = cleanUrl;
 
   iframe.src = localViewerUrl;
   modal.classList.remove('hidden');
+  showToast('In-App Trace Inspector', `Loading trace timeline for ${filename}`, 'info');
 };
 
 window.closeInAppTraceModal = function() {
@@ -4956,8 +5006,7 @@ function renderRunDetailsTests() {
 
     let actions = [];
     if (currentRdRun.latestTrace) {
-      const viewerUrl = `https://trace.playwright.dev/?trace=${encodeURIComponent(window.location.origin + currentRdRun.latestTrace.url)}`;
-      actions.push(`<a href="${viewerUrl}" target="_blank" class="btn btn-primary btn-sm" style="padding: 2px 6px; font-size: 0.70rem;" title="Open Playwright Trace">🔍 Trace</a>`);
+      actions.push(`<button onclick="window.openInAppTraceModal('${currentRdRun.latestTrace.url}')" class="btn btn-primary btn-sm" style="padding: 2px 6px; font-size: 0.70rem;" title="Inspect in In-App Playwright Trace Viewer">🔍 Trace</button>`);
     }
     if (!isPass && currentRdRun.rca) {
       actions.push(`<button class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 0.70rem;" onclick="window.openRcaModal('${currentRdRun.runId}')" title="AI Root Cause Analysis">🤖 RCA</button>`);
@@ -5064,8 +5113,7 @@ function renderHistoryTable(historyList) {
     `);
     diagHtml.push(`<button class="btn btn-secondary btn-sm" style="padding: 2px 7px; font-size: 0.72rem;" onclick="window.openRunDetailsModal('${h.runId}')" title="View executed test cases breakdown">📋 Tests</button>`);
     if (h.latestTrace) {
-      const viewerUrl = `https://trace.playwright.dev/?trace=${encodeURIComponent(window.location.origin + h.latestTrace.url)}`;
-      diagHtml.push(`<a href="${viewerUrl}" target="_blank" class="btn btn-primary btn-sm" style="padding: 2px 7px; font-size: 0.72rem;" title="Inspect Action Timeline & Traces">🔍 Trace</a>`);
+      diagHtml.push(`<button class="btn btn-primary btn-sm" style="padding: 2px 7px; font-size: 0.72rem;" onclick="window.openInAppTraceModal('${h.latestTrace.url}')" title="Inspect Action Timeline & Traces in In-App Inspector">🔍 Trace</button>`);
     }
     if (!isPassed && h.rca) {
       diagHtml.push(`<button class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 0.72rem;" onclick="window.openRcaModal('${h.runId}')" title="View AI Root Cause Analysis">🤖 RCA</button>`);
@@ -5201,10 +5249,9 @@ async function fetchDeepArtifacts(searchTerm = '', type = null) {
         `;
       } else if (item.type === 'trace') {
         const fullTraceUrl = window.location.origin + item.url;
-        const viewerUrl = `https://trace.playwright.dev/?trace=${encodeURIComponent(fullTraceUrl)}`;
         return `
           <div class="artifact-studio-card glass-card">
-            <div class="artifact-preview-wrap" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);" onclick="window.open('${viewerUrl}', '_blank')">
+            <div class="artifact-preview-wrap" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); cursor: pointer;" onclick="window.openInAppTraceModal('${item.url}')">
               <div class="artifact-icon-placeholder">
                 <span class="studio-big-icon">⏱️</span>
                 <span style="font-size: 0.72rem; font-weight: 600; color: #60a5fa;">PLAYWRIGHT TRACE</span>
@@ -5227,7 +5274,7 @@ async function fetchDeepArtifacts(searchTerm = '', type = null) {
               </div>
             </div>
             <div class="artifact-actions-row">
-              <a href="${viewerUrl}" target="_blank" class="btn btn-primary btn-sm" style="flex: 1; text-align: center; text-decoration: none;">🔍 Trace Viewer ↗</a>
+              <button onclick="window.openInAppTraceModal('${item.url}')" class="btn btn-primary btn-sm" style="flex: 1; text-align: center;">🔍 In-App Trace</button>
               <a href="${item.url}" download="${escapeHtml(item.filename)}" class="btn btn-secondary btn-sm" title="Download .zip Trace Archive">⬇ .zip</a>
             </div>
           </div>

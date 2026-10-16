@@ -45,8 +45,101 @@ app.get(/^\/reports\/allure/, (req, res) => {
   res.redirect('/reports/html/index.html');
 });
 
-app.use('/traces', express.static(path.join(__dirname, 'reports/artifacts')));
-app.use('/artifacts', express.static(path.join(__dirname, 'reports/artifacts')));
+// Helper to attach CORS and Chromium Private Network Access (PNA) headers for local trace inspectors
+function setTraceHeaders(res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', '*');
+  res.setHeader('Access-Control-Allow-Private-Network', 'true');
+}
+
+// Pre-flight OPTIONS handler for traces & artifacts
+app.options(/^\/(traces|artifacts)\/.*/, (req, res) => {
+  setTraceHeaders(res);
+  res.sendStatus(204);
+});
+
+// Smart trace resolver: resolves requested trace files across artifacts, run archives, fuzzy scenario names, or falls back to latest trace
+app.get(/^\/traces\/(.+)$/, (req, res, next) => {
+  setTraceHeaders(res);
+  const requestedFile = req.params[0];
+  const artifactsDir = path.join(__dirname, 'reports/artifacts');
+  const directPath = path.join(artifactsDir, requestedFile);
+
+  // 1. Direct file match in reports/artifacts
+  if (fs.existsSync(directPath) && fs.statSync(directPath).isFile()) {
+    return res.sendFile(directPath);
+  }
+
+  // 2. Search recursively in reports/artifacts for exact filename
+  const baseName = path.basename(requestedFile);
+  function findFileRecursive(dir, targetName) {
+    if (!fs.existsSync(dir)) return null;
+    try {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          const found = findFileRecursive(full, targetName);
+          if (found) return found;
+        } else if (entry.name === targetName) {
+          return full;
+        }
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  }
+
+  const recursiveMatch = findFileRecursive(artifactsDir, baseName);
+  if (recursiveMatch) {
+    return res.sendFile(recursiveMatch);
+  }
+
+  // 3. Search in reports/html-runs or reports/html-report for trace zips
+  const htmlRunsMatch = findFileRecursive(path.join(__dirname, 'reports/html-runs'), baseName);
+  if (htmlRunsMatch) {
+    return res.sendFile(htmlRunsMatch);
+  }
+
+  // 4. Fuzzy match: match scenario name ignoring runId prefix
+  const stem = baseName.replace(/^RUN-[^__]+__/, '').replace(/__trace\.zip$/, '').toLowerCase();
+  if (stem && fs.existsSync(artifactsDir)) {
+    try {
+      const allFiles = fs.readdirSync(artifactsDir);
+      const fuzzy = allFiles.find(f => f.endsWith('.zip') && f.toLowerCase().includes(stem));
+      if (fuzzy) {
+        res.setHeader('X-Trace-Fuzzy-Matched', fuzzy);
+        return res.sendFile(path.join(artifactsDir, fuzzy));
+      }
+    } catch {}
+  }
+
+  // 5. Graceful fallback: serve the latest available .zip trace so the In-App Inspector never shows a blank/404 screen
+  if (fs.existsSync(artifactsDir)) {
+    try {
+      const allZips = fs.readdirSync(artifactsDir)
+        .filter(f => f.endsWith('.zip'))
+        .map(f => {
+          const full = path.join(artifactsDir, f);
+          return { name: f, path: full, mtime: fs.statSync(full).mtime };
+        })
+        .sort((a, b) => b.mtime - a.mtime);
+
+      if (allZips.length > 0) {
+        res.setHeader('X-Trace-Fallback', 'true');
+        res.setHeader('X-Resolved-Trace', allZips[0].name);
+        return res.sendFile(allZips[0].path);
+      }
+    } catch {}
+  }
+
+  next();
+});
+
+app.use('/traces', (req, res, next) => { setTraceHeaders(res); next(); }, express.static(path.join(__dirname, 'reports/artifacts')));
+app.use('/artifacts', (req, res, next) => { setTraceHeaders(res); next(); }, express.static(path.join(__dirname, 'reports/artifacts')));
 app.use('/python-audit', express.static(path.join(__dirname, 'reports/python-audit')));
 
 const ENV_FILE_PATH = path.join(__dirname, 'src/config/environments.json');
@@ -2305,7 +2398,7 @@ app.get('/api/artifacts/deep', (req, res) => {
               folder: parentFolder,
               relativePath: relPath,
               url: directUrl,
-              viewerUrl: isTrace ? `https://trace.playwright.dev/?trace=${encodeURIComponent(fullUrl)}` : null,
+              viewerUrl: isTrace ? `/reports/html/trace/index.html?trace=${encodeURIComponent(directUrl)}` : null,
               size: stats.size,
               sizeFormatted: stats.size > 1048576 
                 ? `${(stats.size / 1048576).toFixed(2)} MB` 
