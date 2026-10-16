@@ -64,84 +64,36 @@ test.describe('IoT Hub Portal - 04: Accounts Management Suite (TC_ACC_001 to TC_
       await accountsPage.createAccountButton.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
     });
 
-    test('[TC_ACC_005] Complete Account Creation Lifecycle: Validate Demo (Billing Profile Skipped) vs Non-Demo (Billing Profile Appears) and Successful Account Creation', { tag: ['@happy-path', '@e2e', '@wizard'] }, async ({ accountsPage, page, dataFactory }) => {
-      const uniqueAccountName = dataFactory.uniqueAccountName();
+    test('[TC_ACC_005] Complete Demo Account Creation Lifecycle: 4-Step Stepper (Billing Profile Skipped) and DRAFT Verification', { tag: ['@happy-path', '@e2e', '@wizard', '@demo'] }, async ({ accountsPage, page, dataFactory }) => {
+      const demoAccountName = dataFactory.uniqueAccountName();
 
-      await test.step('Step 2: [TC_ACC_006] Launch Creation Stepper Modal and verify initial stepper structure', async () => {
-        Logger.step(2, 'Opening Create Account modal and inspecting initial stepper');
+      await test.step('Step 2: [TC_ACC_006] Open Create Account modal and configure Step 1 with DEMO type', async () => {
+        Logger.step(2, `Opening Create Account modal and populating Basic Information for: "${demoAccountName}"`);
         await accountsPage.openCreateAccountModal();
         await expect(accountsPage.createAccountDialog.first(), 'Create Account dialog must be open').toBeVisible({ timeout: 8000 });
-        const initialSteps = await page.locator('.MuiStepLabel-label').allInnerTexts();
-        Logger.info(`[Stepper Init] Initial Stepper stages: ${JSON.stringify(initialSteps)}`);
-        expect(initialSteps).toContain('Basic');
-      });
 
-      await test.step('Step 3: [TC_ACC_008] Validate Non-Demo Account Type - Verify Billing Profile section APPEARS (5 Steps)', async () => {
-        Logger.step(3, 'Selecting Non-Demo (INDUSTRIAL_DIRECT) and asserting Billing Profile step appears in Stepper');
-        const nameInput = page.locator('.MuiDialog-root input[placeholder="Name"]').first();
-        await nameInput.fill('temp_nondemo_validation');
-
-        // Select Non-Demo: INDUSTRIAL_DIRECT via event-driven wait
+        // Ensure DEMO type is selected
         const typeCombobox = page.locator('.MuiDialog-root .MuiSelect-select').first();
-        await typeCombobox.click();
-        const popover = page.locator('.MuiPopover-root:visible, [role="listbox"]').first();
-        await popover.waitFor({ state: 'visible', timeout: 5000 });
-        const nonDemoOption = page.locator('.MuiPopover-root:visible li:has-text("INDUSTRIAL_DIRECT"), .MuiPopover-root:visible [role="option"]:has-text("INDUSTRIAL_DIRECT")').first();
-        await nonDemoOption.click();
-        await page.locator('.MuiPopover-root').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
-
-        // Select Admin Role if visible
-        const roleInput = page.locator('#account-admin-role');
-        if (await roleInput.isVisible({ timeout: 2000 })) {
-          await roleInput.click();
-          const roleOption = page.locator('#account-admin-role-popup li, .MuiAutocomplete-popper li').first();
-          if (await roleOption.isVisible({ timeout: 2000 })) {
-            await roleOption.click();
+        if (await typeCombobox.isVisible({ timeout: 2000 })) {
+          const currentText = await typeCombobox.innerText();
+          if (!currentText.includes('DEMO')) {
+            await typeCombobox.click();
+            await page.locator('.MuiPopover-root:visible, [role="listbox"]').first().waitFor({ state: 'visible', timeout: 5000 });
+            const demoOption = page.locator('.MuiPopover-root:visible li:has-text("DEMO"), .MuiPopover-root:visible [role="option"]:has-text("DEMO")').first();
+            await demoOption.click();
+            await page.locator('.MuiPopover-root').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
           }
         }
 
-        // Assert 5 steps are present for Non-Demo
-        const nonDemoSteps = await page.locator('.MuiStepLabel-label').allInnerTexts();
-        Logger.info(`[Non-Demo Validation] Stepper steps with Non-Demo selected: ${JSON.stringify(nonDemoSteps)}`);
-        expect(nonDemoSteps, 'Billing Profile must appear in stepper for Non-Demo accounts').toContain('Billing Profile');
+        // Fill collision-free account name
+        const nameInput = page.locator('.MuiDialog-root input[placeholder="Name"]').first();
+        await nameInput.fill(demoAccountName);
 
-        // Click NEXT to advance to Step 2 (Billing Profile)
-        const nextBtn = page.locator('.MuiDialog-root button:has-text("Next"), button:has-text("Next")').first();
-        await nextBtn.click();
-        await expect(page.locator('.MuiDialogContent-root')).toContainText(/Billing Cycle|Currency|Rating Type|MRC Type/i, { timeout: 8000 });
-
-        // Assert Billing Profile section and fields appear
-        const dialogText = await page.locator('.MuiDialogContent-root').innerText();
-        expect(dialogText, 'Billing Profile section must appear for Non-Demo').toMatch(/Billing Cycle|Currency|Rating Type|MRC Type/i);
-        Logger.info('[Non-Demo Validation] Successfully verified Billing Profile section appears on Step 2');
-
-        // Click Back to return to Step 1
-        const backBtn = page.locator('.MuiDialog-root button:has-text("Back"), button:has-text("Back")').first();
-        await backBtn.click();
-        await expect(nameInput).toBeVisible({ timeout: 5000 });
-      });
-
-      await test.step('Step 4: [TC_ACC_008] Validate Demo Account Type - Verify Billing Profile section is SKIPPED (4 Steps)', async () => {
-        Logger.step(4, 'Selecting DEMO type and asserting Billing Profile step is skipped from Stepper');
-        const typeCombobox = page.locator('.MuiDialog-root .MuiSelect-select').first();
-        await typeCombobox.click();
-        await page.locator('.MuiPopover-root:visible, [role="listbox"]').first().waitFor({ state: 'visible', timeout: 5000 });
-        const demoOption = page.locator('.MuiPopover-root:visible li:has-text("DEMO"), .MuiPopover-root:visible [role="option"]:has-text("DEMO")').first();
-        await demoOption.click();
-        await page.locator('.MuiPopover-root').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
-
-        // Assert Billing Profile is skipped in the stepper for DEMO
+        // Assert 4-step stepper structure for DEMO (Billing Profile is skipped)
         const demoSteps = await page.locator('.MuiStepLabel-label').allInnerTexts();
-        Logger.info(`[Demo Validation] Stepper steps with DEMO selected: ${JSON.stringify(demoSteps)}`);
+        Logger.info(`[Demo Stepper] Stepper steps with DEMO selected: ${JSON.stringify(demoSteps)}`);
         expect(demoSteps, 'Billing Profile step must be skipped for DEMO accounts').not.toContain('Billing Profile');
         expect(demoSteps).toEqual(['Basic', 'Auto State Transition', 'Contacts', 'Primary Address']);
-        Logger.info('[Demo Validation] Successfully verified Billing Profile section is skipped (4-step stepper)');
-      });
-
-      await test.step('Step 5: [TC_ACC_006] Fill Basic Info with collision-free name and advance to Auto State Transition', async () => {
-        Logger.step(5, `Populating Step 1 with unique collision-free account: "${uniqueAccountName}"`);
-        const nameInput = page.locator('.MuiDialog-root input[placeholder="Name"]').first();
-        await nameInput.fill(uniqueAccountName);
 
         // Advance to Step 2 (Auto State Transition - Billing Profile skipped)
         const nextBtn = page.locator('.MuiDialog-root button:has-text("Next"), button:has-text("Next")').first();
@@ -149,15 +101,15 @@ test.describe('IoT Hub Portal - 04: Accounts Management Suite (TC_ACC_001 to TC_
         await expect(page.locator('.MuiDialogContent-root')).toContainText(/Auto State Transition|Source State|Target State/i, { timeout: 8000 });
       });
 
-      await test.step('Step 6: [TC_ACC_009] Configure Auto State Transition and advance to Contacts', async () => {
-        Logger.step(6, 'Advancing past Auto State Transition to Contacts step');
+      await test.step('Step 3: [TC_ACC_009] Configure Auto State Transition and advance to Contacts', async () => {
+        Logger.step(3, 'Advancing past Auto State Transition to Contacts step');
         const nextBtn = page.locator('.MuiDialog-root button:has-text("Next"), button:has-text("Next")').first();
         await nextBtn.click();
         await expect(page.locator('.MuiDialogContent-root')).toContainText(/Contact Type|First Name|Last Name|Email/i, { timeout: 8000 });
       });
 
-      await test.step('Step 7: [TC_ACC_010] Populate Contacts Information (Primary Contact)', async () => {
-        Logger.step(7, 'Filling Primary Contact mandatory fields');
+      await test.step('Step 4: [TC_ACC_010] Populate Contacts Information (Primary Contact)', async () => {
+        Logger.step(4, 'Filling Primary Contact mandatory fields');
         await page.locator('.MuiDialog-root input[placeholder="First Name"]').first().fill('Vetri');
         await page.locator('.MuiDialog-root input[placeholder="Last Name"]').first().fill('Automation');
         await page.locator('.MuiDialog-root input[placeholder="Email"]').first().fill('vetri.automation@att.com');
@@ -169,8 +121,8 @@ test.describe('IoT Hub Portal - 04: Accounts Management Suite (TC_ACC_001 to TC_
         await expect(page.locator('.MuiDialogContent-root')).toContainText(/Address Line 1|City|State & Province|Postal Code/i, { timeout: 8000 });
       });
 
-      await test.step('Step 8: [TC_ACC_012] Populate Primary Address and Submit Account Creation', async () => {
-        Logger.step(8, 'Filling Primary Address and submitting via Ok button');
+      await test.step('Step 5: [TC_ACC_012] Populate Primary Address and Submit DEMO Account Creation', async () => {
+        Logger.step(5, 'Filling Primary Address and submitting via Ok button');
         await page.locator('.MuiDialog-root input[placeholder="Address Line 1"]').first().fill('208 S. Akard St.');
         await page.locator('.MuiDialog-root input[placeholder="City"]').first().fill('Dallas');
         await page.locator('.MuiDialog-root input[placeholder="State & Province"]').first().fill('Texas');
@@ -195,27 +147,153 @@ test.describe('IoT Hub Portal - 04: Accounts Management Suite (TC_ACC_001 to TC_
         await accountsPage.waitForLoadingSpinnerToDisappear();
         await accountsPage.createAccountDialog.first().waitFor({ state: 'hidden', timeout: 12000 }).catch(() => {});
         expect(await accountsPage.createAccountDialog.first().isVisible().catch(() => false)).toBe(false);
-        Logger.info(`[Account Creation] Modal closed successfully for: "${uniqueAccountName}"`);
+        Logger.info(`[Demo Account Creation] Modal closed successfully for: "${demoAccountName}"`);
       });
 
-      await test.step('Step 9: [TC_ACC_013] Verify newly created account appears in Accounts table with DRAFT status', async () => {
-        Logger.step(9, `Verifying created account "${uniqueAccountName}" appears in Accounts directory`);
+      await test.step('Step 6: [TC_ACC_013] Verify newly created DEMO account appears in Accounts table with DRAFT status', async () => {
+        Logger.step(6, `Verifying created DEMO account "${demoAccountName}" appears in Accounts directory`);
         await accountsPage.waitForLoadingSpinnerToDisappear();
         await accountsPage.waitForPageReady();
 
-        // Search for the newly created account
-        await accountsPage.searchAccount(uniqueAccountName);
+        await accountsPage.searchAccount(demoAccountName);
         await accountsPage.waitForLoadingSpinnerToDisappear();
 
-        // Assert row is visible
-        const targetRow = accountsPage.tableRows.filter({ hasText: uniqueAccountName }).first();
-        await expect(targetRow, `Account row "${uniqueAccountName}" must be visible in table`).toBeVisible({ timeout: 12000 });
+        const targetRow = accountsPage.tableRows.filter({ hasText: demoAccountName }).first();
+        await expect(targetRow, `Account row "${demoAccountName}" must be visible in table`).toBeVisible({ timeout: 12000 });
 
-        // Assert DRAFT status badge
         const statusCell = targetRow.locator('td, [role="cell"]').filter({ hasText: /DRAFT/i }).first();
         await expect(statusCell, 'Newly created account status must be DRAFT').toBeVisible({ timeout: 8000 });
         const statusBadge = (await statusCell.innerText()).trim();
-        Logger.info(`[TC_ACC_005 SUCCESS] Created account "${uniqueAccountName}" verified in table with status: "${statusBadge}"`);
+        Logger.info(`[TC_ACC_005 SUCCESS] Created DEMO account "${demoAccountName}" verified in table with status: "${statusBadge}"`);
+
+        expect(page.url()).not.toMatch(/\/auth|\/login/i);
+      });
+    });
+
+    test('[TC_ACC_008] Complete Non-Demo Account Creation Lifecycle: 5-Step Stepper with Billing Profile Configuration and DRAFT Verification', { tag: ['@happy-path', '@e2e', '@wizard', '@billing', '@non-demo'] }, async ({ accountsPage, page, dataFactory }) => {
+      const nonDemoAccountName = `Enterprise_${dataFactory.uniqueAccountName()}`;
+
+      await test.step('Step 2: [TC_ACC_006] Open Create Account modal and configure Step 1 with Non-Demo type', async () => {
+        Logger.step(2, `Opening Create Account modal and configuring Non-Demo (INDUSTRIAL_DIRECT) for: "${nonDemoAccountName}"`);
+        await accountsPage.openCreateAccountModal();
+        await expect(accountsPage.createAccountDialog.first(), 'Create Account dialog must be open').toBeVisible({ timeout: 8000 });
+
+        const nameInput = page.locator('.MuiDialog-root input[placeholder="Name"]').first();
+        await nameInput.fill(nonDemoAccountName);
+
+        // Select Non-Demo: INDUSTRIAL_DIRECT via event-driven wait
+        const typeCombobox = page.locator('.MuiDialog-root .MuiSelect-select').first();
+        await typeCombobox.click();
+        const popover = page.locator('.MuiPopover-root:visible, [role="listbox"]').first();
+        await popover.waitFor({ state: 'visible', timeout: 5000 });
+        const nonDemoOption = page.locator('.MuiPopover-root:visible li:has-text("INDUSTRIAL_DIRECT"), .MuiPopover-root:visible [role="option"]:has-text("INDUSTRIAL_DIRECT")').first();
+        await nonDemoOption.click();
+        await page.locator('.MuiPopover-root').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
+
+        // Select Admin Role if visible
+        const roleInput = page.locator('#account-admin-role');
+        if (await roleInput.isVisible({ timeout: 2000 })) {
+          await roleInput.click();
+          const roleOption = page.locator('#account-admin-role-popup li, .MuiAutocomplete-popper li').first();
+          if (await roleOption.isVisible({ timeout: 2000 })) {
+            await roleOption.click();
+          }
+        }
+
+        // Assert 5 steps are present for Non-Demo (Billing Profile is active)
+        const nonDemoSteps = await page.locator('.MuiStepLabel-label').allInnerTexts();
+        Logger.info(`[Non-Demo Stepper] Stepper steps with Non-Demo selected: ${JSON.stringify(nonDemoSteps)}`);
+        expect(nonDemoSteps, 'Billing Profile must appear in stepper for Non-Demo accounts').toContain('Billing Profile');
+        expect(nonDemoSteps).toEqual(['Basic', 'Billing Profile', 'Auto State Transition', 'Contacts', 'Primary Address']);
+
+        // Advance to Step 2 (Billing Profile)
+        const nextBtn = page.locator('.MuiDialog-root button:has-text("Next"), button:has-text("Next")').first();
+        await nextBtn.click();
+        await expect(page.locator('.MuiDialogContent-root')).toContainText(/Billing Cycle|Currency|Rating Type|MRC Type/i, { timeout: 8000 });
+      });
+
+      await test.step('Step 3: [TC_ACC_008] Configure & Assert Step 2: Billing Profile parameters', async () => {
+        Logger.step(3, 'Configuring Billing Profile financial preferences (Currency, Billing Cycle, Rating Type)');
+        const dialogText = await page.locator('.MuiDialogContent-root').innerText();
+        expect(dialogText, 'Billing Profile section must be active on Step 2').toMatch(/Billing Cycle|Currency|Rating Type|MRC Type/i);
+
+        // Customize or verify Currency dropdown if interactive
+        const currencySelect = page.locator('.MuiDialog-root .MuiSelect-select').filter({ hasText: /EUR|USD|GBP/i }).first();
+        if (await currencySelect.isVisible({ timeout: 2000 })) {
+          Logger.info(`[Billing Profile] Active currency preference: "${(await currencySelect.innerText()).trim()}"`);
+        }
+
+        // Advance to Step 3 (Auto State Transition)
+        const nextBtn = page.locator('.MuiDialog-root button:has-text("Next"), button:has-text("Next")').first();
+        await nextBtn.click();
+        await expect(page.locator('.MuiDialogContent-root')).toContainText(/Auto State Transition|Source State|Target State/i, { timeout: 8000 });
+        Logger.info('[Billing Profile] Successfully configured Billing Profile and advanced to Step 3');
+      });
+
+      await test.step('Step 4: [TC_ACC_009] Configure Auto State Transition and advance to Contacts', async () => {
+        Logger.step(4, 'Advancing past Auto State Transition to Contacts step');
+        const nextBtn = page.locator('.MuiDialog-root button:has-text("Next"), button:has-text("Next")').first();
+        await nextBtn.click();
+        await expect(page.locator('.MuiDialogContent-root')).toContainText(/Contact Type|First Name|Last Name|Email/i, { timeout: 8000 });
+      });
+
+      await test.step('Step 5: [TC_ACC_010] Populate Contacts Information (Primary Contact)', async () => {
+        Logger.step(5, 'Filling Primary Contact mandatory fields for Non-Demo account');
+        await page.locator('.MuiDialog-root input[placeholder="First Name"]').first().fill('Enterprise');
+        await page.locator('.MuiDialog-root input[placeholder="Last Name"]').first().fill('Admin');
+        await page.locator('.MuiDialog-root input[placeholder="Email"]').first().fill('enterprise.admin@att.com');
+        await page.locator('.MuiDialog-root input[placeholder="Phone Number"]').first().fill('+12025550198');
+
+        // Advance to Step 5 (Primary Address)
+        const nextBtn = page.locator('.MuiDialog-root button:has-text("Next"), button:has-text("Next")').first();
+        await nextBtn.click();
+        await expect(page.locator('.MuiDialogContent-root')).toContainText(/Address Line 1|City|State & Province|Postal Code/i, { timeout: 8000 });
+      });
+
+      await test.step('Step 6: [TC_ACC_012] Populate Primary Address and Submit Non-Demo Account Creation', async () => {
+        Logger.step(6, 'Filling Primary Address and submitting Non-Demo account');
+        await page.locator('.MuiDialog-root input[placeholder="Address Line 1"]').first().fill('One AT&T Way');
+        await page.locator('.MuiDialog-root input[placeholder="City"]').first().fill('Bedminster');
+        await page.locator('.MuiDialog-root input[placeholder="State & Province"]').first().fill('New Jersey');
+        await page.locator('.MuiDialog-root input[placeholder="Postal Code"]').first().fill('07921');
+
+        const countryInput = page.locator('#address-country');
+        if (await countryInput.isVisible({ timeout: 2000 })) {
+          await countryInput.click();
+          await countryInput.fill('United States');
+          const countryOption = page.locator('#address-country-popup li, .MuiAutocomplete-popper li').first();
+          if (await countryOption.isVisible({ timeout: 2000 })) {
+            await countryOption.click();
+          }
+        }
+
+        // Submit via "Ok" button
+        const okBtn = page.locator('.MuiDialog-root button:has-text("Ok"), .MuiDialog-root button:has-text("OK")').first();
+        await expect(okBtn, 'Ok button must be enabled').toBeEnabled();
+        await accountsPage.click(okBtn, 'Submit Account (Ok button)');
+
+        // Wait for modal to close with event-driven wait
+        await accountsPage.waitForLoadingSpinnerToDisappear();
+        await accountsPage.createAccountDialog.first().waitFor({ state: 'hidden', timeout: 12000 }).catch(() => {});
+        expect(await accountsPage.createAccountDialog.first().isVisible().catch(() => false)).toBe(false);
+        Logger.info(`[Non-Demo Account Creation] Modal closed successfully for: "${nonDemoAccountName}"`);
+      });
+
+      await test.step('Step 7: [TC_ACC_013] Verify newly created Non-Demo account appears in Accounts table with DRAFT status', async () => {
+        Logger.step(7, `Verifying created Non-Demo account "${nonDemoAccountName}" appears in Accounts directory`);
+        await accountsPage.waitForLoadingSpinnerToDisappear();
+        await accountsPage.waitForPageReady();
+
+        await accountsPage.searchAccount(nonDemoAccountName);
+        await accountsPage.waitForLoadingSpinnerToDisappear();
+
+        const targetRow = accountsPage.tableRows.filter({ hasText: nonDemoAccountName }).first();
+        await expect(targetRow, `Account row "${nonDemoAccountName}" must be visible in table`).toBeVisible({ timeout: 12000 });
+
+        const statusCell = targetRow.locator('td, [role="cell"]').filter({ hasText: /DRAFT/i }).first();
+        await expect(statusCell, 'Newly created account status must be DRAFT').toBeVisible({ timeout: 8000 });
+        const statusBadge = (await statusCell.innerText()).trim();
+        Logger.info(`[TC_ACC_008 SUCCESS] Created Non-Demo account "${nonDemoAccountName}" verified in table with status: "${statusBadge}"`);
 
         expect(page.url()).not.toMatch(/\/auth|\/login/i);
       });
