@@ -9085,3 +9085,25 @@ body.theme-dark .exec-run-item {
   border-color: rgba(51, 65, 85, 0.6);
 }
 
+.exec-gate-passed {
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.04) 100%) !important;
+}
+
+.exec-gate-blocked {
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(185, 28, 28, 0.04) 100%) !important;
+}
+
+.exec-delta-box {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.03);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+body.theme-dark .exec-delta-box {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(148, 163, 184, 0.1);
+}
+
