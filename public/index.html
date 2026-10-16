@@ -320,370 +320,416 @@
       </div>
     </div>
 
-    <!-- TAB 1: MAIN DASHBOARD & RUNNER -->
-    <div id="tab-content-dashboard" class="tab-content active">
-      <!-- Active Environment Telemetry Widget -->
-      <section class="env-telemetry-banner glass-card">
-        <div class="telemetry-left">
-          <div class="telemetry-env-icon">🌐</div>
-          <div>
-            <div class="telemetry-title">
-              <span id="telemetry-env-name">Azure FrontDoor (CMPaaS)</span>
-              <span class="badge badge-env cat-dev" id="telemetry-category">DEV</span>
-              <span class="badge badge-health-online" id="telemetry-health-badge">HEALTHY</span>
-            </div>
-            <div class="telemetry-url" id="telemetry-base-url">https://wdh-ekbbe2e2bbe4addc.a02.azurefd.net</div>
+    <!-- TAB 1: MAIN DASHBOARD & RUNNER (ENTERPRISE COMMAND CENTER) -->
+    <div id="tab-content-dashboard" class="tab-content active enterprise-dashboard">
+
+      <!-- ==========================================
+           TIER 1: STICKY OPERATIONAL STATUS STRIP
+           Height ~44px, High-Density Glass Bar
+           ========================================== -->
+      <section class="env-telemetry-banner enterprise-status-strip glass-card" id="executive-governance-card">
+        <div class="status-strip-left">
+          <div class="telemetry-env-icon-compact">🌐</div>
+          <div class="status-strip-env-info">
+            <span id="telemetry-env-name" class="font-bold text-sm text-slate-800 dark:text-slate-100">Azure FrontDoor (CMPaaS)</span>
+            <span class="badge badge-env cat-dev" id="telemetry-category">DEV</span>
+            <span class="badge badge-health-online" id="telemetry-health-badge">HEALTHY</span>
           </div>
+          <div class="status-strip-url truncate" id="telemetry-base-url">https://wdh-ekbbe2e2bbe4addc.a02.azurefd.net</div>
         </div>
-        <div class="telemetry-metrics">
-          <div class="metric-item">
-            <span class="metric-label">Latency</span>
-            <span class="metric-value" id="telemetry-latency">-- ms</span>
+
+        <div class="status-strip-center">
+          <div class="strip-chip">
+            <span class="strip-chip-label">Latency:</span>
+            <span class="strip-chip-val font-mono" id="telemetry-latency">-- ms</span>
           </div>
-          <div class="metric-item">
-            <span class="metric-label">Auth User</span>
-            <span class="metric-value" id="telemetry-username">cmpaas-csp-user</span>
+          <div class="strip-chip">
+            <span class="strip-chip-label">User:</span>
+            <span class="strip-chip-val font-mono" id="telemetry-username">cmpaas-csp-user</span>
           </div>
-          <div class="metric-item">
-            <span class="metric-label">Status</span>
-            <span class="metric-value status-good" id="telemetry-status-text">Connected</span>
+          <div class="strip-chip">
+            <span class="strip-chip-label">Link:</span>
+            <span class="strip-chip-val status-good font-semibold" id="telemetry-status-text">Connected</span>
           </div>
-          <div class="telemetry-actions">
-            <button id="telemetry-direct-switch-btn" class="btn btn-warning btn-sm hidden" title="Target host is on a private network. Switch directly to Azure FrontDoor">⚡ Switch to Azure FrontDoor</button>
-            <button id="telemetry-ping-btn" class="btn btn-secondary btn-sm">📡 Test Ping</button>
-            <button id="telemetry-switch-btn" class="btn btn-primary btn-sm">🔄 Switch Env</button>
+          <!-- Target host direct switch button (shown if host is private/unreachable) -->
+          <button id="telemetry-direct-switch-btn" class="btn btn-warning btn-xs hidden" title="Target host is on a private network. Switch directly to Azure FrontDoor">⚡ Switch Azure FD</button>
+        </div>
+
+        <div class="status-strip-right">
+          <!-- Env Operations -->
+          <div class="btn-group-compact">
+            <button id="telemetry-ping-btn" class="btn btn-secondary btn-xs" title="Ping active endpoint">📡 Ping</button>
+            <button id="telemetry-switch-btn" class="btn btn-secondary btn-xs" title="Switch environment">🔄 Switch</button>
+          </div>
+
+          <div class="strip-divider"></div>
+
+          <!-- 1-Click Executive Action Presets -->
+          <div class="btn-group-presets">
+            <button class="btn btn-primary btn-xs" onclick="window.triggerExecutiveRun('smoke')" title="Run High-Priority Critical Path Smoke Tests (30s)">
+              <span>⚡ Smoke Audit</span>
+            </button>
+            <button class="btn btn-secondary btn-xs" onclick="window.triggerExecutiveRun('sanity')" title="Run Core Navigation & Account Sanity Gate (1m)">
+              <span>🛡️ Sanity Gate</span>
+            </button>
+            <button class="btn btn-secondary btn-xs" onclick="window.openEmailPreviewModal()" title="Preview or Send Executive HTML Summary Card">
+              <span>✉️ Digest</span>
+            </button>
           </div>
         </div>
       </section>
 
-      <!-- Executive Client & Release Governance Command Banner -->
-      <section class="executive-governance-card glass-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-          <div style="display: flex; align-items: center; gap: 14px;">
-            <div class="gov-icon-wrapper">👑</div>
-            <div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <h3 class="gov-title">Executive Release Governance & Quality Gate</h3>
-                <span class="badge badge-health-online" id="executive-gate-badge" style="font-size: 0.72rem;">PRODUCTION GATE: GO</span>
+      <!-- ==========================================
+           TIER 2: UNIFIED EXECUTIVE QUALITY & FLEET KPI HERO
+           Split Grid: 42% Allure Quality Gate | 58% Fleet KPIs & Defect Clusters
+           ========================================== -->
+      <section class="allure-dashboard-widget enterprise-command-hero glass-card mb-3" id="allure-dashboard-card">
+        <div class="hero-split-grid">
+          
+          <!-- LEFT HERO: Allure Quality Gate Donut & Governance SLA -->
+          <div class="hero-quality-gate-panel">
+            <div class="hero-card-header">
+              <div class="flex items-center gap-2.5">
+                <div class="hero-icon-badge">📊</div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">QUALITY GATE</span>
+                    <span class="badge badge-fail" id="allure-dash-audit-badge">TRIAGE REQUIRED</span>
+                    <span class="text-xs font-mono text-muted" id="allure-dash-run-id">RUN-176189</span>
+                  </div>
+                  <h4 class="text-sm font-bold text-slate-900 dark:text-slate-100" id="allure-dash-title">Playwright HTML & Executive Defect Intelligence</h4>
+                </div>
               </div>
-              <p class="gov-desc" id="executive-gate-desc">1-Click client-friendly verification presets with instant executive HTML email digest generation</p>
+              <div class="flex items-center gap-1.5">
+                <button class="btn btn-secondary btn-xs" onclick="switchTab('report')" title="Switch to full interactive Quality Reports">
+                  <span>📋 Report</span>
+                </button>
+                <a href="/reports/html/index.html" target="_blank" class="btn btn-secondary btn-xs" title="Open Playwright HTML Report in new tab">
+                  <span>↗ HTML</span>
+                </a>
+              </div>
             </div>
-          </div>
 
-          <!-- Quick 1-Click Executive Presets -->
-          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <button class="btn btn-primary" onclick="window.triggerExecutiveRun('smoke')" title="Run High-Priority Critical Path Smoke Tests (30s)">
-              <span>⚡ 1-Click Smoke Audit</span>
-            </button>
-            <button class="btn btn-secondary" onclick="window.triggerExecutiveRun('sanity')" title="Run Core Navigation & Account Management Sanity (1m)">
-              <span>🛡️ 1-Click Sanity Gate</span>
-            </button>
-            <button class="btn btn-secondary" onclick="window.openEmailPreviewModal()" title="Preview or Send Executive HTML Summary Card">
-              <span>✉️ Email Report Preview</span>
-            </button>
-          </div>
-        </div>
-      </section>
+            <div class="hero-donut-row">
+              <div class="donut-canvas-container">
+                <canvas id="allure-donut-canvas" width="100" height="100"></canvas>
+              </div>
+              <div class="donut-stats-col">
+                <div class="flex items-baseline gap-2">
+                  <span class="text-3xl font-black allure-metric-title font-mono" id="allure-dash-pass-pct">80.5%</span>
+                  <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">PASSED</span>
+                </div>
+                <div class="allure-metric-sub font-medium" id="allure-dash-subtext">33 passed of 41 executed</div>
+                <div class="text-[11px] text-muted font-mono mt-0.5" id="allure-dash-fleet-pct">Fleet Total: 66.0% (50 Scenarios)</div>
+                <div class="flex items-center gap-1.5 mt-2 flex-wrap">
+                  <span class="allure-legend-pill passed">● <span id="allure-dash-passed-count">33</span> Passed</span>
+                  <span class="allure-legend-pill failed">● <span id="allure-dash-failed-count">8</span> Failed</span>
+                  <span class="allure-legend-pill skipped" title="Safety Guardrail Lock">🛡️ <span id="allure-dash-skipped-count">9</span> Guardrail</span>
+                </div>
+              </div>
+            </div>
 
-      <!-- KPI Stats Bar -->
-      <section class="kpi-grid">
-        <div class="kpi-card glass-card" id="kpi-card-modules" title="Click to view Automated Portal Modules">
-          <div class="kpi-icon-wrapper blue">📦</div>
-          <div class="kpi-content">
-            <span class="kpi-label">Active Modules</span>
-            <span class="kpi-value" id="kpi-modules">13 Suites</span>
-          </div>
-        </div>
-        <div class="kpi-card glass-card" id="kpi-card-scenarios" title="Click to view Detailed Scenario Matrix">
-          <div class="kpi-icon-wrapper green">🧪</div>
-          <div class="kpi-content">
-            <span class="kpi-label">Total Scenarios</span>
-            <span class="kpi-value" id="kpi-scenarios">81 Tests</span>
-          </div>
-        </div>
-        <div class="kpi-card glass-card" id="kpi-card-envs" title="Click to manage Configured Environments">
-          <div class="kpi-icon-wrapper purple">🏛️</div>
-          <div class="kpi-content">
-            <span class="kpi-label">Configured Envs</span>
-            <span class="kpi-value" id="kpi-envs">4 Environments</span>
-          </div>
-        </div>
-        <div class="kpi-card glass-card" id="kpi-card-e2e" title="Click to view End-to-End Test Suite (Includes Account Lifecycle & Provisioning)">
-          <div class="kpi-icon-wrapper orange">🔄</div>
-          <div class="kpi-content">
-            <span class="kpi-label">E2E Test Suite</span>
-            <span class="kpi-value" id="kpi-e2e">25 Scenarios</span>
-          </div>
-        </div>
-      </section>
+            <!-- Integrated Executive Governance Release Gate Status -->
+            <div class="hero-governance-strip">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="gov-mini-icon">👑</span>
+                  <span class="badge badge-health-online text-[10px]" id="executive-gate-badge">PRODUCTION GATE: GO</span>
+                </div>
+                <span class="text-[10px] text-muted font-mono" id="allure-dash-sla-status">Needs 4 Fixes for Release</span>
+              </div>
+              <p class="text-[11px] text-muted line-clamp-1 mt-1" id="executive-gate-desc">1-Click client-friendly verification presets with instant executive HTML email digest generation</p>
+            </div>
 
-      <!-- Section: Enterprise Multi-Stage Promotion Pipeline (Dev to QA, QA to Stag, Stag to Prod) -->
-      <section class="promotion-pipeline-card glass-card mb-4" id="promotion-pipeline-section">
-        <div class="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-slate-200 dark:border-slate-700/40">
-          <div class="flex items-center gap-2.5">
-            <div style="background: linear-gradient(135deg, #3b82f6, #8b5cf6); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);">🚀</div>
-            <div>
+            <!-- Quality Gate SLA Status Bar -->
+            <div class="allure-gate-bar-container">
+              <div class="flex items-center gap-2 text-xs flex-wrap">
+                <span class="font-bold text-slate-700 dark:text-slate-300" id="allure-gate-strip-title">Stage Gate:</span>
+                <span class="badge badge-health-online text-[10px]" id="allure-gate-strip-threshold">SLA 90%</span>
+                <span class="text-muted text-[11px]" id="allure-gate-strip-executed">Current: <strong id="allure-gate-strip-pct">80.5%</strong></span>
+              </div>
               <div class="flex items-center gap-2">
-                <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">MULTI-STAGE PROMOTION PIPELINE</span>
-                <span class="badge badge-env text-[10px]" id="pipeline-active-badge">ACTIVE: QA → STAG</span>
+                <span class="text-[10px] text-muted font-mono" id="allure-gate-strip-runid">Run: <strong class="text-slate-700 dark:text-slate-200" id="allure-gate-strip-runid-text">RUN-176189</strong></span>
+                <button class="btn btn-secondary btn-xs text-[10px] py-0.5 px-2" onclick="switchTab('report')" title="Open detailed report">
+                  Root Causes →
+                </button>
               </div>
-              <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100">Release Promotion Gates & Multi-Environment Consistency Matrix</h4>
             </div>
           </div>
-          <div class="flex items-center gap-2 text-xs flex-wrap">
-            <span class="text-muted text-[11px] font-medium">Switch Promotion Tier:</span>
-            <div class="inline-flex rounded-lg p-0.5 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60" id="pipeline-stage-selector">
-              <button class="stage-nav-pill" id="stage-nav-dev-to-qa" onclick="window.selectPipelineStage('dev-to-qa')">1. Dev → QA</button>
-              <button class="stage-nav-pill active" id="stage-nav-qa-to-stag" onclick="window.selectPipelineStage('qa-to-stag')">2. QA → Stag</button>
-              <button class="stage-nav-pill" id="stage-nav-stag-to-prod" onclick="window.selectPipelineStage('stag-to-prod')">3. Stag → Prod</button>
-            </div>
-          </div>
-        </div>
 
-        <!-- 3 Pipeline Stage Flow Cards (Dynamically Populated) -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3" id="pipeline-stage-cards-grid">
-          <div class="p-4 text-center text-xs text-muted col-span-3">Loading synchronized promotion pipeline stages...</div>
+          <!-- RIGHT HERO: 4 High-Density KPIs + Defect Intelligence & Environment Guardrail -->
+          <div class="hero-kpi-intel-panel">
+            
+            <!-- 4 High-Density KPI Cards Row -->
+            <div class="high-density-kpi-grid">
+              <div class="hd-kpi-card glass-card" id="kpi-card-modules" title="Click to view Automated Portal Modules">
+                <div class="hd-kpi-icon blue">📦</div>
+                <div class="hd-kpi-info">
+                  <span class="hd-kpi-label">Active Modules</span>
+                  <span class="hd-kpi-val" id="kpi-modules">13 Suites</span>
+                </div>
+              </div>
+              <div class="hd-kpi-card glass-card" id="kpi-card-scenarios" title="Click to view Detailed Scenario Matrix">
+                <div class="hd-kpi-icon green">🧪</div>
+                <div class="hd-kpi-info">
+                  <span class="hd-kpi-label">Total Scenarios</span>
+                  <span class="hd-kpi-val" id="kpi-scenarios">81 Tests</span>
+                </div>
+              </div>
+              <div class="hd-kpi-card glass-card" id="kpi-card-envs" title="Click to manage Configured Environments">
+                <div class="hd-kpi-icon purple">🏛️</div>
+                <div class="hd-kpi-info">
+                  <span class="hd-kpi-label">Configured Envs</span>
+                  <span class="hd-kpi-val" id="kpi-envs">4 Envs</span>
+                </div>
+              </div>
+              <div class="hd-kpi-card glass-card" id="kpi-card-e2e" title="Click to view End-to-End Suite">
+                <div class="hd-kpi-icon orange">🔄</div>
+                <div class="hd-kpi-info">
+                  <span class="hd-kpi-label">E2E Suite</span>
+                  <span class="hd-kpi-val" id="kpi-e2e">25 Tests</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sub-Grid: Defect Intelligence (Triage) & Environment Context -->
+            <div class="hero-intel-subgrid">
+              <!-- Defect Categories Triage -->
+              <div class="hero-subcard">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Defect Clusters (Triage)</span>
+                  <span class="text-[10px] font-mono text-muted" id="allure-dash-cat-count">2 Categories Active</span>
+                </div>
+                <div id="allure-dash-categories-list" class="space-y-1.5 flex-1">
+                  <div class="text-xs text-muted">Loading categories...</div>
+                </div>
+                <div class="mt-2.5 pt-2 border-t border-slate-200 dark:border-slate-700/50 flex justify-between items-center">
+                  <button class="btn btn-secondary btn-xs" id="allure-dash-rca-btn" onclick="window.openRcaModal && window.openRcaModal(document.getElementById('allure-dash-run-id')?.textContent || 'RUN-176189')" title="AI Root Cause Analysis">
+                    <span>🤖 AI RCA Triage</span>
+                  </button>
+                  <button class="btn btn-secondary btn-xs" onclick="switchTab('report')" title="Refresh Report">
+                    <span>🔄 Refresh</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Target Cluster Governance & Guardrails -->
+              <div class="hero-subcard flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Cluster Governance</span>
+                  <span class="badge badge-env text-[9px]">ISOLATED</span>
+                </div>
+                <div class="space-y-2 text-xs">
+                  <div class="allure-env-row">
+                    <span class="allure-env-label">Target Env</span>
+                    <span class="allure-env-val text-blue-600 dark:text-blue-400 font-semibold" id="allure-dash-env-name">SIT - STG 2</span>
+                  </div>
+                  <div class="allure-env-row">
+                    <span class="allure-env-label">Guardrail</span>
+                    <span class="allure-env-val text-amber-600 dark:text-amber-400 font-mono text-[11px]" id="allure-dash-guardrail">ACTIVE (Write Protection)</span>
+                  </div>
+                  <div class="allure-env-row">
+                    <span class="allure-env-label">Concurrency</span>
+                    <span class="allure-env-val text-slate-700 dark:text-slate-200 font-mono text-[11px]" id="allure-dash-concurrency">4x Isolated Workers</span>
+                  </div>
+                </div>
+                <div class="mt-2.5 pt-2 border-t border-slate-200 dark:border-slate-700/50 flex justify-between items-center text-[11px] text-muted">
+                  <span>Engine: <strong class="text-slate-800 dark:text-slate-200">Playwright 1.57</strong></span>
+                  <span class="text-emerald-500 font-semibold">● Enterprise Ready</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
         </div>
       </section>
 
-      <!-- Section: Latest Execution Snapshot & RCA Quick View -->
-      <section class="latest-run-card glass-card mb-4" id="latest-run-card">
-        <div class="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-slate-700/40">
-          <div class="flex items-center gap-3">
-            <div class="run-status-icon-wrapper" id="latest-run-icon">⚡</div>
-            <div>
+      <!-- ==========================================
+           TIER 3: 2-COLUMN COMMAND DECK
+           Left (54%): Latest Run Snapshot + Trend Velocity
+           Right (46%): Multi-Stage Promotion Pipeline + Fleet & Latency Matrix
+           ========================================== -->
+      <section class="command-deck-grid mb-3">
+
+        <!-- DECK COLUMN 1: Execution Snapshot & Stability Trend -->
+        <div class="command-deck-col">
+          
+          <!-- Latest Execution Snapshot -->
+          <div class="latest-run-card glass-card" id="latest-run-card">
+            <div class="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-slate-200 dark:border-slate-700/40">
+              <div class="flex items-center gap-2.5">
+                <div class="run-status-icon-wrapper" id="latest-run-icon">⚡</div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-muted">LATEST RUN</span>
+                    <span class="badge" id="latest-run-badge">READY</span>
+                    <span class="text-[10px] font-mono text-muted" id="latest-run-id">--</span>
+                  </div>
+                  <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100 truncate max-w-[280px]" id="latest-run-title">No test run recorded in this session</h4>
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button class="btn btn-secondary btn-xs" id="latest-run-logs-btn" title="Open Live Canvas and Terminal Logs">
+                  <span>🏎️ Logs</span>
+                </button>
+                <button class="btn btn-secondary btn-xs" id="latest-run-rca-btn" title="View RCA">
+                  <span>🔍 RCA</span>
+                </button>
+                <button class="btn btn-primary btn-xs" id="latest-run-rerun-btn" title="Re-run last execution">
+                  <span>⚡ Re-Run</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Compact Metrics Grid -->
+            <div class="grid grid-cols-5 gap-2 pt-2.5 text-xs" id="latest-run-stats-grid">
+              <div class="compact-stat-cell">
+                <span class="compact-stat-label">Env</span>
+                <span class="compact-stat-val truncate font-mono text-slate-800 dark:text-slate-100" id="latest-run-env">--</span>
+              </div>
+              <div class="compact-stat-cell">
+                <span class="compact-stat-label">Passed</span>
+                <span class="compact-stat-val font-mono text-emerald-600 dark:text-emerald-400 font-bold" id="latest-run-passed">0</span>
+              </div>
+              <div class="compact-stat-cell">
+                <span class="compact-stat-label">Failed</span>
+                <span class="compact-stat-val font-mono text-rose-600 dark:text-rose-400 font-bold" id="latest-run-failed">0</span>
+              </div>
+              <div class="compact-stat-cell">
+                <span class="compact-stat-label">Skipped</span>
+                <span class="compact-stat-val font-mono text-amber-600 dark:text-amber-400 font-bold" id="latest-run-skipped">0</span>
+              </div>
+              <div class="compact-stat-cell">
+                <span class="compact-stat-label">Duration</span>
+                <span class="compact-stat-val font-mono text-slate-800 dark:text-slate-100" id="latest-run-duration">--</span>
+              </div>
+            </div>
+
+            <!-- Diagnosis Banner (shows if failed) -->
+            <div id="latest-run-diagnosis" class="mt-2.5 p-2 rounded-lg bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 text-xs hidden">
+              <span class="font-bold">⚠️ Failure Diagnosis:</span> <span id="latest-run-diagnosis-text">Network timeout / VPN required</span>
+            </div>
+          </div>
+
+          <!-- Stability Trajectory Trend Chart -->
+          <div class="glass-card p-3 rounded-xl border border-slate-200 dark:border-slate-700/50 flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-1.5">
               <div class="flex items-center gap-2">
-                <span class="text-xs font-bold uppercase tracking-wider text-muted">LATEST EXECUTION SNAPSHOT</span>
-                <span class="badge" id="latest-run-badge">READY</span>
-                <span class="text-xs font-mono text-muted" id="latest-run-id">--</span>
+                <span class="text-[10px] font-bold tracking-wider text-blue-500 uppercase">TREND VELOCITY</span>
+                <h4 class="text-xs font-semibold text-slate-800 dark:text-slate-200">Pass Rate & Stability Velocity</h4>
               </div>
-              <h4 class="text-base font-bold text-slate-800 dark:text-slate-100" id="latest-run-title">No test run recorded in this session</h4>
+              <span class="badge badge-pass text-[10px]">98.4% Baseline</span>
             </div>
+            <div class="h-36 w-full relative">
+              <canvas id="tremor-trend-chart"></canvas>
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-muted border-t border-slate-200 dark:border-slate-700/40 pt-1.5 mt-1">
+              <span>Historical regression velocity</span>
+              <span class="text-emerald-500 font-medium font-mono">↑ 4.2% stability gain</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- DECK COLUMN 2: Multi-Stage Promotion Pipeline + Cluster Health -->
+        <div class="command-deck-col">
+          
+          <!-- Promotion Pipeline Section -->
+          <div class="promotion-pipeline-card glass-card" id="promotion-pipeline-section">
+            <div class="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-200 dark:border-slate-700/40">
+              <div class="flex items-center gap-2">
+                <div style="background: linear-gradient(135deg, #3b82f6, #8b5cf6); width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px;">🚀</div>
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">PROMOTION PIPELINE</span>
+                    <span class="badge badge-env text-[9px]" id="pipeline-active-badge">ACTIVE: QA → STAG</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Stage selector pills -->
+              <div class="inline-flex rounded-lg p-0.5 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60" id="pipeline-stage-selector">
+                <button class="stage-nav-pill" id="stage-nav-dev-to-qa" onclick="window.selectPipelineStage('dev-to-qa')">1. Dev→QA</button>
+                <button class="stage-nav-pill active" id="stage-nav-qa-to-stag" onclick="window.selectPipelineStage('qa-to-stag')">2. QA→Stag</button>
+                <button class="stage-nav-pill" id="stage-nav-stag-to-prod" onclick="window.selectPipelineStage('stag-to-prod')">3. Stag→Prod</button>
+              </div>
+            </div>
+
+            <!-- 3 Pipeline Stage Flow Cards Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2.5" id="pipeline-stage-cards-grid">
+              <div class="p-3 text-center text-xs text-muted col-span-3">Loading synchronized promotion pipeline stages...</div>
+            </div>
+          </div>
+
+          <!-- Dual Telemetry Charts: Suite Latency & Fleet Health Donut -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <!-- Latency Benchmark -->
+            <div class="glass-card p-3 rounded-xl border border-slate-200 dark:border-slate-700/50 flex flex-col justify-between">
+              <div class="flex items-center justify-between mb-1">
+                <div>
+                  <span class="text-[10px] font-bold tracking-wider text-amber-500 uppercase">PERFORMANCE</span>
+                  <h4 class="text-xs font-semibold text-slate-800 dark:text-slate-200">Latency (ms)</h4>
+                </div>
+                <span class="badge badge-env text-[9px]">&lt;1.5s</span>
+              </div>
+              <div class="h-32 w-full relative">
+                <canvas id="tremor-latency-chart"></canvas>
+              </div>
+              <div class="flex items-center justify-between text-[10px] text-muted border-t border-slate-200 dark:border-slate-700/40 pt-1 mt-1">
+                <span>Fastest: <strong class="text-slate-700 dark:text-slate-300">Auth</strong></span>
+                <span>Slowest: <strong class="text-amber-500">Reports</strong></span>
+              </div>
+            </div>
+
+            <!-- Fleet Health Donut -->
+            <div class="glass-card p-3 rounded-xl border border-slate-200 dark:border-slate-700/50 flex flex-col justify-between">
+              <div class="flex items-center justify-between mb-1">
+                <div>
+                  <span class="text-[10px] font-bold tracking-wider text-purple-500 uppercase">FLEET MATRIX</span>
+                  <h4 class="text-xs font-semibold text-slate-800 dark:text-slate-200">Cluster Health</h4>
+                </div>
+                <span class="badge badge-health-online text-[9px]">4 Clusters</span>
+              </div>
+              <div class="h-32 w-full relative flex items-center justify-center">
+                <canvas id="tremor-fleet-chart"></canvas>
+              </div>
+              <div class="flex items-center justify-between text-[10px] text-muted border-t border-slate-200 dark:border-slate-700/40 pt-1 mt-1">
+                <span class="text-emerald-500 font-medium" id="fleet-stat-online">● 3 Online</span>
+                <span class="text-amber-500 font-medium" id="fleet-stat-warning">● 1 Alert</span>
+                <span class="text-slate-400 font-medium" id="fleet-stat-offline">● 0 Off</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ==========================================
+           BOTTOM DIRECTORY: HIGH-DENSITY MODULE DIRECTORY
+           Compact Matrix with Quick Filters & Direct Launch
+           ========================================== -->
+      <section class="portal-modules-quick-section enterprise-module-directory glass-card mb-4">
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-2.5">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-blue-500">PORTAL SUITE HEALTH</span>
+            <span class="badge badge-env text-[10px]" id="dash-modules-count-badge">16 Modules Ready</span>
+            <span class="text-xs text-muted">| Instant Direct Module Execution</span>
           </div>
           <div class="flex items-center gap-2">
-            <button class="btn btn-secondary btn-sm" id="latest-run-logs-btn" title="Open Live Canvas and Terminal Logs">
-              <span>🏎️ View Live Canvas</span>
+            <button class="btn btn-secondary btn-xs" onclick="switchTab('suites')" title="Open Full Modules Manager">
+              <span>📦 Open Modules Manager →</span>
             </button>
-            <button class="btn btn-secondary btn-sm" id="latest-run-rca-btn" title="View Root Cause Analysis (RCA)">
-              <span>🔍 View RCA Analysis</span>
-            </button>
-            <button class="btn btn-primary btn-sm" id="latest-run-rerun-btn" title="Re-run last execution">
-              <span>⚡ Re-Run</span>
+            <button class="btn btn-primary btn-xs" onclick="window.triggerExecutiveRun('smoke')" title="Run Critical Path Smoke Tests">
+              <span>⚡ 1-Click Smoke</span>
             </button>
           </div>
         </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 pt-3 text-xs" id="latest-run-stats-grid">
-          <div class="p-2.5 rounded-lg bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/50">
-            <span class="text-muted block text-[10px] uppercase font-semibold">Environment</span>
-            <span class="font-bold text-slate-800 dark:text-slate-100 font-mono" id="latest-run-env">--</span>
-          </div>
-          <div class="p-2.5 rounded-lg bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/50">
-            <span class="text-muted block text-[10px] uppercase font-semibold">Passed</span>
-            <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono text-sm" id="latest-run-passed">0</span>
-          </div>
-          <div class="p-2.5 rounded-lg bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/50">
-            <span class="text-muted block text-[10px] uppercase font-semibold">Failed</span>
-            <span class="font-bold text-rose-600 dark:text-rose-400 font-mono text-sm" id="latest-run-failed">0</span>
-          </div>
-          <div class="p-2.5 rounded-lg bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/50">
-            <span class="text-muted block text-[10px] uppercase font-semibold">Skipped</span>
-            <span class="font-bold text-amber-600 dark:text-amber-400 font-mono text-sm" id="latest-run-skipped">0</span>
-          </div>
-          <div class="p-2.5 rounded-lg bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/50">
-            <span class="text-muted block text-[10px] uppercase font-semibold">Duration</span>
-            <span class="font-bold text-slate-800 dark:text-slate-100 font-mono text-sm" id="latest-run-duration">--</span>
-          </div>
-        </div>
-
-        <!-- Diagnosis Banner (shows if failed) -->
-        <div id="latest-run-diagnosis" class="mt-3 p-2.5 rounded-lg bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 text-xs hidden">
-          <span class="font-bold">⚠️ Failure Diagnosis:</span> <span id="latest-run-diagnosis-text">Network timeout / VPN required</span>
+        <div class="dash-modules-compact-grid" id="dash-modules-quick-grid">
+          <!-- Dynamically populated module cards -->
         </div>
       </section>
 
-      <!-- Dual-Layer Executive Quality Report Integration Widget -->
-      <section class="allure-dashboard-widget glass-card mb-4" id="allure-dashboard-card">
-        <div class="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-slate-200 dark:border-slate-700/40">
-          <div class="flex items-center gap-3">
-            <div class="allure-badge-icon" style="background: linear-gradient(135deg, #0284c7, #2563eb); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 19px; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);">📊</div>
-            <div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">DUAL-LAYER EXECUTIVE QUALITY REPORT</span>
-                <span class="badge badge-fail" id="allure-dash-audit-badge">TRIAGE REQUIRED</span>
-                <span class="text-xs font-mono text-muted" id="allure-dash-run-id">RUN-176189</span>
-              </div>
-              <h4 class="text-base font-bold text-slate-900 dark:text-slate-100" id="allure-dash-title">Playwright HTML & Executive Defect Intelligence</h4>
-            </div>
-          </div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <button class="btn btn-secondary btn-sm" onclick="switchTab('report')" title="Switch to full interactive Playwright HTML & Executive Reports">
-              <span>📋 View Quality Report</span>
-            </button>
-            <button class="btn btn-secondary btn-sm" id="allure-dash-rca-btn" onclick="window.openRcaModal && window.openRcaModal(document.getElementById('allure-dash-run-id')?.textContent || 'RUN-176189')" title="AI Root Cause Analysis of Failed Tests">
-              <span>🤖 AI RCA Triage</span>
-            </button>
-            <a href="/reports/html/index.html" target="_blank" class="btn btn-secondary btn-sm" title="Open Playwright HTML Report in new tab">
-              <span>🚀 Open HTML Report ↗</span>
-            </a>
-            <button class="btn btn-primary btn-sm" onclick="switchTab('report')" title="Refresh Report & Telemetry">
-              <span>🔄 Refresh</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3.5 pt-3 items-stretch">
-          <!-- 1. Allure Donut Chart & Dual Metric Card -->
-          <div class="lg:col-span-4 allure-panel-card flex items-center justify-center gap-4">
-            <div style="width: 105px; height: 105px; position: relative; flex-shrink: 0;">
-              <canvas id="allure-donut-canvas" width="105" height="105"></canvas>
-            </div>
-            <div class="flex flex-col justify-center">
-              <div class="flex items-baseline gap-1.5">
-                <span class="text-3xl font-black allure-metric-title font-mono" id="allure-dash-pass-pct">80.5%</span>
-                <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">PASSED</span>
-              </div>
-              <div class="allure-metric-sub font-medium" id="allure-dash-subtext">33 passed of 41 executed</div>
-              <div class="text-[11px] text-muted font-mono mt-0.5" id="allure-dash-fleet-pct">Fleet Total: 66.0% (50 Scenarios)</div>
-              
-              <div class="flex items-center gap-1.5 mt-2.5 flex-wrap">
-                <span class="allure-legend-pill passed">● <span id="allure-dash-passed-count">33</span> Passed</span>
-                <span class="allure-legend-pill failed">● <span id="allure-dash-failed-count">8</span> Failed</span>
-                <span class="allure-legend-pill skipped" title="Intentionally skipped via Production Safety Guardrails on SIT-STG2">🛡️ <span id="allure-dash-skipped-count">9</span> Guardrail</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 2. Interactive Allure Defect Categories Breakdown -->
-          <div class="lg:col-span-5 allure-panel-card flex flex-col justify-between">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Defect Categories (Allure Triage)</span>
-              <span class="text-[10px] font-mono text-muted" id="allure-dash-cat-count">2 Categories Active</span>
-            </div>
-            <div id="allure-dash-categories-list" class="space-y-2 flex-1 flex flex-col justify-center">
-              <div class="text-xs text-muted">Loading categories...</div>
-            </div>
-          </div>
-
-          <!-- 3. Target Environment & Guardrail Lock Context -->
-          <div class="lg:col-span-3 allure-panel-card flex flex-col justify-between space-y-2">
-            <div class="allure-env-row">
-              <span class="allure-env-label">Target Environment</span>
-              <span class="allure-env-val text-blue-600 dark:text-blue-400" id="allure-dash-env-name">SIT - STG 2</span>
-            </div>
-            <div class="allure-env-row">
-              <span class="allure-env-label">Safety Guardrail Interception</span>
-              <span class="allure-env-val text-amber-600 dark:text-amber-400 text-xs" id="allure-dash-guardrail">ACTIVE (Write Protection)</span>
-            </div>
-            <div class="allure-env-row">
-              <span class="allure-env-label">Parallel Concurrency</span>
-              <span class="allure-env-val text-slate-800 dark:text-slate-200 text-xs" id="allure-dash-concurrency">4x Isolated Workers</span>
-            </div>
-            <div class="allure-env-row">
-              <span class="allure-env-label">Quality SLA Status</span>
-              <span class="allure-env-val text-rose-600 dark:text-rose-400 text-xs font-semibold" id="allure-dash-sla-status">Needs 4 Fixes for Release</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. Quality Gate SLA Indicator Strip -->
-        <div class="allure-gate-bar-container">
-          <div class="flex items-center gap-2 text-xs">
-            <span class="font-bold text-slate-700 dark:text-slate-300" id="allure-gate-strip-title">Stage Quality Gate:</span>
-            <span class="badge badge-health-online text-[11px]" id="allure-gate-strip-threshold">SLA Threshold: 90%</span>
-            <span class="text-muted text-[11px]" id="allure-gate-strip-executed">Current Executed: <strong id="allure-gate-strip-pct">80.5%</strong></span>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="text-[11px] text-muted font-mono" id="allure-gate-strip-runid">Run ID: <strong class="text-slate-700 dark:text-slate-200" id="allure-gate-strip-runid-text">RUN-176189</strong></span>
-            <button class="btn btn-secondary btn-sm text-[11px] py-0.5 px-2.5" onclick="switchTab('report')" title="Open detailed report">
-              View Detailed Root Causes →
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Advanced Tremor & React/Shadcn-Style Analytics & Telemetry Grid -->
-      <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-        <!-- Chart 1: Pass Rate & Regression Velocity Trend -->
-        <div class="glass-card p-4 rounded-xl border border-slate-700/50 flex flex-col justify-between">
-          <div class="flex items-center justify-between mb-2">
-            <div>
-              <span class="text-xs font-bold tracking-wider text-blue-400 uppercase">TELEMETRY TREND</span>
-              <h3 class="text-base font-semibold text-slate-100">Pass Rate & Stability Velocity</h3>
-            </div>
-            <span class="badge badge-pass text-xs">98.4% Baseline</span>
-          </div>
-          <div class="h-44 w-full relative">
-            <canvas id="tremor-trend-chart"></canvas>
-          </div>
-          <div class="flex items-center justify-between text-xs text-slate-400 border-t border-slate-700/40 pt-2 mt-2">
-            <span>Historical regression velocity</span>
-            <span class="text-emerald-400 font-medium font-mono">↑ 4.2% stability improvement</span>
-          </div>
-        </div>
-
-        <!-- Chart 2: Module Latency Distribution Waterfall -->
-        <div class="glass-card p-4 rounded-xl border border-slate-700/50 flex flex-col justify-between">
-          <div class="flex items-center justify-between mb-2">
-            <div>
-              <span class="text-xs font-bold tracking-wider text-amber-400 uppercase">PERFORMANCE BENCHMARK</span>
-              <h3 class="text-base font-semibold text-slate-100">Latency by Suite (ms)</h3>
-            </div>
-            <span class="badge badge-env text-xs">SLA: &lt;1.5s</span>
-          </div>
-          <div class="h-44 w-full relative">
-            <canvas id="tremor-latency-chart"></canvas>
-          </div>
-          <div class="flex items-center justify-between text-xs text-slate-400 border-t border-slate-700/40 pt-2 mt-2">
-            <span>Fastest: <strong class="text-slate-200">Auth (320ms)</strong></span>
-            <span>Slowest: <strong class="text-amber-400">Reports (1.1s)</strong></span>
-          </div>
-        </div>
-
-        <!-- Chart 3: Multi-Environment Fleet Health Doughnut -->
-        <div class="glass-card p-4 rounded-xl border border-slate-700/50 flex flex-col justify-between">
-          <div class="flex items-center justify-between mb-2">
-            <div>
-              <span class="text-xs font-bold tracking-wider text-purple-400 uppercase">FLEET MATRIX</span>
-              <h3 class="text-base font-semibold text-slate-100">Cluster Health Status</h3>
-            </div>
-            <span class="badge badge-health-online text-xs">4 Clusters</span>
-          </div>
-          <div class="h-44 w-full relative flex items-center justify-center">
-            <canvas id="tremor-fleet-chart"></canvas>
-          </div>
-          <div class="flex items-center justify-between text-xs text-slate-400 border-t border-slate-700/40 pt-2 mt-2">
-            <span class="text-emerald-400" id="fleet-stat-online">● 3 Online</span>
-            <span class="text-amber-400" id="fleet-stat-warning">● 1 Latency Alert</span>
-            <span class="text-slate-400" id="fleet-stat-offline">● 0 Offline</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- Section: Portal Modules Quick Health & Direct Execution Matrix -->
-      <section class="portal-modules-quick-section glass-card mb-4">
-        <div class="flex items-center justify-between flex-wrap gap-3 mb-3">
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-bold uppercase tracking-wider text-blue-500">PORTAL SUITE HEALTH</span>
-              <span class="badge badge-env" id="dash-modules-count-badge">16 Modules Ready</span>
-            </div>
-            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">Automated Modules Direct Health Matrix</h3>
-          </div>
-          <div class="flex items-center gap-2">
-            <button class="btn btn-secondary btn-sm" onclick="switchTab('suites')" title="Open Full Modules Manager">
-              <span>📦 Open Modules Manager</span>
-            </button>
-            <button class="btn btn-primary btn-sm" onclick="window.triggerExecutiveRun('smoke')" title="Run Critical Path Smoke Tests">
-              <span>⚡ 1-Click Smoke Audit</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3" id="dash-modules-quick-grid">
-          <!-- Dynamically generated module cards with live status & 1-click Run button -->
-        </div>
-      </section>
     </div>
 
     <!-- TAB: AUTOMATED PORTAL MODULES & GROUPS -->
