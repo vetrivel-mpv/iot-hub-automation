@@ -1,0 +1,16 @@
+{
+  "quarantinedTests": [
+    {
+      "testId": "TC_AUTH_017",
+      "title": "Handle 503 Service Unavailable / SSO Intermittent Failure",
+      "suiteId": "auth",
+      "reason": "External IdP Staging latency spikes >5s on SIT-STG2 cluster",
+      "ticketId": "JIRA-4819",
+      "quarantinedBy": "Vetrivel (Lead QA Architect)",
+      "quarantinedAt": "2026-10-16T22:30:00.000Z",
+      "flakeScore": 33,
+      "status": "QUARANTINED"
+    }
+  ],
+  "updatedAt": "2026-10-16T22:30:00.000Z"
+}
