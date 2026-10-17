@@ -41,23 +41,8 @@ Copy `.env.example` to `.env`:
 ```bash
 cp .env.example .env
 ```
-Open `.env` and fill in your authorized corporate credentials for the target environment:
-```env
-# Target Environment URL
-WDH_BASE_URL=https://wdh-sitstg2.nokiawing.com
+Populate `.env` with your authorized corporate credentials and target cluster configuration based on `.env.example`.
 
-# Your Corporate Test Credentials
-WDH_USERNAME=your_corporate_username
-WDH_PASSWORD=YourSecurePassword123!
-
-# Environment Level: DEV / SIT / PROD
-WDH_ENV=SIT
-
-# Execution Settings
-HEADLESS=true
-DEFAULT_TIMEOUT=30000
-WORKERS=4
-```
 > [!NOTE]
 > `.env` is explicitly ignored by `.gitignore` and will never be committed to git.
 

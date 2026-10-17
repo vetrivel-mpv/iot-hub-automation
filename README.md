@@ -230,15 +230,7 @@ npx playwright install chromium
 ```bash
 cp .env.example .env
 ```
-
-Configure your target credentials in `.env`:
-```env
-PORT=3030
-WDH_BASE_URL=https://wdh-ekbbe2e2bbe4addc.a02.azurefd.net
-WDH_USERNAME=cmpaas-csp-user
-WDH_PASSWORD=your_secure_password
-WDH_ENV=DEV
-```
+Populate `.env` with your authorized environment endpoints and test credentials as outlined in `.env.example`.
 
 ### 4. Launch the Enterprise Command Center
 ```bash
